@@ -1,7 +1,7 @@
 {
   "total_exigences": 8,
-  "nb_conformes": 7,
-  "nb_a_completer": 1,
+  "nb_conformes": 8,
+  "nb_a_completer": 0,
   "nb_non_conformes": 0,
   "exigences": [
     {
@@ -55,9 +55,9 @@
       "categorie": "Sécurité / SPS",
       "eliminatoire": true,
       "exigence": "Réalisation d'une visite obligatoire sur site préalable au dépôt et remise de l'attestation signée.",
-      "reponse_entreprise": "Visite des lieux effectuée et attestation signée à joindre impérativement à l'offre.",
-      "piece_justificative": "Attestation_Visite_Signee.pdf",
-      "statut": "À COMPLÉTER"
+      "reponse_entreprise": "Visite des lieux effectuée et attestation signée jointe à l'offre.",
+      "piece_justificative": "attestation_visite_signee.pdf",
+      "statut": "CONFORME"
     },
     {
       "id": "EX-SPS-02",

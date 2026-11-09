@@ -105,9 +105,9 @@
     {
       "piece": "Attestation de visite des lieux signée",
       "obligatoire": true,
-      "statut": "A_OBTENIR",
+      "statut": "DISPONIBLE",
       "description": "Justificatif de visite sur site signé par le responsable du groupe scolaire / mairie.",
-      "action": "Prendre rendez-vous avant la date limite stipulée au CCAP."
+      "action": "Attestation officielle signée par la mairie prête à être jointe au pli."
     },
     {
       "piece": "Fiches techniques des produits et avis techniques CSTB",

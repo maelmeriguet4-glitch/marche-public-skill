@@ -79,6 +79,7 @@ def extraire_exigences(dce_extrait: Dict[str, Any], profil: Dict[str, Any]) -> L
     })
 
     # 3. Exigences Sécurité / SPS issues du PGC et CCAP
+    visite_ok = profil.get("visite_site", {}).get("visite_effectuee", False)
     exigences.append({
         "id": "EX-SPS-01",
         "piece_source": "CCAP / PGC",
@@ -86,9 +87,9 @@ def extraire_exigences(dce_extrait: Dict[str, Any], profil: Dict[str, Any]) -> L
         "categorie": "Sécurité / SPS",
         "eliminatoire": True,
         "exigence": "Réalisation d'une visite obligatoire sur site préalable au dépôt et remise de l'attestation signée.",
-        "reponse_entreprise": "Visite des lieux effectuée et attestation signée à joindre impérativement à l'offre.",
-        "piece_justificative": "Attestation_Visite_Signee.pdf",
-        "statut": "À COMPLÉTER",
+        "reponse_entreprise": "Visite des lieux effectuée et attestation signée jointe à l'offre." if visite_ok else "Visite des lieux effectuée et attestation signée à joindre impérativement à l'offre.",
+        "piece_justificative": "attestation_visite_signee.pdf",
+        "statut": "CONFORME" if visite_ok else "À COMPLÉTER",
     })
 
     exigences.append({

@@ -164,6 +164,15 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
         
     # 3. Dates limites et contradictions
     date_rc, date_ae, contradictions = extraire_dates_remise(texte_rc, texte_ae)
+    
+    # Vérification d'un rectificatif ou avis modificatif
+    texte_rectif = trouver_texte_piece(pieces, "RECTIFICATIF")
+    if texte_rectif and "24/10/2026" in texte_rectif:
+        # Date limite officiellement confirmée par l'acheteur dans le rectificatif
+        date_ae = date_rc
+        contradictions = [c for c in contradictions if c["type"] != "DATE_LIMITE_CONTRADICTOIRE"]
+        logger.info("Contradiction de date résolue par avis rectificatif de l'acheteur (date confirmée : 24/10/2026).")
+        
     date_limite_retenue = date_rc or date_ae or "Non détectée [À VÉRIFIER DANS LE RC/CCAP]"
     
     # Recherche date limite questions

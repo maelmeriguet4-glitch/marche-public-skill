@@ -23,5 +23,5 @@
 | **Cadre de décomposition du prix chiffré (DPGF)** | Obligatoire | 🔵 En cours | Chiffrer chaque ligne et vérifier sous scripts/controle_prix.py. |
 | **Mémoire technique justificatif d'offre** | Obligatoire | 🔵 En cours | Adapter assets/memoire_technique_template.md et supprimer toutes les balises [À FOURNIR]. |
 | **Planning prévisionnel détaillé d'exécution** | Obligatoire | 🔵 En cours | Indiquer les phases de préparation, approvisionnement, toiture, rampe PMR et repliement. |
-| **Attestation de visite des lieux signée** | Obligatoire | 🔵 En cours | Prendre rendez-vous avant la date limite stipulée au CCAP. |
+| **Attestation de visite des lieux signée** | Obligatoire | 🟢 Prêt | Attestation officielle signée par la mairie prête à être jointe au pli. |
 | **Fiches techniques des produits et avis techniques CSTB** | Facultatif | 🔵 En cours | Compiler en annexe technique du mémoire. |

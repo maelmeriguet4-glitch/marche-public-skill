@@ -17,10 +17,6 @@ Date limite de remise des p
 | **Délai d'exécution** | 10 % | Optimisation du planning et durée totale des travaux. |
 
 ## 3. Contradictions contractuelles et pièges détectés
-> [!WARNING] **DATE_LIMITE_CONTRADICTOIRE (BLOQUANT)**
-> Discordance sur la date limite de remise des offres : '24/10/2026 à 12h00' dans le RC vs '28/10/2026 à 12h00' dans l'AE.
-> *Action recommandée :* Considérer impérativement la date la plus précoce pour le calendrier et interroger l'acheteur via le profil d'acheteur.
-
 > [!WARNING] **PIEGE_EXIGENCE_CCAP_ISOLEE (HAUT)**
 > L'obligation de visite sur site ou la remise d'une attestation de visite signée est stipulée dans le CCAP mais omise dans le RC.
 > *Action recommandée :* Effectuer impérativement la visite et faire tamponner l'attestation sous peine d'élimination de l'offre.

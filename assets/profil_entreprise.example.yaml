@@ -95,3 +95,9 @@ parc_materiel:
   - "Plieuse d'atelier et plieuses de chantier pour façonnage zinc"
   - "Mini-pelle 2,5 t avec brise-roche et godets de terrassement"
   - "Véhicules utilitaires équipés outillage électroportatif de sécurité"
+
+visite_site:
+  visite_effectuee: true
+  date_visite: "2026-10-12"
+  signataire_mairie: "M. le Responsable des Services Techniques Municipaux"
+  attestation_fichier: "attestation_visite_signee.pdf"

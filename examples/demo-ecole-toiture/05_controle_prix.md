@@ -1,19 +1,15 @@
 # Rapport de Contrôle Arithmétique du Chiffrage (DPGF)
 
-## Statut du contrôle : 🔴 ANOMALIES DÉTECTÉES
+## Statut du contrôle : 🟢 CONFORME
 
 ### Synthèse financière arrêtée
 - **Total Général Recalculé HT** : `142 500,00 €`
 - **TVA (20.0 %)** : `28 500,00 €`
 - **Total Général Recalculé TTC** : `171 000,00 €`
-- **Total inscrit dans le fichier Excel** : `145 000,00 €`
-- ⚠️ **Écart de total général détecté** : `2500.00 €`
+- **Total inscrit dans le fichier Excel** : `142 500,00 €`
 
-## Anomalies et écarts arithmétiques relevés
-
-| Type d'anomalie | Ligne / Poste | Désignation | Description factuelle |
-| :--- | :---: | :--- | :--- |
-| **ECART_TOTAL_GENERAL_HT** | Général | - | Le total général HT affiché dans le fichier (145000 €) diverge de la somme exacte des lignes (142500.00 €). |
+## Contrôle arithmétique unitaire
+Aucune erreur de multiplication ni d'addition détectée sur les lignes du bordereau.
 
 ## Évaluation de la marge et des frais d'entreprise
 - Déboursé sec prévisionnel : `105 555,56 €`

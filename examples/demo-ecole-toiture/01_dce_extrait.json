@@ -1,12 +1,13 @@
 {
-  "repertoire": "C:\\marche-public-skill\\tests\\fixtures",
-  "total_pieces": 5,
+  "repertoire": "C:\\marche-public-skill\\examples\\demo-ecole-toiture\\dce_resolu",
+  "total_pieces": 6,
   "sommaire_classification": {
     "AE": 1,
     "CCAP": 1,
     "CCTP": 1,
     "DPGF": 1,
-    "RC": 1
+    "RC": 1,
+    "RECTIFICATIF": 1
   },
   "pieces": [
     {
@@ -69,7 +70,7 @@
     {
       "nom_fichier": "DPGF.xlsx",
       "chemin_relatif": "DPGF.xlsx",
-      "taille_octets": 5938,
+      "taille_octets": 5946,
       "extension": ".xlsx",
       "categorie": "DPGF",
       "statut": "OK",
@@ -80,10 +81,10 @@
         {
           "page": 1,
           "longueur": 1025,
-          "texte": "DÉCOMPOSITION DU PRIX GLOBAL ET FORFAITAIRE (DPGF) |  |  |  |  | \nMarché : Réfection toiture et mise en accessibilité de l'école communale |  |  |  |  | \nN° Poste | Désignation des ouvrages | Unité | Quantité | Prix Unitaire HT (€) | Total Ligne HT (€)\n1.1 | Installation de chantier, échafaudage de pied certifié NF et cantonnement | fft | 1 | 14500 | 14500\n1.2 | Dépose des anciennes tuiles et évacuation en décharge agréée | m² | 650 | 18 | 11700\n1.3 | Fourniture et pose isolant laine de roche 200 mm et pare-vapeur | m² | 650 | 48 | 31200\n1.4 | Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21 | m² | 650 | 68 | 44200\n1.5 | Zinguerie, gouttières demi-ronde zinc et descentes EP | ml | 120 | 65 | 7800\n2.1 | Terrassement et fondations rampe d'accès PMR | m³ | 45 | 95 | 4275\n2.2 | Réalisation rampe béton balayé et garde-corps double lisse | ml | 38 | 380 | 14440\n2.3 | Reprise des seuils de porte d'entrée et signalétique podotactile | ens | 1 | 14385 | 14385\n | TOTAL GÉNÉRAL HT DU MARCHÉ |  |  |  | 145000"
+          "texte": "DÉCOMPOSITION DU PRIX GLOBAL ET FORFAITAIRE (DPGF) |  |  |  |  | \nMarché : Réfection toiture et mise en accessibilité de l'école communale |  |  |  |  | \nN° Poste | Désignation des ouvrages | Unité | Quantité | Prix Unitaire HT (€) | Total Ligne HT (€)\n1.1 | Installation de chantier, échafaudage de pied certifié NF et cantonnement | fft | 1 | 14500 | 14500\n1.2 | Dépose des anciennes tuiles et évacuation en décharge agréée | m² | 650 | 18 | 11700\n1.3 | Fourniture et pose isolant laine de roche 200 mm et pare-vapeur | m² | 650 | 48 | 31200\n1.4 | Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21 | m² | 650 | 68 | 44200\n1.5 | Zinguerie, gouttières demi-ronde zinc et descentes EP | ml | 120 | 65 | 7800\n2.1 | Terrassement et fondations rampe d'accès PMR | m³ | 45 | 95 | 4275\n2.2 | Réalisation rampe béton balayé et garde-corps double lisse | ml | 38 | 380 | 14440\n2.3 | Reprise des seuils de porte d'entrée et signalétique podotactile | ens | 1 | 14385 | 14385\n | TOTAL GÉNÉRAL HT DU MARCHÉ |  |  |  | 142500"
         }
       ],
-      "texte_complet": "DÉCOMPOSITION DU PRIX GLOBAL ET FORFAITAIRE (DPGF) |  |  |  |  | \nMarché : Réfection toiture et mise en accessibilité de l'école communale |  |  |  |  | \nN° Poste | Désignation des ouvrages | Unité | Quantité | Prix Unitaire HT (€) | Total Ligne HT (€)\n1.1 | Installation de chantier, échafaudage de pied certifié NF et cantonnement | fft | 1 | 14500 | 14500\n1.2 | Dépose des anciennes tuiles et évacuation en décharge agréée | m² | 650 | 18 | 11700\n1.3 | Fourniture et pose isolant laine de roche 200 mm et pare-vapeur | m² | 650 | 48 | 31200\n1.4 | Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21 | m² | 650 | 68 | 44200\n1.5 | Zinguerie, gouttières demi-ronde zinc et descentes EP | ml | 120 | 65 | 7800\n2.1 | Terrassement et fondations rampe d'accès PMR | m³ | 45 | 95 | 4275\n2.2 | Réalisation rampe béton balayé et garde-corps double lisse | ml | 38 | 380 | 14440\n2.3 | Reprise des seuils de porte d'entrée et signalétique podotactile | ens | 1 | 14385 | 14385\n | TOTAL GÉNÉRAL HT DU MARCHÉ |  |  |  | 145000",
+      "texte_complet": "DÉCOMPOSITION DU PRIX GLOBAL ET FORFAITAIRE (DPGF) |  |  |  |  | \nMarché : Réfection toiture et mise en accessibilité de l'école communale |  |  |  |  | \nN° Poste | Désignation des ouvrages | Unité | Quantité | Prix Unitaire HT (€) | Total Ligne HT (€)\n1.1 | Installation de chantier, échafaudage de pied certifié NF et cantonnement | fft | 1 | 14500 | 14500\n1.2 | Dépose des anciennes tuiles et évacuation en décharge agréée | m² | 650 | 18 | 11700\n1.3 | Fourniture et pose isolant laine de roche 200 mm et pare-vapeur | m² | 650 | 48 | 31200\n1.4 | Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21 | m² | 650 | 68 | 44200\n1.5 | Zinguerie, gouttières demi-ronde zinc et descentes EP | ml | 120 | 65 | 7800\n2.1 | Terrassement et fondations rampe d'accès PMR | m³ | 45 | 95 | 4275\n2.2 | Réalisation rampe béton balayé et garde-corps double lisse | ml | 38 | 380 | 14440\n2.3 | Reprise des seuils de porte d'entrée et signalétique podotactile | ens | 1 | 14385 | 14385\n | TOTAL GÉNÉRAL HT DU MARCHÉ |  |  |  | 142500",
       "feuilles": {
         "DPGF": {
           "nb_lignes": 12,
@@ -182,7 +183,7 @@
               "",
               "",
               "",
-              "145000"
+              "142500"
             ]
           ]
         }
@@ -206,6 +207,25 @@
         }
       ],
       "texte_complet": "RÈGLEMENT DE LA CONSULTATION (RC)\nCOMMUNE DE SAINT-PIERRE-DES-BOIS — DIRECTION DES SERVICES TECHNIQUES\nMarché à Procédure Adaptée (MAPA) — Article L. 2123-1 du Code de la commande publique.\nArticle 1 — Objet et consistance de la consultation\nObjet du marché : Réfection de la toiture et mise en accessibilité d'une école communale.\nAllotissement : Marché passé en Lot unique (Travaux de couverture, zinguerie, étanchéité et aménagements PMR).\nArticle 2 — Calendrier de la consultation\nDate limite de remise des offres : 24/10/2026 à 12h00 impérativement.\nDate limite pour poser des questions : 16/10/2026 à 18h00 via le profil d'acheteur.\nArticle 3 — Jugement des offres et critères de notation\nLe jugement sera prononcé sur la base de l'offre économiquement la plus avantageuse selon les critères :\n1. Prix des prestations (DPGF) : 50 %\n2. Valeur technique (Mémoire technique) : 40 %\n3. Délai d'exécution (Planning d'intervention) : 10 %\nArticle 4 — Présentation des candidatures et des offres\nDossier de candidature : DC1, DC2, attestation d'assurance décennale en cours de validité, attestations fiscales et sociales, Kbis.\nDossier de l'offre : Acte d'Engagement (AE), Décomposition du Prix Global et Forfaitaire (DPGF), Mémoire technique justificatif, Planning."
+    },
+    {
+      "nom_fichier": "Rectificatif_01.docx",
+      "chemin_relatif": "Rectificatif_01.docx",
+      "taille_octets": 35655,
+      "extension": ".docx",
+      "categorie": "RECTIFICATIF",
+      "statut": "OK",
+      "alertes": [],
+      "nb_pages": 1,
+      "total_caracteres": 511,
+      "pages": [
+        {
+          "page": 1,
+          "longueur": 511,
+          "texte": "AVIS RECTIFICATIF N° 1 — CONSULTATION\nCommune de Saint-Pierre-des-Bois — Direction des Services Techniques\nMarché : Réfection de la toiture et mise en accessibilité d'une école communale\nObjet de la rectification\nIl est précisé à l'attention de l'ensemble des candidats qu'une erreur matérielle s'était glissée à l'Acte d'Engagement.\nLa date limite unique et impérative de remise des offres est définitivement arrêtée au 24/10/2026 à 12h00.\nL'ensemble des stipulations du Règlement de la Consultation prévalent."
+        }
+      ],
+      "texte_complet": "AVIS RECTIFICATIF N° 1 — CONSULTATION\nCommune de Saint-Pierre-des-Bois — Direction des Services Techniques\nMarché : Réfection de la toiture et mise en accessibilité d'une école communale\nObjet de la rectification\nIl est précisé à l'attention de l'ensemble des candidats qu'une erreur matérielle s'était glissée à l'Acte d'Engagement.\nLa date limite unique et impérative de remise des offres est définitivement arrêtée au 24/10/2026 à 12h00.\nL'ensemble des stipulations du Règlement de la Consultation prévalent."
     }
   ]
 }

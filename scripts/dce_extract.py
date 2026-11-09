@@ -28,6 +28,7 @@ CLASSIFICATION_PATTERNS = {
     "BPU": [r"(?:^|[\b_\.-])bpu(?:[\b_\.-]|$)", r"bordereau.*prix.*unitaires"],
     "DQE": [r"(?:^|[\b_\.-])dqe(?:[\b_\.-]|$)", r"detail.*quantitatif.*estimatif"],
     "PGC": [r"(?:^|[\b_\.-])pgc(?:[\b_\.-]|$)", r"plan.*general.*coordination", r"(?:^|[\b_\.-])sps(?:[\b_\.-]|$)"],
+    "RECTIFICATIF": [r"rectificatif", r"avis.*rectificatif", r"reponse.*questions"],
     "PLANS": [r"\bplan\b", r"\bcoupe\b", r"\bcroquis\b"],
 }
 
@@ -37,10 +38,15 @@ def classifier_document(nom_fichier: str, extrait_texte: str = "") -> str:
     nom_normalise = nom_fichier.lower()
     texte_sample = extrait_texte[:2000].lower() if extrait_texte else ""
     
+    # 1. Vérification prioritaire sur le nom du fichier
     for categorie, patterns in CLASSIFICATION_PATTERNS.items():
         for pat in patterns:
             if re.search(pat, nom_normalise):
                 return categorie
+                
+    # 2. Vérification sur le contenu textuel
+    for categorie, patterns in CLASSIFICATION_PATTERNS.items():
+        for pat in patterns:
             if re.search(pat, texte_sample):
                 return categorie
     return "AUTRE"

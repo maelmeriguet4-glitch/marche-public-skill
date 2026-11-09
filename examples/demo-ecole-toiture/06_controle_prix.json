@@ -1,22 +1,14 @@
 {
   "nb_lignes_verifiees": 8,
-  "total_affiche_excel_ht": "145000",
+  "total_affiche_excel_ht": "142500",
   "total_recalcule_ht": "142500.00",
   "taux_tva_pct": "20.0",
   "montant_tva": "28500.00",
   "total_recalcule_ttc": "171000.00",
-  "ecart_total_ht": "2500.00",
-  "statut_global": "ANOMALIES_DETECTEES",
-  "nb_anomalies": 1,
-  "anomalies": [
-    {
-      "type": "ECART_TOTAL_GENERAL_HT",
-      "valeur_excel": "145000",
-      "valeur_recalculee": "142500.00",
-      "ecart": "2500.00",
-      "description": "Le total général HT affiché dans le fichier (145000 €) diverge de la somme exacte des lignes (142500.00 €)."
-    }
-  ],
+  "ecart_total_ht": "0.00",
+  "statut_global": "CONFORME",
+  "nb_anomalies": 0,
+  "anomalies": [],
   "analyse_rentabilite": {
     "coefficient_vente_applique": "1.35",
     "debourse_sec_estime_ht": "105555.56",

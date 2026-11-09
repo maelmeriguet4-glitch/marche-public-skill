@@ -171,12 +171,13 @@ def construire_checklist(analyse: Dict[str, Any], profil: Dict[str, Any]) -> Dic
         "action": "Indiquer les phases de préparation, approvisionnement, toiture, rampe PMR et repliement."
     })
     
+    visite_faite = profil.get("visite_site", {}).get("visite_effectuee", False)
     pieces_offre.append({
         "piece": "Attestation de visite des lieux signée",
         "obligatoire": True,
-        "statut": "A_OBTENIR",
+        "statut": "DISPONIBLE" if visite_faite else "A_OBTENIR",
         "description": "Justificatif de visite sur site signé par le responsable du groupe scolaire / mairie.",
-        "action": "Prendre rendez-vous avant la date limite stipulée au CCAP."
+        "action": "Attestation officielle signée par la mairie prête à être jointe au pli." if visite_faite else "Prendre rendez-vous avant la date limite stipulée au CCAP."
     })
     
     pieces_offre.append({

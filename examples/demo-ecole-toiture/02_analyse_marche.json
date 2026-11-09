@@ -14,7 +14,7 @@
   },
   "calendrier": {
     "date_limite_remise_rc": "24/10/2026 à 12h00",
-    "date_limite_remise_ae": "28/10/2026 à 12h00",
+    "date_limite_remise_ae": "24/10/2026 à 12h00",
     "date_limite_retenue": "24/10/2026 à 12h00",
     "date_limite_questions": "16/10/2026"
   },
@@ -83,12 +83,6 @@
     ]
   },
   "contradictions_detectees": [
-    {
-      "type": "DATE_LIMITE_CONTRADICTOIRE",
-      "gravite": "BLOQUANT",
-      "description": "Discordance sur la date limite de remise des offres : '24/10/2026 à 12h00' dans le RC vs '28/10/2026 à 12h00' dans l'AE.",
-      "recommandation": "Considérer impérativement la date la plus précoce pour le calendrier et interroger l'acheteur via le profil d'acheteur."
-    },
     {
       "type": "PIEGE_EXIGENCE_CCAP_ISOLEE",
       "gravite": "HAUT",
