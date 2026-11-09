@@ -1,0 +1,125 @@
+{
+  "nb_lignes_verifiees": 8,
+  "total_affiche_excel_ht": "145000",
+  "total_recalcule_ht": "142500.00",
+  "taux_tva_pct": "20.0",
+  "montant_tva": "28500.00",
+  "total_recalcule_ttc": "171000.00",
+  "ecart_total_ht": "2500.00",
+  "statut_global": "ANOMALIES_DETECTEES",
+  "nb_anomalies": 1,
+  "anomalies": [
+    {
+      "type": "ECART_TOTAL_GENERAL_HT",
+      "valeur_excel": "145000",
+      "valeur_recalculee": "142500.00",
+      "ecart": "2500.00",
+      "description": "Le total général HT affiché dans le fichier (145000 €) diverge de la somme exacte des lignes (142500.00 €)."
+    }
+  ],
+  "analyse_rentabilite": {
+    "coefficient_vente_applique": "1.35",
+    "debourse_sec_estime_ht": "105555.56",
+    "frais_generaux_estimes_ht": "19950.00",
+    "marge_nette_estimee_ht": "9975.00",
+    "marge_nette_pct": "7.00"
+  },
+  "lignes": [
+    {
+      "ligne_excel": 5,
+      "numero": "1.1",
+      "designation": "Installation de chantier, échafaudage de pied certifié NF et cantonnement",
+      "unite": "fft",
+      "quantite": "1",
+      "prix_unitaire_ht": "14500",
+      "total_ligne_excel": "14500",
+      "total_ligne_recalcule_ht": "14500.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    },
+    {
+      "ligne_excel": 6,
+      "numero": "1.2",
+      "designation": "Dépose des anciennes tuiles et évacuation en décharge agréée",
+      "unite": "m²",
+      "quantite": "650",
+      "prix_unitaire_ht": "18",
+      "total_ligne_excel": "11700",
+      "total_ligne_recalcule_ht": "11700.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    },
+    {
+      "ligne_excel": 7,
+      "numero": "1.3",
+      "designation": "Fourniture et pose isolant laine de roche 200 mm et pare-vapeur",
+      "unite": "m²",
+      "quantite": "650",
+      "prix_unitaire_ht": "48",
+      "total_ligne_excel": "31200",
+      "total_ligne_recalcule_ht": "31200.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    },
+    {
+      "ligne_excel": 8,
+      "numero": "1.4",
+      "designation": "Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21",
+      "unite": "m²",
+      "quantite": "650",
+      "prix_unitaire_ht": "68",
+      "total_ligne_excel": "44200",
+      "total_ligne_recalcule_ht": "44200.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    },
+    {
+      "ligne_excel": 9,
+      "numero": "1.5",
+      "designation": "Zinguerie, gouttières demi-ronde zinc et descentes EP",
+      "unite": "ml",
+      "quantite": "120",
+      "prix_unitaire_ht": "65",
+      "total_ligne_excel": "7800",
+      "total_ligne_recalcule_ht": "7800.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    },
+    {
+      "ligne_excel": 10,
+      "numero": "2.1",
+      "designation": "Terrassement et fondations rampe d'accès PMR",
+      "unite": "m³",
+      "quantite": "45",
+      "prix_unitaire_ht": "95",
+      "total_ligne_excel": "4275",
+      "total_ligne_recalcule_ht": "4275.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    },
+    {
+      "ligne_excel": 11,
+      "numero": "2.2",
+      "designation": "Réalisation rampe béton balayé et garde-corps double lisse",
+      "unite": "ml",
+      "quantite": "38",
+      "prix_unitaire_ht": "380",
+      "total_ligne_excel": "14440",
+      "total_ligne_recalcule_ht": "14440.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    },
+    {
+      "ligne_excel": 12,
+      "numero": "2.3",
+      "designation": "Reprise des seuils de porte d'entrée et signalétique podotactile",
+      "unite": "ens",
+      "quantite": "1",
+      "prix_unitaire_ht": "14385",
+      "total_ligne_excel": "14385",
+      "total_ligne_recalcule_ht": "14385.00",
+      "ecart": "0.00",
+      "statut": "OK"
+    }
+  ]
+}

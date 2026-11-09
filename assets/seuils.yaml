@@ -1,0 +1,79 @@
+# Paramètres et seuils réglementaires de la commande publique (Travaux BTP - France)
+# Note : Tout montant est sujet à actualisation bisannuelle au Journal Officiel de l'Union Européenne et décret national.
+# Statut : CONFORME ou À VÉRIFIER selon la date de publication officielle.
+
+version: "2026.1"
+date_derniere_mise_a_jour: "2026-01-01"
+
+seuils_travaux:
+  dispense_procedure_formalites_prealables:
+    montant_ht_euros: 40000.00
+    statut: "À VÉRIFIER"
+    source_url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000038820846"
+    date_verification: "2026-01-01"
+    description: "Seuil de dispense de procédure pour les marchés de travaux (Article R. 2122-8 du Code de la commande publique)."
+
+  dispense_travaux_innovants_ou_urgence:
+    montant_ht_euros: 100000.00
+    statut: "À VÉRIFIER"
+    source_url: "https://www.economie.gouv.fr/daj/marches-publics-seuils"
+    date_verification: "2026-01-01"
+    description: "Seuil dérogatoire travaux ou achats innovants selon dispositions spécifiques."
+
+  seuil_europeen_marches_publics_travaux:
+    montant_ht_euros: 5538000.00
+    statut: "À VÉRIFIER"
+    source_url: "https://www.economie.gouv.fr/daj/marches-publics-seuils-europeens"
+    date_verification: "2026-01-01"
+    description: "Seuil de procédure formalisée européenne pour les marchés de travaux de l'État et des collectivités."
+
+delais_minimaux_remise_offres:
+  mapa_indicatif_jours:
+    valeur_jours: 15
+    statut: "CONFORME"
+    source_url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000038820838"
+    date_verification: "2026-01-01"
+    description: "Délai raisonnable apprécié selon l'objet et la complexité (Article R. 2123-1)."
+
+  appel_offres_ouvert_standard_jours:
+    valeur_jours: 30
+    statut: "CONFORME"
+    source_url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000038820790"
+    date_verification: "2026-01-01"
+    description: "Délai minimal de réception des offres en procédure formalisée avec transmission dématérialisée."
+
+  appel_offres_restreint_candidature_jours:
+    valeur_jours: 30
+    statut: "CONFORME"
+    source_url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000038820786"
+    date_verification: "2026-01-01"
+    description: "Délai de réception des candidatures en appel d'offres restreint."
+
+regles_financieres:
+  taux_avance_minimale_obligatoire_pct:
+    valeur_pct: 5.0
+    statut: "CONFORME"
+    source_url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000038820464"
+    date_verification: "2026-01-01"
+    description: "Avance obligatoire si montant du marché > 50 000 € HT et durée d'exécution > 2 mois (Article R. 2191-3)."
+
+  taux_avance_etat_pme_pct:
+    valeur_pct: 20.0
+    statut: "À VÉRIFIER"
+    source_url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041440268"
+    date_verification: "2026-01-01"
+    description: "Taux d'avance pour les PME titulaires de marchés d'État ou collectivités ayant délibéré."
+
+  retenue_garantie_maximale_pct:
+    valeur_pct: 5.0
+    statut: "CONFORME"
+    source_url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000038820448"
+    date_verification: "2026-01-01"
+    description: "Plafond légal de la retenue de garantie (Article R. 2191-33)."
+
+  seuil_alerte_oab_defaut_pct:
+    valeur_pct: 25.0
+    statut: "INDICATIF"
+    source_url: "https://www.economie.gouv.fr/daj/guide-prix-marches-publics"
+    date_verification: "2026-01-01"
+    description: "Écart type par rapport à la moyenne des offres déclenchant la suspicion d'Offre Anormalement Basse."

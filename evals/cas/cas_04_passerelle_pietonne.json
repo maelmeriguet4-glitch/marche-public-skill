@@ -1,0 +1,31 @@
+{
+  "id": "CAS-04",
+  "intitule": "Construction d'une passerelle piétonne et cyclable au-dessus de la rivière",
+  "acheteur": "Communauté d'Agglomération de Bourges",
+  "procedure": "MAPA",
+  "type_marche": "Travaux Génie Civil / BTP",
+  "allotissement": {
+    "est_alloti": false,
+    "nb_lots": 1,
+    "lots": ["Lot unique : Génie civil, charpente métallique et platelage bois"]
+  },
+  "criteres_attribution": [
+    {"critere": "Prix des prestations", "ponderation_pct": 45},
+    {"critere": "Valeur technique", "ponderation_pct": 45},
+    {"critere": "Insertion sociale", "ponderation_pct": 10}
+  ],
+  "verite_terrain": {
+    "montant_reel_dpgf_ht": "245000.00",
+    "montant_inscrit_dpgf_ht": "245000.00",
+    "ecart_arithmetique_dpgf_ht": "0.00",
+    "delai_contractuel_semaines": 14,
+    "pieges_attendus": [
+      {
+        "id": "CLAUSE_INSERTION_OBLIGATOIRE",
+        "description": "Obligation de réaliser 140 heures d'insertion sociale avec pénalité de 25 € par heure manquante",
+        "statut_attendu": "OBLIGATION_CONTRACTUELLE"
+      }
+    ],
+    "verdict_attendu": "PRET"
+  }
+}

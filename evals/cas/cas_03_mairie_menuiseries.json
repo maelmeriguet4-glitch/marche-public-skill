@@ -1,0 +1,30 @@
+{
+  "id": "CAS-03",
+  "intitule": "Remplacement des menuiseries extérieures de l'hôtel de ville et conformité PMR",
+  "acheteur": "Mairie de Vierzon",
+  "procedure": "MAPA",
+  "type_marche": "Travaux BTP",
+  "allotissement": {
+    "est_alloti": false,
+    "nb_lots": 1,
+    "lots": ["Lot unique : Menuiserie aluminium et serrurerie"]
+  },
+  "criteres_attribution": [
+    {"critere": "Prix des prestations", "ponderation_pct": 50},
+    {"critere": "Valeur technique", "ponderation_pct": 50}
+  ],
+  "verite_terrain": {
+    "montant_reel_dpgf_ht": "88400.00",
+    "montant_inscrit_dpgf_ht": "88400.00",
+    "ecart_arithmetique_dpgf_ht": "0.00",
+    "delai_contractuel_semaines": 8,
+    "pieges_attendus": [
+      {
+        "id": "PRIX_UNITAIRE_ZERO_OAB",
+        "description": "Ligne 'Fourniture de clés sécurisées' chiffrée à 0,00 € sans justification écrite",
+        "statut_attendu": "SUSPICION_OAB"
+      }
+    ],
+    "verdict_attendu": "PAS_PRET"
+  }
+}

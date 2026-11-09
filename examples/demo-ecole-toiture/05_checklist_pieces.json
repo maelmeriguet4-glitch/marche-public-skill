@@ -1,0 +1,120 @@
+{
+  "total_pieces_candidature": 10,
+  "total_pieces_offre": 6,
+  "candidature": [
+    {
+      "piece": "Lettre de candidature et habilitation (DC1)",
+      "obligatoire": true,
+      "statut": "DISPONIBLE",
+      "description": "Formulaire DAJ officiel avec engagement sur l'honneur d'absence d'interdiction de soumissionner.",
+      "action": "À compléter avec le numéro du lot et à faire signer par le mandataire."
+    },
+    {
+      "piece": "Déclaration du candidat individuel (DC2)",
+      "obligatoire": true,
+      "statut": "DISPONIBLE",
+      "description": "Chiffres d'affaires et effectifs déclarés (BÂTIMENT ET COUVERTURE DU CENTRE (BCC)).",
+      "action": "Vérifier le report exact des 3 derniers bilans comptables."
+    },
+    {
+      "piece": "Extrait d'immatriculation au RCS (Kbis)",
+      "obligatoire": true,
+      "statut": "DISPONIBLE",
+      "description": "SIRET 48912345600028 — RCS Bourges.",
+      "action": "Télécharger un extrait récent de moins de 3 mois sur MonIdenum / Infogreffe."
+    },
+    {
+      "piece": "Attestation de régularité fiscale (DGFiP)",
+      "obligatoire": true,
+      "statut": "DISPONIBLE",
+      "description": "Justification de la déclaration et du paiement de l'IS et de la TVA.",
+      "action": "Télécharger l'attestation annuelle sur l'espace professionnel impots.gouv.fr."
+    },
+    {
+      "piece": "Attestation de vigilance sociale (URSSAF)",
+      "obligatoire": true,
+      "statut": "DISPONIBLE",
+      "description": "Attestation de conformité travail dissimulé (article L. 243-15 du Code de la sécurité sociale).",
+      "action": "Télécharger l'attestation de vigilance datant de moins de 6 mois sur urssaf.fr."
+    },
+    {
+      "piece": "Attestation de régularité CIBTP (Congés intempéries BTP)",
+      "obligatoire": true,
+      "statut": "DISPONIBLE",
+      "description": "Certificat de cotisation auprès de la Caisse des Congés Payés du BTP.",
+      "action": "À joindre pour toute entreprise soumise au régime conventionnel du BTP."
+    },
+    {
+      "piece": "Attestation d'assurance Décennale en cours de validité",
+      "obligatoire": true,
+      "statut": "VALIDE",
+      "description": "Compagnie SMABTP — Police DEC-2024-55102 (Échéance: 2026-12-31).",
+      "action": "Contrôler expressément que l'activité couverture/zinguerie et travaux de maçonnerie y figurent."
+    },
+    {
+      "piece": "Attestation d'assurance Responsabilité Civile Professionnelle",
+      "obligatoire": true,
+      "statut": "VALIDE",
+      "description": "Compagnie AXA Assurances — Police RC-89412093.",
+      "action": "Vérifier le montant des garanties par sinistre."
+    },
+    {
+      "piece": "Certificats de qualification professionnelle (Qualibat / RGE)",
+      "obligatoire": false,
+      "statut": "DISPONIBLE",
+      "description": "QUALIBAT 3101, QUALIBAT 3142, QUALIBAT 2111, RGE ",
+      "action": "Joindre les certificats officiels en cours de validité."
+    },
+    {
+      "piece": "Dossier de références de chantiers récents similaires",
+      "obligatoire": true,
+      "statut": "DISPONIBLE",
+      "description": "3 fiches chantiers de moins de 5 ans disponibles dans le profil.",
+      "action": "Mettre en avant les références en milieu scolaire et ERP."
+    }
+  ],
+  "offre": [
+    {
+      "piece": "Acte d'Engagement (AE)",
+      "obligatoire": true,
+      "statut": "A_COMPLETER",
+      "description": "Document contractuel récapitulant le montant total HT/TTC, les délais et le RIB.",
+      "action": "Renseigner le montant strictement égal à la DPGF et le délai contractuel."
+    },
+    {
+      "piece": "Cadre de décomposition du prix chiffré (DPGF)",
+      "obligatoire": true,
+      "statut": "A_CHIFFRER",
+      "description": "Bordereau officiel au format Excel imposé sans modification d'intitulé.",
+      "action": "Chiffrer chaque ligne et vérifier sous scripts/controle_prix.py."
+    },
+    {
+      "piece": "Mémoire technique justificatif d'offre",
+      "obligatoire": true,
+      "statut": "A_REDIGER",
+      "description": "Mémoire structuré selon les critères et sous-critères du RC.",
+      "action": "Adapter assets/memoire_technique_template.md et supprimer toutes les balises [À FOURNIR]."
+    },
+    {
+      "piece": "Planning prévisionnel détaillé d'exécution",
+      "obligatoire": true,
+      "statut": "A_FINALISER",
+      "description": "Diagramme de Gantt des travaux respectant le délai global de l'AE.",
+      "action": "Indiquer les phases de préparation, approvisionnement, toiture, rampe PMR et repliement."
+    },
+    {
+      "piece": "Attestation de visite des lieux signée",
+      "obligatoire": true,
+      "statut": "A_OBTENIR",
+      "description": "Justificatif de visite sur site signé par le responsable du groupe scolaire / mairie.",
+      "action": "Prendre rendez-vous avant la date limite stipulée au CCAP."
+    },
+    {
+      "piece": "Fiches techniques des produits et avis techniques CSTB",
+      "obligatoire": false,
+      "statut": "A_RASSEMBLER",
+      "description": "Fiches fabricants (tuiles, zinc, isolant thermique, rampe PMR).",
+      "action": "Compiler en annexe technique du mémoire."
+    }
+  ]
+}

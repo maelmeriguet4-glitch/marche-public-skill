@@ -1,0 +1,64 @@
+{
+  "score_sur_100": 90.0,
+  "verdict": "GO",
+  "commentaire": "Opportunité favorable avec un score solide de 90.0/100. Candidature recommandée.",
+  "drapeaux_rouges": [],
+  "criteres": [
+    {
+      "id": "adequation_technique",
+      "nom": "Adéquation technique et qualifications",
+      "poids_max": 20,
+      "points_obtenus": 20.0,
+      "justification": "Qualifications Qualibat et compétences couverture/zinguerie parfaitement maîtrisées en interne."
+    },
+    {
+      "id": "references_comparables",
+      "nom": "Expérience et chantiers similaires",
+      "poids_max": 15,
+      "points_obtenus": 15.0,
+      "justification": "3 références probantes récentes en toiture / ERP scolaire recensées."
+    },
+    {
+      "id": "capacite_financiere_et_taille",
+      "nom": "Capacité financière et solidité",
+      "poids_max": 15,
+      "points_obtenus": 15.0,
+      "justification": "Excellente surface financière (CA moyen : 1,740,000 €), le marché représente < 10 % du CA."
+    },
+    {
+      "id": "charge_travail_et_disponibilite",
+      "nom": "Disponibilité des ressources humaines",
+      "poids_max": 15,
+      "points_obtenus": 12.0,
+      "justification": "Encadrement disponible et équipes de couvreurs mobilisables sur la période prévisionnelle."
+    },
+    {
+      "id": "localisation_eloignement",
+      "nom": "Proximité géographique et logistique",
+      "poids_max": 10,
+      "points_obtenus": 10.0,
+      "justification": "Chantier situé dans le bassin d'intervention naturel de l'entreprise (< 40 km du dépôt)."
+    },
+    {
+      "id": "rentabilite_estimee",
+      "nom": "Potentiel de rentabilité et maîtrise des coûts",
+      "poids_max": 10,
+      "points_obtenus": 8.0,
+      "justification": "Perspectives de marge brute conformes aux objectifs internes (> 15 % de marge brute)."
+    },
+    {
+      "id": "risques_contractuels",
+      "nom": "Sécurité juridique et contractuelle",
+      "poids_max": 10,
+      "points_obtenus": 6.0,
+      "justification": "Vigilance contractuelle requise : 2 contradiction(s) ou clause(s) spécifique(s) au CCAP."
+    },
+    {
+      "id": "delai_remise_dossier",
+      "nom": "Délai disponible pour la préparation",
+      "poids_max": 5,
+      "points_obtenus": 4.0,
+      "justification": "Délai suffisant pour boucler l'étude de prix et le mémoire technique dans les règles."
+    }
+  ]
+}

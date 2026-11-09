@@ -1,0 +1,102 @@
+{
+  "acheteur": "Commune de Saint-Pierre-des-Bois\nDate limite de remise des p",
+  "objet": "Réfection de la toiture et mise en accessibilité d'une école communale.",
+  "procedure": "MAPA (Procédure Adaptée)",
+  "allotissement": {
+    "est_alloti": false,
+    "nb_lots": 1,
+    "lots": [
+      {
+        "numero": "Unique",
+        "intitule": "Réfection de la toiture et mise en accessibilité d'une école communale."
+      }
+    ]
+  },
+  "calendrier": {
+    "date_limite_remise_rc": "24/10/2026 à 12h00",
+    "date_limite_remise_ae": "28/10/2026 à 12h00",
+    "date_limite_retenue": "24/10/2026 à 12h00",
+    "date_limite_questions": "16/10/2026"
+  },
+  "criteres_jugement": [
+    {
+      "nom": "Prix des prestations",
+      "ponderation_pct": 50,
+      "description": "Évaluation du montant financier de l'offre (DPGF / BPU).",
+      "sous_criteres": []
+    },
+    {
+      "nom": "Valeur technique",
+      "ponderation_pct": 40,
+      "description": "Jugement de la note méthodologique / mémoire technique.",
+      "sous_criteres": [
+        {
+          "nom": "Méthodologie d'exécution et phasage",
+          "points": "À CONFIRMER"
+        },
+        {
+          "nom": "Moyens humains et matériels affectés",
+          "points": "À CONFIRMER"
+        },
+        {
+          "nom": "Mesures d'hygiène, sécurité et environnement",
+          "points": "À CONFIRMER"
+        }
+      ]
+    },
+    {
+      "nom": "Délai d'exécution",
+      "ponderation_pct": 10,
+      "description": "Optimisation du planning et durée totale des travaux.",
+      "sous_criteres": []
+    }
+  ],
+  "pieces_exigees": {
+    "candidature": [
+      "Lettre de candidature (DC1 ou équivalent DUME)",
+      "Déclaration du candidat individuel (DC2)",
+      "Déclaration de sous-traitance (DC4 le cas échéant)",
+      "Extrait Kbis ou immatriculation de moins de 3 mois",
+      "Attestations de régularité fiscale (DGFiP) et sociale (URSSAF / CIBTP)",
+      "Attestation d'assurance Responsabilité Civile Professionnelle en cours de validité",
+      "Attestation d'assurance Décennale en cours de validité couvrant le lot visé",
+      "Certificats de qualifications professionnelles (ex. Qualibat, RGE)",
+      "Références de travaux similaires réalisés au cours des 5 dernières années"
+    ],
+    "offre": [
+      "Acte d'Engagement (AE) dûment complété et paraphé",
+      "Cadre de décomposition du prix (DPGF ou BPU) intégralement chiffré",
+      "Mémoire technique justificatif adapté aux contraintes spécifiques du site",
+      "Planning prévisionnel d'intervention et cheminement logistique",
+      "Attestation de visite des lieux (obligatoire selon stipulations CCAP)",
+      "Fiches techniques des matériaux principaux et avis techniques CSTB"
+    ]
+  },
+  "clauses_sensibles": {
+    "penalites_retard": "1/1000e par jour de retard ouvré (stipulation standard CCAG)",
+    "retenue_garantie_pct": 5.0,
+    "avance_forfaitaire_pct": 5.0,
+    "delai_global_mois": null,
+    "exigences_particulieres": [
+      "Article 7.2 — Visite obligatoire des lieux préalable au dépôt de l'offre :",
+      "Une visite obligatoire sur site préalable au dépôt est imposée à tous les candidats. Le candidat doit impérativement joindre à son offre une attestation de visite des lieux signée par le représentant de la mairie ou le chef d'établissement sous peine de rejet de l'offre pour irrégularité."
+    ]
+  },
+  "contradictions_detectees": [
+    {
+      "type": "DATE_LIMITE_CONTRADICTOIRE",
+      "gravite": "BLOQUANT",
+      "description": "Discordance sur la date limite de remise des offres : '24/10/2026 à 12h00' dans le RC vs '28/10/2026 à 12h00' dans l'AE.",
+      "recommandation": "Considérer impérativement la date la plus précoce pour le calendrier et interroger l'acheteur via le profil d'acheteur."
+    },
+    {
+      "type": "PIEGE_EXIGENCE_CCAP_ISOLEE",
+      "gravite": "HAUT",
+      "description": "L'obligation de visite sur site ou la remise d'une attestation de visite signée est stipulée dans le CCAP mais omise dans le RC.",
+      "recommandation": "Effectuer impérativement la visite et faire tamponner l'attestation sous peine d'élimination de l'offre."
+    }
+  ],
+  "non_extrait": [
+    "delai_global_contractuel_mois [À VÉRIFIER DANS LE CCAP]"
+  ]
+}

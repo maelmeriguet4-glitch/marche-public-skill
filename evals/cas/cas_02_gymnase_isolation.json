@@ -1,0 +1,31 @@
+{
+  "id": "CAS-02",
+  "intitule": "Isolation thermique par l'extérieur et réfection de l'étanchéité d'un gymnase municipal",
+  "acheteur": "Communauté de Communes Berry Loire",
+  "procedure": "Appel d'offres ouvert",
+  "type_marche": "Travaux BTP",
+  "allotissement": {
+    "est_alloti": true,
+    "nb_lots": 2,
+    "lots": ["Lot 1 : Étanchéité et toiture-terrasse", "Lot 2 : ITE et bardage métallique"]
+  },
+  "criteres_attribution": [
+    {"critere": "Prix des prestations", "ponderation_pct": 60},
+    {"critere": "Valeur technique", "ponderation_pct": 35},
+    {"critere": "Performances environnementales", "ponderation_pct": 5}
+  ],
+  "verite_terrain": {
+    "montant_reel_dpgf_ht": "320000.00",
+    "montant_inscrit_dpgf_ht": "320000.00",
+    "ecart_arithmetique_dpgf_ht": "0.00",
+    "delai_contractuel_semaines": 16,
+    "pieges_attendus": [
+      {
+        "id": "MARCHE_ALLOTI_LOT_NON_PRECISE",
+        "description": "Marché alloti en 2 lots distincts exigeant une réponse séparée par lot",
+        "statut_attendu": "VIGILANCE"
+      }
+    ],
+    "verdict_attendu": "PRET"
+  }
+}

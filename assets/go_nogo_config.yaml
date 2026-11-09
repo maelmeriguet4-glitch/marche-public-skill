@@ -1,0 +1,92 @@
+# Configuration de l'algorithme d'aide à la décision Go / No-Go
+# Poids total = 100 points
+# Score minimal requis pour GO : 70 points
+# Score entre 50 et 69 : GO SOUS RÉSERVE
+# Score < 50 ou présence d'un drapeau rouge : NO-GO
+
+seuils_decision:
+  seuil_go: 70.0
+  seuil_go_reserve: 50.0
+
+criteres:
+  adequation_technique:
+    poids: 20
+    description: "Concordance entre les corps d'état du marché et les métiers/qualifications de l'entreprise (ex. Qualibat)."
+    bareme:
+      qualifications_completes: 20
+      qualifications_partielles_avec_experience: 14
+      sous-traitance_obligatoire_pour_competences_cles: 8
+      metier_non_maitrise: 0
+
+  references_comparables:
+    poids: 15
+    description: "Existence de chantiers similaires réalisés au cours des 3 à 5 dernières années."
+    bareme:
+      trois_references_similaires_ou_plus: 15
+      une_a_deux_references: 10
+      references_eloignees_en_nature: 5
+      aucune_reference: 0
+
+  capacite_financiere_et_taille:
+    poids: 15
+    description: "Ratio du montant estimé du marché par rapport au chiffre d'affaires annuel moyen (règle prudentielle : max 30-33 % du CA)."
+    bareme:
+      marche_inf_15pct_du_ca: 15
+      marche_entre_15_et_30pct_du_ca: 10
+      marche_entre_30_et_50pct_du_ca: 4
+      marche_sup_50pct_du_ca: 0
+
+  charge_travail_et_disponibilite:
+    poids: 15
+    description: "Disponibilité de l'encadrement et des équipes travaux sur la période d'exécution prévisionnelle."
+    bareme:
+      ressources_disponibles_immediatement: 15
+      charge_moderee_ajustement_mineur: 10
+      charge_elevee_recrutement_ou_interim_requis: 5
+      saturation_totale_des_equipes: 0
+
+  localisation_eloignement:
+    poids: 10
+    description: "Distance du chantier par rapport au siège ou au dépôt (frais de déplacement, réactivité)."
+    bareme:
+      distance_inf_30km: 10
+      distance_entre_30_et_70km: 7
+      distance_entre_70_et_120km: 4
+      distance_sup_120km: 0
+
+  rentabilite_estimee:
+    poids: 10
+    description: "Marge brute prévisionnelle et adéquation avec les ratios cibles de l'entreprise."
+    bareme:
+      marge_au_dessus_de_l_objectif: 10
+      marge_alignee_sur_l_objectif: 7
+      marge_serree_ou_faible: 3
+      risque_de_chantier_a_perte: 0
+
+  risques_contractuels:
+    poids: 10
+    description: "Analyse des pénalités de retard journalières, clauses exorbitantes ou délais irréalistes."
+    bareme:
+      clauses_standards_ccag_sans_piege: 10
+      penalites_moderees_delai_tendu: 6
+      penalites_lourdes_et_delais_tres_contraints: 2
+      clauses_derogatoires_inacceptables: 0
+
+  delai_remise_dossier:
+    poids: 5
+    description: "Nombre de jours ouvrés restants pour préparer l'offre et chiffrer avant la date limite."
+    bareme:
+      plus_de_10_jours_ouvres: 5
+      entre_5_et_10_jours_ouvres: 3
+      entre_2_et_4_jours_ouvres: 1
+      moins_de_2_jours_ouvres: 0
+
+drapeaux_rouges_bloquants:
+  - id: "DATE_LIMITE_DEPASSEE"
+    description: "La date limite de remise des plis est déjà expirée."
+  - id: "VISITE_OBLIGATOIRE_MANQUEE"
+    description: "Une visite sur site est obligatoire et toutes les dates de visite sont passées sans attestation."
+  - id: "DEFAUT_ASSURANCE_DECENNALE"
+    description: "Absence d'attestation d'assurance décennale valide couvrant les activités spécifiques du marché."
+  - id: "INTERDICTION_SOUMISSIONNER"
+    description: "Condamnation pénale, liquidation judiciaire sans plan de continuation ou manquement fiscal/social non régularisé."

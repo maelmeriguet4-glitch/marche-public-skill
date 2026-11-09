@@ -1,0 +1,36 @@
+{
+  "formule_utilisee": "classique_moins_disant",
+  "ponderation_prix_max": "50.00",
+  "prix_le_plus_bas": "135000.00",
+  "rang_notre_offre": 2,
+  "participants": [
+    {
+      "nom": "Concurrent 1",
+      "prix_ht": "135000.00",
+      "note_prix": "50.00",
+      "est_notre_offre": false,
+      "rang_prix": 1
+    },
+    {
+      "nom": "Entreprise (Notre offre)",
+      "prix_ht": "142500.00",
+      "note_prix": "47.37",
+      "est_notre_offre": true,
+      "rang_prix": 2
+    },
+    {
+      "nom": "Concurrent 2",
+      "prix_ht": "148000.00",
+      "note_prix": "45.61",
+      "est_notre_offre": false,
+      "rang_prix": 3
+    },
+    {
+      "nom": "Concurrent 3",
+      "prix_ht": "155000.00",
+      "note_prix": "43.55",
+      "est_notre_offre": false,
+      "rang_prix": 4
+    }
+  ]
+}

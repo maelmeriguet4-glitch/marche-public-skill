@@ -1,0 +1,97 @@
+# Exemple de profil entreprise pour TPE/PME du BTP
+identite:
+  raison_sociale: "BÂTIMENT ET COUVERTURE DU CENTRE (BCC)"
+  forme_juridique: "SAS"
+  capital_social_euros: 80000.00
+  siret: "48912345600028"
+  rcs_ville: "Bourges"
+  siege_social:
+    adresse: "14 Rue des Métiers"
+    code_postal: "18000"
+    ville: "Bourges"
+  contact_marche:
+    nom: "Dupont"
+    prenom: "Jean-Marc"
+    fonction: "Directeur Général"
+    email: "direction@bcc-btp.fr"
+    telephone: "02 48 00 00 00"
+
+capacites_financieres:
+  exercices:
+    - annee: 2025
+      chiffre_affaires_ht_euros: 1850000.00
+      resultat_net_euros: 92000.00
+    - annee: 2024
+      chiffre_affaires_ht_euros: 1720000.00
+      resultat_net_euros: 84000.00
+    - annee: 2023
+      chiffre_affaires_ht_euros: 1650000.00
+      resultat_net_euros: 78000.00
+
+effectifs:
+  total_salaries: 14
+  cadres_et_conducteurs_travaux: 2
+  chefs_equipe: 3
+  compagnons_qualifies: 7
+  apprentis: 2
+
+qualifications_et_certifications:
+  - organisme: "QUALIBAT"
+    code: "3101"
+    intitule: "Tuiles à emboîtement ou à glissement"
+    date_echeance: "2027-12-31"
+  - organisme: "QUALIBAT"
+    code: "3142"
+    intitule: "Couverture en zinc"
+    date_echeance: "2027-12-31"
+  - organisme: "QUALIBAT"
+    code: "2111"
+    intitule: "Maçonnerie et béton armé courant"
+    date_echeance: "2027-06-30"
+  - organisme: "RGE"
+    intitule: "Isolation du toit et des combles"
+    date_echeance: "2027-12-31"
+
+assurances:
+  responsabilite_civile:
+    compagnie: "AXA Assurances"
+    numero_police: "RC-89412093"
+    date_validite: "2026-12-31"
+    activites_couvertes:
+      - "Couverture, zinguerie, étanchéité"
+      - "Maçonnerie, plâtrerie, accessibilité"
+  decennale:
+    compagnie: "SMABTP"
+    numero_police: "DEC-2024-55102"
+    date_validite: "2026-12-31"
+    zone_geographique: "France métropolitaine"
+    activites_couvertes:
+      - "Couverture"
+      - "Étanchéité"
+      - "Maçonnerie"
+
+references_chantiers:
+  - intitule: "Rénovation de la toiture du groupe scolaire Jules Ferry"
+    maitre_ouvrage: "Mairie de Vierzon"
+    montant_ht_euros: 135000.00
+    annee_realisation: 2024
+    description: "Dépose amiante non friable, voligeage, couverture zinc et tuiles, pose de lignes de vie."
+    contact_mo: "Service Bâtiments - 02 48 50 00 00"
+  - intitule: "Mise en accessibilité PMR de la salle des fêtes communale"
+    maitre_ouvrage: "Commune de Saint-Doulchard"
+    montant_ht_euros: 48000.00
+    annee_realisation: 2025
+    description: "Création d'une rampe d'accès pente 5 %, élargissement d'ouvertures et sanitaires PMR."
+  - intitule: "Réfection toiture gymnase municipal"
+    maitre_ouvrage: "Communauté de Communes Berry Loire"
+    montant_ht_euros: 162000.00
+    annee_realisation: 2023
+    description: "Bac acier isolé, chéneaux grande capacité et descentes EP."
+
+parc_materiel:
+  - "Échafaudage de pied certifié NF (800 m² de façade avec filets)"
+  - "Camion nacelle 18 mètres"
+  - "Monte-matériaux de chantier 150 kg / 20 m"
+  - "Plieuse d'atelier et plieuses de chantier pour façonnage zinc"
+  - "Mini-pelle 2,5 t avec brise-roche et godets de terrassement"
+  - "Véhicules utilitaires équipés outillage électroportatif de sécurité"

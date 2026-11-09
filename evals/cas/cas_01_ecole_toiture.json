@@ -1,0 +1,43 @@
+{
+  "id": "CAS-01",
+  "intitule": "Réfection de la toiture et mise en accessibilité d'une école communale",
+  "acheteur": "Commune de Saint-Pierre-des-Bois",
+  "procedure": "MAPA",
+  "type_marche": "Travaux BTP",
+  "allotissement": {
+    "est_alloti": false,
+    "nb_lots": 1,
+    "lots": ["Lot unique"]
+  },
+  "criteres_attribution": [
+    {"critere": "Prix des prestations", "ponderation_pct": 50},
+    {"critere": "Valeur technique", "ponderation_pct": 40},
+    {"critere": "Délai d'exécution", "ponderation_pct": 10}
+  ],
+  "verite_terrain": {
+    "montant_reel_dpgf_ht": "142500.00",
+    "montant_inscrit_dpgf_ht": "145000.00",
+    "ecart_arithmetique_dpgf_ht": "2500.00",
+    "delai_contractuel_semaines": 12,
+    "taux_avance_pct": 5.0,
+    "retenue_garantie_pct": 5.0,
+    "pieges_attendus": [
+      {
+        "id": "DATE_CONTRADICTOIRE",
+        "description": "Date limite de remise : 24/10/2026 dans le RC vs 28/10/2026 dans l'AE",
+        "statut_attendu": "BLOQUANT"
+      },
+      {
+        "id": "ERREUR_SOMME_DPGF",
+        "description": "Erreur d'addition : total affiché 145 000 € vs somme exacte 142 500 €",
+        "statut_attendu": "BLOQUANT"
+      },
+      {
+        "id": "VISITE_OBLIGATOIRE_CCAP",
+        "description": "Attestation de visite obligatoire exigée à l'article 7 du CCAP mais absente du RC",
+        "statut_attendu": "HAUT"
+      }
+    ],
+    "verdict_attendu": "PAS_PRET"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "date_limite_cloture": "2026-10-24 12:00:00",
+  "total_jalons": 7,
+  "jalons": [
+    {
+      "jalon": "Visite obligatoire ou recommandée sur les lieux",
+      "echeance": "14/10/2026",
+      "delta_jours": -10,
+      "responsable": "Conducteur de travaux",
+      "description": "Reconnaissance des accès, contraintes de toiture et délivrance du certificat ou récépissé de visite signé par la MOA.",
+      "statut": "PREREQUIS"
+    },
+    {
+      "jalon": "Dernier délai pour poser des questions à l'acheteur",
+      "echeance": "17/10/2026",
+      "delta_jours": -7,
+      "responsable": "Chargé d'affaires",
+      "description": "Dépôt des demandes d'éclaircissements techniques ou signalement des contradictions détectées entre pièces.",
+      "statut": "PROCEDURE"
+    },
+    {
+      "jalon": "Validation définitive du chiffrage et de la DPGF",
+      "echeance": "19/10/2026",
+      "delta_jours": -5,
+      "responsable": "Métreur / Chiffreur",
+      "description": "Contrôle arithmétique rigoureux sous scripts/controle_prix.py, vérification des sous-détails et arrêt du prix de vente.",
+      "statut": "PRODUCTION"
+    },
+    {
+      "jalon": "Bouclage de la trame du mémoire technique",
+      "echeance": "21/10/2026",
+      "delta_jours": -3,
+      "responsable": "Conducteur de travaux / Rédacteur",
+      "description": "Suppression de toutes les balises [À FOURNIR], intégration des fiches techniques fabricants et exports PDF propres.",
+      "statut": "PRODUCTION"
+    },
+    {
+      "jalon": "Test de connexion et contrôle final croisé",
+      "echeance": "22/10/2026",
+      "delta_jours": -2,
+      "responsable": "Équipe réponse marché",
+      "description": "Vérification des accès au profil d'acheteur, audit des pièces avec scripts/controle_final.py et vérification du certificat de signature si imposé.",
+      "statut": "QUALITE"
+    },
+    {
+      "jalon": "Dépôt final du pli sur la plateforme",
+      "echeance": "23/10/2026 avant 16:00",
+      "delta_jours": -1,
+      "responsable": "Dirigeant / Chargé d'affaires habilité",
+      "description": "Téléversement de l'archive complète (Candidature + Offre) et téléchargement du récépissé électronique d'horodatage.",
+      "statut": "OBLIGATOIRE"
+    },
+    {
+      "jalon": "Échéance officielle de clôture de la consultation",
+      "echeance": "24/10/2026 à 12:00",
+      "delta_jours": 0,
+      "responsable": "Plateforme profil d'acheteur",
+      "description": "Fermeture automatique de la salle des dépôts. Tout pli en cours de téléversement est rejeté.",
+      "statut": "CRITIQUE"
+    }
+  ]
+}

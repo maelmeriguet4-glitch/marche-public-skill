@@ -1,0 +1,30 @@
+{
+  "id": "CAS-05",
+  "intitule": "Réhabilitation des installations de ventilation double flux et sanitaires d'une crèche",
+  "acheteur": "Centre Communal d'Action Sociale (CCAS)",
+  "procedure": "MAPA",
+  "type_marche": "Travaux CVC / BTP",
+  "allotissement": {
+    "est_alloti": false,
+    "nb_lots": 1,
+    "lots": ["Lot unique : CVC et plomberie sanitaire"]
+  },
+  "criteres_attribution": [
+    {"critere": "Prix des prestations", "ponderation_pct": 50},
+    {"critere": "Valeur technique", "ponderation_pct": 50}
+  ],
+  "verite_terrain": {
+    "montant_reel_dpgf_ht": "64200.00",
+    "montant_inscrit_dpgf_ht": "64200.00",
+    "ecart_arithmetique_dpgf_ht": "0.00",
+    "delai_contractuel_semaines": 6,
+    "pieges_attendus": [
+      {
+        "id": "PENALITES_DEROGATOIRES_LOURDES",
+        "description": "Pénalité portée à 1/200e du montant du marché par jour calendaire de retard au lieu de 1/1000e ouvré",
+        "statut_attendu": "RISQUE_CONTRACTUEL_ELEVE"
+      }
+    ],
+    "verdict_attendu": "PRET"
+  }
+}

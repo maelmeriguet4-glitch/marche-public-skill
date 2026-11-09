@@ -1,0 +1,29 @@
+# Structure de coûts internes et paramètres de chiffrage BTP
+# Tous les montants et pourcentages sont manipulés via decimal.Decimal
+
+taux_horaires_charges_euros:
+  conducteur_travaux: 55.00
+  chef_equipe: 42.00
+  compagnon_couvreur: 36.50
+  compagnon_macon: 35.00
+  manoeuvre_polyvalent: 29.50
+
+coefficients_et_frais:
+  frais_chantier_pct: 8.0          # Installation, repliement, bennes, échafaudage, clôtures
+  frais_generaux_pct: 14.0         # Frais de structure siège, assurances, loyers, amortissements
+  aleas_et_imprevus_pct: 3.0       # Provision pour intempéries et sujétions techniques mineures
+  marge_nette_cible_pct: 7.0       # Bénéfice net visé avant impôt sur les sociétés
+
+# Coefficient de vente multiplicateur cible = Déboursé Sec x K_vente
+# Exemple : K_vente = 1 / ((1 - 0.08) * (1 - 0.14) * (1 - 0.03) * (1 - 0.07))
+coefficient_vente_cible: 1.35
+
+deplacement_et_logistique:
+  indemnite_trajet_journalier_euros: 15.00
+  panier_repas_btp_euros: 10.50
+  cout_km_vehicule_utilitaire_euros: 0.65
+
+traitement_dechets:
+  benne_gravats_inertes_euros: 320.00
+  benne_dib_melange_euros: 480.00
+  forfait_amiante_sous_section_4_euros: 850.00

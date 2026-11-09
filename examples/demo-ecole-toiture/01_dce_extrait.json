@@ -1,0 +1,211 @@
+{
+  "repertoire": "C:\\marche-public-skill\\tests\\fixtures",
+  "total_pieces": 5,
+  "sommaire_classification": {
+    "AE": 1,
+    "CCAP": 1,
+    "CCTP": 1,
+    "DPGF": 1,
+    "RC": 1
+  },
+  "pieces": [
+    {
+      "nom_fichier": "AE.docx",
+      "chemin_relatif": "AE.docx",
+      "taille_octets": 35587,
+      "extension": ".docx",
+      "categorie": "AE",
+      "statut": "OK",
+      "alertes": [],
+      "nb_pages": 1,
+      "total_caracteres": 382,
+      "pages": [
+        {
+          "page": 1,
+          "longueur": 382,
+          "texte": "ACTE D'ENGAGEMENT (AE) — FORMULAIRE ATTRI1\nOpération : Réfection de la toiture et mise en accessibilité d'une école communale\nAcheteur : Commune de Saint-Pierre-des-Bois\nDate limite de remise des plis : 28/10/2026 à 12h00.\nDélai global d'exécution : 12 semaines à compter de l'ordre de service.\nMontant estimatif de l'offre : 142 500,00 € Hors Taxes.\nTaux d'avance accordé : 5,00 %."
+        }
+      ],
+      "texte_complet": "ACTE D'ENGAGEMENT (AE) — FORMULAIRE ATTRI1\nOpération : Réfection de la toiture et mise en accessibilité d'une école communale\nAcheteur : Commune de Saint-Pierre-des-Bois\nDate limite de remise des plis : 28/10/2026 à 12h00.\nDélai global d'exécution : 12 semaines à compter de l'ordre de service.\nMontant estimatif de l'offre : 142 500,00 € Hors Taxes.\nTaux d'avance accordé : 5,00 %."
+    },
+    {
+      "nom_fichier": "CCAP.docx",
+      "chemin_relatif": "CCAP.docx",
+      "taille_octets": 35890,
+      "extension": ".docx",
+      "categorie": "CCAP",
+      "statut": "OK",
+      "alertes": [],
+      "nb_pages": 1,
+      "total_caracteres": 990,
+      "pages": [
+        {
+          "page": 1,
+          "longueur": 990,
+          "texte": "CAHIER DES CLAUSES ADMINISTRATIVES PARTICULIÈRES (CCAP)\nMarché de travaux de l'école communale — Lot unique\nArticle 3 — Délais d'exécution et pénalités de retard\nLe délai d'exécution est de 12 semaines. En cas de retard non imputable aux intempéries constatées, une pénalité journalière de 1/1000e du montant du marché HT par jour ouvré de retard sera appliquée d'office.\nArticle 7 — Hygiène, Sécurité et Visite des lieux\nArticle 7.1 : Les entreprises devront respecter le PGC SPS et établir un PPSPS avant toute intervention.\nArticle 7.2 — Visite obligatoire des lieux préalable au dépôt de l'offre :\nUne visite obligatoire sur site préalable au dépôt est imposée à tous les candidats. Le candidat doit impérativement joindre à son offre une attestation de visite des lieux signée par le représentant de la mairie ou le chef d'établissement sous peine de rejet de l'offre pour irrégularité.\nArticle 9 — Dérogations au CCAG Travaux\nIl n'est pas dérogé aux stipulations du CCAG Travaux 2021."
+        }
+      ],
+      "texte_complet": "CAHIER DES CLAUSES ADMINISTRATIVES PARTICULIÈRES (CCAP)\nMarché de travaux de l'école communale — Lot unique\nArticle 3 — Délais d'exécution et pénalités de retard\nLe délai d'exécution est de 12 semaines. En cas de retard non imputable aux intempéries constatées, une pénalité journalière de 1/1000e du montant du marché HT par jour ouvré de retard sera appliquée d'office.\nArticle 7 — Hygiène, Sécurité et Visite des lieux\nArticle 7.1 : Les entreprises devront respecter le PGC SPS et établir un PPSPS avant toute intervention.\nArticle 7.2 — Visite obligatoire des lieux préalable au dépôt de l'offre :\nUne visite obligatoire sur site préalable au dépôt est imposée à tous les candidats. Le candidat doit impérativement joindre à son offre une attestation de visite des lieux signée par le représentant de la mairie ou le chef d'établissement sous peine de rejet de l'offre pour irrégularité.\nArticle 9 — Dérogations au CCAG Travaux\nIl n'est pas dérogé aux stipulations du CCAG Travaux 2021."
+    },
+    {
+      "nom_fichier": "CCTP.docx",
+      "chemin_relatif": "CCTP.docx",
+      "taille_octets": 35957,
+      "extension": ".docx",
+      "categorie": "CCTP",
+      "statut": "OK",
+      "alertes": [],
+      "nb_pages": 1,
+      "total_caracteres": 1039,
+      "pages": [
+        {
+          "page": 1,
+          "longueur": 1039,
+          "texte": "CAHIER DES CLAUSES TECHNIQUES PARTICULIÈRES (CCTP)\nTravaux de toiture et mise en accessibilité PMR de l'école communale\nChapitre 1 — Travaux de toiture et couverture\n1.1 Installation de chantier et échafaudage de pied classe 4 certifié NF.\n1.2 Dépose soignée des tuiles mécaniques existantes et liteaux (surface : 650 m²).\n1.3 Fourniture et pose d'un écran pare-vapeur et isolant laine de roche haute densité épaisseur 200 mm.\n1.4 Fourniture et pose de tuiles à emboîtement terre cuite conformes au DTU 40.21.\n1.5 Façonnage et pose des chéneaux et descentes d'eaux pluviales en zinc naturel.\nChapitre 2 — Travaux d'accessibilité PMR\n2.1 Terrassement et réalisation d'une rampe béton balayé antidérapant avec pente maximale de 5 %.\n2.2 Pose de garde-corps acier thermolaqué avec double lisse à 75 cm et 90 cm.\n2.3 Traitement des seuils de portes d'accès aux classes pour ressaut ≤ 20 mm.\nChapitre 3 — Prescriptions environnementales (SOSED)\nTri sélectif des déchets in situ en 5 flux et transmission obligatoire des bordereaux Trackdéchets."
+        }
+      ],
+      "texte_complet": "CAHIER DES CLAUSES TECHNIQUES PARTICULIÈRES (CCTP)\nTravaux de toiture et mise en accessibilité PMR de l'école communale\nChapitre 1 — Travaux de toiture et couverture\n1.1 Installation de chantier et échafaudage de pied classe 4 certifié NF.\n1.2 Dépose soignée des tuiles mécaniques existantes et liteaux (surface : 650 m²).\n1.3 Fourniture et pose d'un écran pare-vapeur et isolant laine de roche haute densité épaisseur 200 mm.\n1.4 Fourniture et pose de tuiles à emboîtement terre cuite conformes au DTU 40.21.\n1.5 Façonnage et pose des chéneaux et descentes d'eaux pluviales en zinc naturel.\nChapitre 2 — Travaux d'accessibilité PMR\n2.1 Terrassement et réalisation d'une rampe béton balayé antidérapant avec pente maximale de 5 %.\n2.2 Pose de garde-corps acier thermolaqué avec double lisse à 75 cm et 90 cm.\n2.3 Traitement des seuils de portes d'accès aux classes pour ressaut ≤ 20 mm.\nChapitre 3 — Prescriptions environnementales (SOSED)\nTri sélectif des déchets in situ en 5 flux et transmission obligatoire des bordereaux Trackdéchets."
+    },
+    {
+      "nom_fichier": "DPGF.xlsx",
+      "chemin_relatif": "DPGF.xlsx",
+      "taille_octets": 5938,
+      "extension": ".xlsx",
+      "categorie": "DPGF",
+      "statut": "OK",
+      "alertes": [],
+      "nb_pages": 1,
+      "total_caracteres": 1025,
+      "pages": [
+        {
+          "page": 1,
+          "longueur": 1025,
+          "texte": "DÉCOMPOSITION DU PRIX GLOBAL ET FORFAITAIRE (DPGF) |  |  |  |  | \nMarché : Réfection toiture et mise en accessibilité de l'école communale |  |  |  |  | \nN° Poste | Désignation des ouvrages | Unité | Quantité | Prix Unitaire HT (€) | Total Ligne HT (€)\n1.1 | Installation de chantier, échafaudage de pied certifié NF et cantonnement | fft | 1 | 14500 | 14500\n1.2 | Dépose des anciennes tuiles et évacuation en décharge agréée | m² | 650 | 18 | 11700\n1.3 | Fourniture et pose isolant laine de roche 200 mm et pare-vapeur | m² | 650 | 48 | 31200\n1.4 | Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21 | m² | 650 | 68 | 44200\n1.5 | Zinguerie, gouttières demi-ronde zinc et descentes EP | ml | 120 | 65 | 7800\n2.1 | Terrassement et fondations rampe d'accès PMR | m³ | 45 | 95 | 4275\n2.2 | Réalisation rampe béton balayé et garde-corps double lisse | ml | 38 | 380 | 14440\n2.3 | Reprise des seuils de porte d'entrée et signalétique podotactile | ens | 1 | 14385 | 14385\n | TOTAL GÉNÉRAL HT DU MARCHÉ |  |  |  | 145000"
+        }
+      ],
+      "texte_complet": "DÉCOMPOSITION DU PRIX GLOBAL ET FORFAITAIRE (DPGF) |  |  |  |  | \nMarché : Réfection toiture et mise en accessibilité de l'école communale |  |  |  |  | \nN° Poste | Désignation des ouvrages | Unité | Quantité | Prix Unitaire HT (€) | Total Ligne HT (€)\n1.1 | Installation de chantier, échafaudage de pied certifié NF et cantonnement | fft | 1 | 14500 | 14500\n1.2 | Dépose des anciennes tuiles et évacuation en décharge agréée | m² | 650 | 18 | 11700\n1.3 | Fourniture et pose isolant laine de roche 200 mm et pare-vapeur | m² | 650 | 48 | 31200\n1.4 | Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21 | m² | 650 | 68 | 44200\n1.5 | Zinguerie, gouttières demi-ronde zinc et descentes EP | ml | 120 | 65 | 7800\n2.1 | Terrassement et fondations rampe d'accès PMR | m³ | 45 | 95 | 4275\n2.2 | Réalisation rampe béton balayé et garde-corps double lisse | ml | 38 | 380 | 14440\n2.3 | Reprise des seuils de porte d'entrée et signalétique podotactile | ens | 1 | 14385 | 14385\n | TOTAL GÉNÉRAL HT DU MARCHÉ |  |  |  | 145000",
+      "feuilles": {
+        "DPGF": {
+          "nb_lignes": 12,
+          "lignes": [
+            [
+              "DÉCOMPOSITION DU PRIX GLOBAL ET FORFAITAIRE (DPGF)",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "Marché : Réfection toiture et mise en accessibilité de l'école communale",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "N° Poste",
+              "Désignation des ouvrages",
+              "Unité",
+              "Quantité",
+              "Prix Unitaire HT (€)",
+              "Total Ligne HT (€)"
+            ],
+            [
+              "1.1",
+              "Installation de chantier, échafaudage de pied certifié NF et cantonnement",
+              "fft",
+              "1",
+              "14500",
+              "14500"
+            ],
+            [
+              "1.2",
+              "Dépose des anciennes tuiles et évacuation en décharge agréée",
+              "m²",
+              "650",
+              "18",
+              "11700"
+            ],
+            [
+              "1.3",
+              "Fourniture et pose isolant laine de roche 200 mm et pare-vapeur",
+              "m²",
+              "650",
+              "48",
+              "31200"
+            ],
+            [
+              "1.4",
+              "Fourniture et pose tuiles à emboîtement terre cuite DTU 40.21",
+              "m²",
+              "650",
+              "68",
+              "44200"
+            ],
+            [
+              "1.5",
+              "Zinguerie, gouttières demi-ronde zinc et descentes EP",
+              "ml",
+              "120",
+              "65",
+              "7800"
+            ],
+            [
+              "2.1",
+              "Terrassement et fondations rampe d'accès PMR",
+              "m³",
+              "45",
+              "95",
+              "4275"
+            ],
+            [
+              "2.2",
+              "Réalisation rampe béton balayé et garde-corps double lisse",
+              "ml",
+              "38",
+              "380",
+              "14440"
+            ],
+            [
+              "2.3",
+              "Reprise des seuils de porte d'entrée et signalétique podotactile",
+              "ens",
+              "1",
+              "14385",
+              "14385"
+            ],
+            [
+              "",
+              "TOTAL GÉNÉRAL HT DU MARCHÉ",
+              "",
+              "",
+              "",
+              "145000"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "nom_fichier": "RC.docx",
+      "chemin_relatif": "RC.docx",
+      "taille_octets": 36073,
+      "extension": ".docx",
+      "categorie": "RC",
+      "statut": "OK",
+      "alertes": [],
+      "nb_pages": 1,
+      "total_caracteres": 1265,
+      "pages": [
+        {
+          "page": 1,
+          "longueur": 1265,
+          "texte": "RÈGLEMENT DE LA CONSULTATION (RC)\nCOMMUNE DE SAINT-PIERRE-DES-BOIS — DIRECTION DES SERVICES TECHNIQUES\nMarché à Procédure Adaptée (MAPA) — Article L. 2123-1 du Code de la commande publique.\nArticle 1 — Objet et consistance de la consultation\nObjet du marché : Réfection de la toiture et mise en accessibilité d'une école communale.\nAllotissement : Marché passé en Lot unique (Travaux de couverture, zinguerie, étanchéité et aménagements PMR).\nArticle 2 — Calendrier de la consultation\nDate limite de remise des offres : 24/10/2026 à 12h00 impérativement.\nDate limite pour poser des questions : 16/10/2026 à 18h00 via le profil d'acheteur.\nArticle 3 — Jugement des offres et critères de notation\nLe jugement sera prononcé sur la base de l'offre économiquement la plus avantageuse selon les critères :\n1. Prix des prestations (DPGF) : 50 %\n2. Valeur technique (Mémoire technique) : 40 %\n3. Délai d'exécution (Planning d'intervention) : 10 %\nArticle 4 — Présentation des candidatures et des offres\nDossier de candidature : DC1, DC2, attestation d'assurance décennale en cours de validité, attestations fiscales et sociales, Kbis.\nDossier de l'offre : Acte d'Engagement (AE), Décomposition du Prix Global et Forfaitaire (DPGF), Mémoire technique justificatif, Planning."
+        }
+      ],
+      "texte_complet": "RÈGLEMENT DE LA CONSULTATION (RC)\nCOMMUNE DE SAINT-PIERRE-DES-BOIS — DIRECTION DES SERVICES TECHNIQUES\nMarché à Procédure Adaptée (MAPA) — Article L. 2123-1 du Code de la commande publique.\nArticle 1 — Objet et consistance de la consultation\nObjet du marché : Réfection de la toiture et mise en accessibilité d'une école communale.\nAllotissement : Marché passé en Lot unique (Travaux de couverture, zinguerie, étanchéité et aménagements PMR).\nArticle 2 — Calendrier de la consultation\nDate limite de remise des offres : 24/10/2026 à 12h00 impérativement.\nDate limite pour poser des questions : 16/10/2026 à 18h00 via le profil d'acheteur.\nArticle 3 — Jugement des offres et critères de notation\nLe jugement sera prononcé sur la base de l'offre économiquement la plus avantageuse selon les critères :\n1. Prix des prestations (DPGF) : 50 %\n2. Valeur technique (Mémoire technique) : 40 %\n3. Délai d'exécution (Planning d'intervention) : 10 %\nArticle 4 — Présentation des candidatures et des offres\nDossier de candidature : DC1, DC2, attestation d'assurance décennale en cours de validité, attestations fiscales et sociales, Kbis.\nDossier de l'offre : Acte d'Engagement (AE), Décomposition du Prix Global et Forfaitaire (DPGF), Mémoire technique justificatif, Planning."
+    }
+  ]
+}
