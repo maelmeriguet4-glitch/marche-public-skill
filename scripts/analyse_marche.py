@@ -106,22 +106,41 @@ def extraire_criteres_notation(texte_rc: str) -> List[Dict[str, Any]]:
 def extraire_clauses_ccap(texte_ccap: str) -> Dict[str, Any]:
     """Extrait les clauses sensibles du CCAP (pénalités, délais, avance, garantie)."""
     clauses = {
-        "penalites_retard": "1/1000e par jour de retard ouvré (stipulation standard CCAG)",
-        "retenue_garantie_pct": 5.0,
-        "avance_forfaitaire_pct": 5.0,
+        "penalites_retard": None,
+        "retenue_garantie_pct": None,
+        "avance_forfaitaire_pct": None,
+        "delai_global_semaines": None,
         "delai_global_mois": None,
         "exigences_particulieres": [],
     }
     
+    if not texte_ccap:
+        return clauses
+        
     # Détection des pénalités
-    match_penalite = re.search(r"p[eé]nalit[eé]s?\s+de\s+retard.*?(1\/\d+|\d+\s*€|\d+[\.,]\d+\s*%)", texte_ccap, re.IGNORECASE)
+    match_penalite = re.search(r"p[eé]nalit[eé]s?\s+(?:de\s+retard|journali[eè]res?).*?(1\/\d+|(?:\d+[\.,]\d+|\d+)\s*(?:€|euros?|%))", texte_ccap, re.IGNORECASE)
     if match_penalite:
         clauses["penalites_retard"] = match_penalite.group(0).strip()
+    else:
+        clauses["penalites_retard"] = "[NON MENTIONNÉ AU CCAP — STIPULATION CCAG PAR DÉFAUT]"
     
     # Détection de l'avance
-    match_avance = re.search(r"avance.*?(\d{1,2})\s*%", texte_ccap, re.IGNORECASE)
+    match_avance = re.search(r"avance.*?(\d{1,2}(?:[\.,]\d+)?)\s*%", texte_ccap, re.IGNORECASE)
     if match_avance:
-        clauses["avance_forfaitaire_pct"] = float(match_avance.group(1))
+        clauses["avance_forfaitaire_pct"] = float(match_avance.group(1).replace(",", "."))
+        
+    # Détection de la retenue de garantie
+    match_retenue = re.search(r"retenue\s+de\s+garantie.*?(\d{1,2}(?:[\.,]\d+)?)\s*%", texte_ccap, re.IGNORECASE)
+    if match_retenue:
+        clauses["retenue_garantie_pct"] = float(match_retenue.group(1).replace(",", "."))
+
+    # Détection du délai global
+    match_delai_sem = re.search(r"d[eé]lai.*?(\d{1,2})\s+semaines", texte_ccap, re.IGNORECASE)
+    if match_delai_sem:
+        clauses["delai_global_semaines"] = int(match_delai_sem.group(1))
+    match_delai_mois = re.search(r"d[eé]lai.*?(\d{1,2})\s+mois", texte_ccap, re.IGNORECASE)
+    if match_delai_mois:
+        clauses["delai_global_mois"] = int(match_delai_mois.group(1))
     
     # Détection de clauses exclusives au CCAP
     lignes_ccap = texte_ccap.split("\n")
@@ -135,7 +154,7 @@ def extraire_clauses_ccap(texte_ccap: str) -> Dict[str, Any]:
 
 
 def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Exécute l'analyse globale des pièces du marché."""
+    """Exécute l'analyse globale des pièces du marché sans supposer d'informations a priori."""
     pieces = dce_extrait.get("pieces", [])
     
     texte_rc = trouver_texte_piece(pieces, "RC")
@@ -145,38 +164,49 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
     texte_global = "\n".join([p.get("texte_complet", "") for p in pieces])
     
     # 1. Identification de l'acheteur et de l'objet
-    acheteur = "Acheteur Public Non Identifié"
+    acheteur = "[ACHETEUR NON DÉTECTÉ — À RENSEIGNER]"
     match_ach = re.search(r"(?:pouvoir\s+adjudicateur|ma[iî]tre\s+d['’]ouvrage|acheteur|commune\s+de|mairie\s+de|ville\s+de)\s*:?\s*([A-Za-zÀ-ÿ0-9\s\-\'\.]{4,60})", texte_global, re.IGNORECASE)
     if match_ach:
         acheteur = match_ach.group(1).strip()
     
-    objet = "Réfection de la toiture et mise en accessibilité d'une école communale"
+    objet = "[OBJET NON DÉTECTÉ — À RENSEIGNER]"
     match_obj = re.search(r"(?:objet\s+(?:du\s+march[eé]|de\s+la\s+consultation))\s*:?\s*([^\n\r]{10,150})", texte_global, re.IGNORECASE)
     if match_obj:
         objet = match_obj.group(1).strip()
+    else:
+        # Recherche secondaire dans les titres du RC
+        match_titre = re.search(r"(?:march[eé]\s+de\s+travaux|travaux\s+de)\s*:?\s*([^\n\r]{10,120})", texte_global, re.IGNORECASE)
+        if match_titre:
+            objet = match_titre.group(1).strip()
         
     # 2. Détection de la procédure
-    procedure = "MAPA (Procédure Adaptée)"
+    procedure = "[PROCÉDURE NON DÉTECTÉE — À VÉRIFIER]"
     if re.search(r"appel\s+d['’]offres\s+ouvert", texte_global, re.IGNORECASE):
         procedure = "Appel d'offres ouvert (Procédure formalisée)"
     elif re.search(r"appel\s+d['’]offres\s+restreint", texte_global, re.IGNORECASE):
         procedure = "Appel d'offres restreint (Procédure formalisée)"
+    elif re.search(r"\bmapa\b|proc[eé]dure\s+adapt[eé]e", texte_global, re.IGNORECASE):
+        procedure = "MAPA (Marché à Procédure Adaptée)"
         
     # 3. Dates limites et contradictions
     date_rc, date_ae, contradictions = extraire_dates_remise(texte_rc, texte_ae)
     
-    # Vérification d'un rectificatif ou avis modificatif
+    # Vérification générique d'un rectificatif ou avis modificatif
     texte_rectif = trouver_texte_piece(pieces, "RECTIFICATIF")
-    if texte_rectif and "24/10/2026" in texte_rectif:
-        # Date limite officiellement confirmée par l'acheteur dans le rectificatif
-        date_ae = date_rc
-        contradictions = [c for c in contradictions if c["type"] != "DATE_LIMITE_CONTRADICTOIRE"]
-        logger.info("Contradiction de date résolue par avis rectificatif de l'acheteur (date confirmée : 24/10/2026).")
+    if texte_rectif:
+        pat_date = r"(?:date\s+limite.*?(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}(?:\s+[àa]\s+\d{1,2}[hH:]\d{0,2})?))"
+        match_rectif = re.search(pat_date, texte_rectif, re.IGNORECASE)
+        if match_rectif:
+            date_rectif = match_rectif.group(1).strip()
+            date_rc = date_rectif
+            date_ae = date_rectif
+            contradictions = [c for c in contradictions if c["type"] != "DATE_LIMITE_CONTRADICTOIRE"]
+            logger.info(f"Contradiction de date résolue par avis rectificatif de l'acheteur (date confirmée : {date_rectif}).")
         
-    date_limite_retenue = date_rc or date_ae or "Non détectée [À VÉRIFIER DANS LE RC/CCAP]"
+    date_limite_retenue = date_rc or date_ae or "[NON DÉTECTÉE — À VÉRIFIER DANS LE RC/CCAP]"
     
     # Recherche date limite questions
-    date_questions = "J-6 avant date limite de remise [À CONFIRMER DANS LE RC]"
+    date_questions = "[NON MENTIONNÉE — DÉLAI LÉGAL RECOMMANDÉ J-6]"
     match_q = re.search(r"(?:questions|renseignements\s+compl[eé]mentaires).*?(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4})", texte_rc, re.IGNORECASE)
     if match_q:
         date_questions = match_q.group(1).strip()
@@ -187,17 +217,13 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
     if matches_lots:
         for num, intitule in matches_lots:
             lots.append({"numero": num.strip(), "intitule": intitule.strip()})
-    else:
+    elif re.search(r"lot\s+unique", texte_global, re.IGNORECASE):
         lots.append({"numero": "Unique", "intitule": objet})
+    else:
+        lots.append({"numero": "Non précisé", "intitule": "[ALLOTISSEMENT NON EXPLICITÉ]"})
         
     # 5. Critères de jugement
     criteres = extraire_criteres_notation(texte_rc)
-    if not criteres:
-        criteres = [
-            {"nom": "Prix des prestations", "ponderation_pct": 50, "description": "DPGF / BPU", "sous_criteres": []},
-            {"nom": "Valeur technique", "ponderation_pct": 40, "description": "Mémoire technique", "sous_criteres": []},
-            {"nom": "Délai d'exécution", "ponderation_pct": 10, "description": "Planning", "sous_criteres": []},
-        ]
         
     # 6. Clauses CCAP
     clauses_ccap = extraire_clauses_ccap(texte_ccap)
@@ -207,33 +233,57 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
     if re.search(r"visite\s+obligatoire|attestation\s+de\s+visite", texte_ccap, re.IGNORECASE) and not re.search(r"visite\s+obligatoire|attestation\s+de\s+visite", texte_rc, re.IGNORECASE):
         exigences_orphelines_ccap.append({
             "type": "PIEGE_EXIGENCE_CCAP_ISOLEE",
-            "gravite": "HAUT",
+            "gravite": "BLOQUANT",
             "description": "L'obligation de visite sur site ou la remise d'une attestation de visite signée est stipulée dans le CCAP mais omise dans le RC.",
             "recommandation": "Effectuer impérativement la visite et faire tamponner l'attestation sous peine d'élimination de l'offre."
         })
         contradictions.extend(exigences_orphelines_ccap)
 
-    # 8. Liste des pièces requises
-    pieces_candidature = [
-        "Lettre de candidature (DC1 ou équivalent DUME)",
-        "Déclaration du candidat individuel (DC2)",
-        "Déclaration de sous-traitance (DC4 le cas échéant)",
-        "Extrait Kbis ou immatriculation de moins de 3 mois",
-        "Attestations de régularité fiscale (DGFiP) et sociale (URSSAF / CIBTP)",
-        "Attestation d'assurance Responsabilité Civile Professionnelle en cours de validité",
-        "Attestation d'assurance Décennale en cours de validité couvrant le lot visé",
-        "Certificats de qualifications professionnelles (ex. Qualibat, RGE)",
-        "Références de travaux similaires réalisés au cours des 5 dernières années",
-    ]
+    # 8. Liste des pièces requises (détection dans le RC avec repères)
+    pieces_candidature = []
+    if re.search(r"\bdc1\b", texte_rc, re.IGNORECASE):
+        pieces_candidature.append("Lettre de candidature (DC1 ou DUME)")
+    if re.search(r"\bdc2\b", texte_rc, re.IGNORECASE):
+        pieces_candidature.append("Déclaration du candidat individuel (DC2)")
+    if re.search(r"kbis|immatriculation", texte_rc, re.IGNORECASE):
+        pieces_candidature.append("Extrait d'immatriculation au RCS (Kbis < 3 mois)")
+    if re.search(r"d[eé]cennale|assurance", texte_rc, re.IGNORECASE):
+        pieces_candidature.append("Attestation d'assurance décennale et RC Pro en cours de validité")
+    if re.search(r"fiscale|sociale", texte_rc, re.IGNORECASE):
+        pieces_candidature.append("Attestations fiscales (DGFiP) et sociales (URSSAF / CIBTP)")
+    if re.search(r"r[eé]f[eé]rence", texte_rc, re.IGNORECASE):
+        pieces_candidature.append("Références de travaux récents similaires")
+    if not pieces_candidature:
+        pieces_candidature.append("[PIÈCES CANDIDATURE NON EXTRAITES DU RC — SE RÉFÉRER À references/03-candidature-pieces.md]")
+        
+    pieces_offre = []
+    if re.search(r"\bae\b|acte\s+d['’]engagement", texte_rc, re.IGNORECASE):
+        pieces_offre.append("Acte d'Engagement (AE) complété et paraphé")
+    if re.search(r"dpgf|bpu|cadre\s+de\s+prix", texte_rc, re.IGNORECASE):
+        pieces_offre.append("Cadre financier chiffré (DPGF / BPU)")
+    if re.search(r"m[eé]moire\s+technique|note\s+m[eé]thodologique", texte_rc, re.IGNORECASE):
+        pieces_offre.append("Mémoire technique justificatif adapté aux critères du RC")
+    if re.search(r"planning|calendrier", texte_rc, re.IGNORECASE):
+        pieces_offre.append("Planning d'intervention prévisionnel")
+    if re.search(r"visite", texte_rc + "\n" + texte_ccap, re.IGNORECASE):
+        pieces_offre.append("Attestation de visite des lieux signée")
+    if not pieces_offre:
+        pieces_offre.append("[PIÈCES OFFRE NON EXTRAITES DU RC — VÉRIFIER L'ARTICLE CONTENU DE L'OFFRE DU RC]")
     
-    pieces_offre = [
-        "Acte d'Engagement (AE) dûment complété et paraphé",
-        "Cadre de décomposition du prix (DPGF ou BPU) intégralement chiffré",
-        "Mémoire technique justificatif adapté aux contraintes spécifiques du site",
-        "Planning prévisionnel d'intervention et cheminement logistique",
-        "Attestation de visite des lieux (obligatoire selon stipulations CCAP)",
-        "Fiches techniques des matériaux principaux et avis techniques CSTB",
-    ]
+    # 9. Recensement des champs non extraits avec certitude
+    non_extrait = []
+    if "[NON DÉTECTÉ" in objet:
+        non_extrait.append("objet_du_marche [NON EXTRAIT]")
+    if "[PROCÉDURE" in procedure:
+        non_extrait.append("procedure_de_passation [NON EXTRAITE]")
+    if "[NON DÉTECTÉE" in date_limite_retenue:
+        non_extrait.append("date_limite_remise [NON EXTRAITE DU RC/AE]")
+    if not criteres:
+        non_extrait.append("criteres_de_jugement [CRITÈRES OU PONDÉRATIONS NON DÉTECTÉS DANS LE RC]")
+    if clauses_ccap.get("delai_global_semaines") is None and clauses_ccap.get("delai_global_mois") is None:
+        non_extrait.append("delai_global_execution [NON DÉTECTÉ AU CCAP]")
+    if clauses_ccap.get("penalites_retard") and "[NON MENTIONNÉ" in clauses_ccap["penalites_retard"]:
+        non_extrait.append("penalites_retard_specifiques [NON MENTIONNÉES AU CCAP]")
     
     # 9. Champs non extraits avec certitude
     non_extrait = []

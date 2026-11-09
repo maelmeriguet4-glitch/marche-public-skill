@@ -1,6 +1,6 @@
 # Rapport de Contrôle Arithmétique du Chiffrage (DPGF)
 
-## Statut du contrôle : 🟢 CONFORME
+## Statut du contrôle : [CONFORME]
 
 ### Synthèse financière arrêtée
 - **Total Général Recalculé HT** : `142 500,00 €`
@@ -14,5 +14,5 @@ Aucune erreur de multiplication ni d'addition détectée sur les lignes du borde
 ## Évaluation de la marge et des frais d'entreprise
 - Déboursé sec prévisionnel : `105 555,56 €`
 - Frais généraux prévisionnels : `19 950,00 €`
-- Marge nette cible (7.00 %) : `9 975,00 €`
+- Marge nette cible (7.0 %) : `9 975,00 €`
 - Coefficient multiplicateur de vente : `1.35`

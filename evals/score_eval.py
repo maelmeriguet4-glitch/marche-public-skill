@@ -1,7 +1,8 @@
-"""Moteur d'évaluation et de benchmark pour le skill marches-publics.
+"""Moteur d'évaluation et de benchmark dynamique pour le skill marches-publics.
 
 Évalue la précision, le rappel et le score F1 sur un jeu de 30 requêtes (15 positives,
-15 négatives) et vérifie la vérité terrain sur les 5 consultations fictives de evals/cas/.
+15 négatives) et teste dynamiquement les modules de contrôle arithmétique et d'audit
+sur les 5 consultations de vérité terrain de evals/cas/.
 """
 
 from __future__ import annotations
@@ -14,6 +15,15 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+# Insertion du dossier scripts dans le sys.path
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+from common import to_decimal, arrondi_monnaie
+from controle_final import auditer_dossier
+from controle_prix import verifier_arithmetique
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -93,10 +103,10 @@ def classifier_declenchement(requete: str) -> bool:
 
 def evaluer_requetes() -> Dict[str, Any]:
     """Calcule la matrice de confusion et les métriques de précision / rappel."""
-    vp = 0  # Vrai Positif
-    fp = 0  # Faux Positif
-    vn = 0  # Vrai Négatif
-    fn = 0  # Faux Négatif
+    vp = 0
+    fp = 0
+    vn = 0
+    fn = 0
     
     details = []
     for r in REQUETES_EVALUATION:
@@ -143,6 +153,110 @@ def evaluer_requetes() -> Dict[str, Any]:
     }
 
 
+def tester_cas_dynamiquement(donnees_cas: Dict[str, Any]) -> Dict[str, Any]:
+    """Exécute les moteurs réels (prix et audit) sur les paramètres du cas de test."""
+    vt = donnees_cas.get("verite_terrain", {})
+    m_reel = to_decimal(vt.get("montant_reel_dpgf_ht", "0.00"))
+    m_inscrit = to_decimal(vt.get("montant_inscrit_dpgf_ht", "0.00"))
+    ecart_attendu = to_decimal(vt.get("ecart_arithmetique_dpgf_ht", "0.00"))
+    delai = int(vt.get("delai_contractuel_semaines", 12))
+    verdict_attendu = vt.get("verdict_attendu", "PRET")
+    
+    # 1. Test du contrôle arithmétique
+    lignes_fictives = [
+        {
+            "ligne_excel": 2,
+            "numero": "1.0",
+            "designation": "Prestations principales",
+            "unite": "fft",
+            "quantite": Decimal("1.00"),
+            "prix_unitaire_ht": m_reel,
+            "total_ligne_excel": m_reel,
+        }
+    ]
+    # Si le cas est CAS-03 (prix à zéro), simuler une ligne à 0
+    if any(p.get("id") == "PRIX_UNITAIRE_ZERO_OAB" for p in vt.get("pieges_attendus", [])):
+        lignes_fictives.append({
+            "ligne_excel": 3,
+            "numero": "2.0",
+            "designation": "Fourniture clés sécurisées",
+            "unite": "u",
+            "quantite": Decimal("5.00"),
+            "prix_unitaire_ht": Decimal("0.00"),
+            "total_ligne_excel": Decimal("0.00"),
+        })
+        
+    ctrl_prix = verifier_arithmetique(
+        lignes=lignes_fictives,
+        total_excel=m_inscrit,
+        taux_tva=Decimal("20.0"),
+    )
+    
+    ecart_calcule = to_decimal(ctrl_prix.get("ecart_total_ht", "0.00"))
+    concordance_arithmetique = (ecart_calcule == ecart_attendu)
+    
+    # 2. Test du contrôle final d'audit
+    contradictions_simulees = []
+    for piege in vt.get("pieges_attendus", []):
+        statut = piege.get("statut_attendu")
+        if statut in ["BLOQUANT", "SUSPICION_OAB"]:
+            contradictions_simulees.append({
+                "gravite": "BLOQUANT",
+                "description": piege.get("description", "")
+            })
+        else:
+            contradictions_simulees.append({
+                "gravite": "MOYEN",
+                "description": piege.get("description", "")
+            })
+            
+    analyse_simulee = {
+        "objet": donnees_cas.get("intitule", ""),
+        "calendrier": {"date_limite_retenue": "31/12/2030"},
+        "contradictions_detectees": contradictions_simulees,
+    }
+    checklist_simulee = {
+        "candidature": [
+            {"piece": "DC1", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "DC2", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "Attestation décennale", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+        ],
+        "offre": [
+            {"piece": "Acte d'Engagement", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "DPGF", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "Mémoire technique", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+        ]
+    }
+    
+    # Audit croisé
+    audit = auditer_dossier(
+        analyse=analyse_simulee,
+        checklist=checklist_simulee,
+        prix=ctrl_prix,
+        memoire_texte=f"Délai d'exécution fixé à {delai} semaines.",
+        delai_ae_semaines=delai,
+        montant_ae_ht=m_inscrit,
+    )
+    
+    verdict_calcule = audit["statut_code"]
+    concordance_verdict = (verdict_calcule == verdict_attendu)
+    
+    statut_test = "VALIDE" if (concordance_arithmetique and concordance_verdict) else "ECHEC"
+    
+    return {
+        "cas_id": donnees_cas.get("id"),
+        "intitule": donnees_cas.get("intitule"),
+        "ecart_arithmetique_calcule": str(ecart_calcule),
+        "ecart_arithmetique_attendu": str(ecart_attendu),
+        "concordance_arithmetique": concordance_arithmetique,
+        "verdict_calcule": verdict_calcule,
+        "verdict_attendu": verdict_attendu,
+        "concordance_verdict": concordance_verdict,
+        "nb_blocages_detectes": audit["total_blocages"],
+        "statut_test": statut_test,
+    }
+
+
 def evaluer_cas_terrain(cas_dir: Path) -> List[Dict[str, Any]]:
     """Vérifie la conformité des cas d'évaluation face à la vérité terrain."""
     fichiers_cas = sorted(cas_dir.glob("cas_*.json"))
@@ -152,22 +266,8 @@ def evaluer_cas_terrain(cas_dir: Path) -> List[Dict[str, Any]]:
         with f.open("r", encoding="utf-8") as fic:
             donnees = json.load(fic)
             
-        cid = donnees.get("id")
-        intitule = donnees.get("intitule")
-        vt = donnees.get("verite_terrain", {})
-        
-        nb_pieges = len(vt.get("pieges_attendus", []))
-        ecart_arith = vt.get("ecart_arithmetique_dpgf_ht", "0.00")
-        verdict = vt.get("verdict_attendu", "INCONNU")
-        
-        resultats_cas.append({
-            "cas_id": cid,
-            "intitule": intitule,
-            "nb_pieges_reconnus": nb_pieges,
-            "ecart_arithmetique_detecte": ecart_arith,
-            "verdict_attendu": verdict,
-            "statut_evaluation": "VALIDE",
-        })
+        res_test = tester_cas_dynamiquement(donnees)
+        resultats_cas.append(res_test)
         
     return resultats_cas
 
@@ -181,7 +281,7 @@ def main() -> None:
     cas_dir = Path(args.cas_dir).resolve()
     
     print("=" * 70)
-    print("ÉVALUATION DU SKILL MARCHES-PUBLICS — PROTOCOLE DE BENCHMARK")
+    print("ÉVALUATION DU SKILL MARCHES-PUBLICS — PROTOCOLE DE BENCHMARK DYNAMIQUE")
     print("=" * 70)
     
     # 1. Évaluation du déclenchement
@@ -199,21 +299,33 @@ def main() -> None:
     if args.verbose:
         print("\nDétail des requêtes :")
         for d in res_req["details"]:
-            symbole = "✅" if d["succes"] else "❌"
+            symbole = "[OK]" if d["succes"] else "[FAIL]"
             print(f"  {symbole} [{d['id']}] Cat:{d['categorie']} -> {d['texte'][:65]}...")
             
     # 2. Évaluation des cas de vérité terrain
-    print("\n2. CONTRÔLE DE VÉRITÉ TERRAIN SUR LES CONSULTATIONS (evals/cas/)")
+    print("\n2. CONTRÔLE DYNAMIQUE DE VÉRITÉ TERRAIN (evals/cas/)")
+    tous_valides = True
     if cas_dir.exists():
         res_cas = evaluer_cas_terrain(cas_dir)
         print(f"Total cas analysés : {len(res_cas)}")
         for c in res_cas:
-            print(f"  * {c['cas_id']} : {c['intitule'][:45]}... | Pièges: {c['nb_pieges_reconnus']} | Écart DPGF: {c['ecart_arithmetique_detecte']} € | Verdict: {c['verdict_attendu']}")
+            symbole = "[OK]" if c["statut_test"] == "VALIDE" else "[FAIL]"
+            if c["statut_test"] != "VALIDE":
+                tous_valides = False
+            print(
+                f"  {symbole} {c['cas_id']} : {c['intitule'][:40]}... | "
+                f"Écart DPGF: {c['ecart_arithmetique_calcule']} € (attendu {c['ecart_arithmetique_attendu']} €) | "
+                f"Verdict: {c['verdict_calcule']} (attendu {c['verdict_attendu']})"
+            )
     else:
         print(f"Dossier {cas_dir} introuvable.")
+        tous_valides = False
         
     print("\n" + "=" * 70)
-    print("RÉSULTAT DU BENCHMARK : VALIDÉ (100 % de conformité)")
+    if tous_valides and res_req["f1_score"] == 1.0:
+        print("RÉSULTAT DU BENCHMARK : VALIDÉ (100 % de conformité dynamique)")
+    else:
+        print("RÉSULTAT DU BENCHMARK : ANOMALIES DÉTECTÉES")
     print("=" * 70)
 
 

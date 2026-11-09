@@ -23,113 +23,129 @@ from common import charger_json, ecrire_fichier_securise, ecrire_json, resoudre_
 logger = logging.getLogger("matrice_conformite")
 
 
+DEONTIC_PATTERNS = [
+    r"\b(?:devra|devront|doit|doivent|est\s+tenu\s+de|sont\s+tenus\s+de|obligatoire|obligatoirement)\b",
+    r"\b(?:sous\s+peine\s+de\s+rejet|à\s+peine\s+d'irrecevabilit[eé]|éliminatoire|impératif|impérativement)\b",
+    r"\b(?:conformément\s+au\s+dtu|selon\s+la\s+norme|avis\s+technique|r[eé]glementation)\b",
+    r"\b(?:fournira|fournir|justifiera|justifier|joindre\s+imp[eé]rativement|remettre)\b",
+    r"\b(?:interdiction\s+de|interdit\s+de|ne\s+pourra\s+pas)\b",
+    r"\b(?:d[eé]cennale|assurance|attestation\s+de\s+visite|qualification)\b",
+]
+
+
+def classifier_categorie_exigence(texte: str) -> str:
+    """Classifie dynamiquement la catégorie d'une exigence à partir de son texte réel."""
+    t = texte.lower()
+    if re.search(r"\b(?:dc1|dc2|dc4|kbis|fiscale|sociale|urssaf|cibtp|attestation|dume|candidat)\b", t):
+        return "Administrative"
+    elif re.search(r"\b(?:s[eé]curit[eé]|sps|pgc|ppsps|hauteur|chute|[eé]chafaudage|protection|visite|danger)\b", t):
+        return "Sécurité / SPS"
+    elif re.search(r"\b(?:d[eé]chets?|sosed|tri|environnement|valorisation|trackd[eé]chets|recyclage|nuisance)\b", t):
+        return "Environnementale"
+    elif re.search(r"\b(?:d[eé]lai|semaines|mois|calendrier|p[eé]nalit[eé]|prix|avance|retenue|planning)\b", t):
+        return "Prix / Délai"
+    return "Technique"
+
+
 def extraire_exigences(dce_extrait: Dict[str, Any], profil: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Construit la liste des exigences contractuelles à partir du texte extrait des pièces."""
+    """Construit dynamiquement la liste des exigences contractuelles extraites du DCE réel.
+    
+    Chaque exigence est sourcée dans le texte des pièces (RC, CCAP, CCTP, PGC, AE).
+    Le statut par défaut est strictement NON_VERIFIE afin de proscrire toute fausse conformité présumée.
+    """
     pieces = dce_extrait.get("pieces", [])
     exigences = []
+    compteur_par_cat: Dict[str, int] = {}
     
-    # 1. Exigences administratives issues du RC
-    exigences.append({
-        "id": "EX-ADM-01",
-        "piece_source": "RC",
-        "reference": "Article 4 — Conditions de participation",
-        "categorie": "Administrative",
-        "eliminatoire": True,
-        "exigence": "Fourniture des formulaires DC1 (lettre de candidature) et DC2 (déclaration du candidat) ou DUME.",
-        "reponse_entreprise": "Formulaires DC1 et DC2 renseignés et certifiés par le représentant légal.",
-        "piece_justificative": "DC1_signe.pdf, DC2_rempli.pdf",
-        "statut": "CONFORME",
-    })
-    
-    exigences.append({
-        "id": "EX-ADM-02",
-        "piece_source": "RC",
-        "reference": "Article 4.2 — Assurances professionnelles",
-        "categorie": "Administrative",
-        "eliminatoire": True,
-        "exigence": "Attestation d'assurance décennale en cours de validité couvrant les activités de toiture et couverture.",
-        "reponse_entreprise": f"Attestation SMABTP police {profil.get('assurances', {}).get('decennale', {}).get('numero_police', 'En cours')} fournie.",
-        "piece_justificative": "Attestation_Decennale_2026.pdf",
-        "statut": "CONFORME" if profil.get("assurances", {}).get("decennale") else "À COMPLÉTER",
-    })
+    for piece in pieces:
+        nom_piece = piece.get("nom_fichier", "Document")
+        cat_piece = piece.get("categorie", "DCE")
+        texte_complet = piece.get("texte_complet", "")
+        if not texte_complet:
+            continue
+            
+        lignes = texte_complet.split("\n")
+        rubrique_courante = f"{cat_piece} — Dispositions générales"
+        
+        for ligne in lignes:
+            l_strip = ligne.strip()
+            if not l_strip:
+                continue
+                
+            # Détection des intitulés d'articles ou chapitres
+            if re.match(r"^(?:article|chapitre|fiche|titre|section|\d+[\.\)]|\bannexe\b)", l_strip, re.IGNORECASE) and len(l_strip) < 120:
+                rubrique_courante = l_strip
+                continue
+                
+            # Recherche de phrases contenant une obligation contractuelle
+            phrases = re.split(r"(?<=[\.\!\?])\s+", l_strip)
+            for phrase in phrases:
+                phrase_clean = phrase.strip()
+                if len(phrase_clean) < 25:
+                    continue
+                    
+                match_deontique = any(re.search(pat, phrase_clean, re.IGNORECASE) for pat in DEONTIC_PATTERNS)
+                if match_deontique:
+                    categorie = classifier_categorie_exigence(phrase_clean)
+                    eliminatoire = bool(re.search(r"rejet|irrecevab|éliminat|obligatoire|impératif|sous\s+peine", phrase_clean, re.IGNORECASE))
+                    
+                    compteur_par_cat[categorie] = compteur_par_cat.get(categorie, 0) + 1
+                    idx_cat = compteur_par_cat[categorie]
+                    cat_code = categorie[:3].upper().replace("/", "").replace(" ", "")
+                    ex_id = f"EX-{cat_code}-{idx_cat:02d}"
+                    
+                    # Analyse de conformité factuelle face au profil entreprise
+                    statut = "NON_VERIFIE"
+                    reponse = "[À AUDITER PAR L'ENTREPRISE]"
+                    piece_justif = "[À FOURNIR]"
+                    
+                    t_lower = phrase_clean.lower()
+                    if "décennale" in t_lower or "assurance" in t_lower:
+                        if profil.get("assurances", {}).get("decennale", {}).get("numero_police"):
+                            statut = "CONFORME"
+                            reponse = f"Attestation {profil['assurances']['decennale'].get('compagnie')} en cours de validité."
+                            piece_justif = "Attestation_Decennale.pdf"
+                        else:
+                            statut = "À COMPLÉTER"
+                            reponse = "Attestation d'assurance décennale non renseignée dans le profil."
+                    elif "visite" in t_lower:
+                        visite_ok = profil.get("visite_site", {}).get("visite_effectuee", False)
+                        if visite_ok:
+                            statut = "CONFORME"
+                            reponse = "Visite sur site effectuée et attestation signée obtenue."
+                            piece_justif = "attestation_visite_signee.pdf"
+                        else:
+                            statut = "À COMPLÉTER"
+                            reponse = "Visite obligatoire sur site à réaliser avant remise."
+                    elif "dc1" in t_lower or "dc2" in t_lower:
+                        reponse = "Formulaire de candidature à renseigner et signer par le mandataire."
+                        piece_justif = "DC1.pdf, DC2.pdf"
+                        statut = "À COMPLÉTER"
+                    elif "déchet" in t_lower or "sosed" in t_lower or "tri" in t_lower:
+                        reponse = "Mémoire technique section environnementale / plan de tri SOSED."
+                        piece_justif = "SOSED intégré à l'offre"
+                        statut = "NON_VERIFIE"
+                    elif "dtu" in t_lower or "norme" in t_lower or "échafaudage" in t_lower:
+                        reponse = "Respect strict des règles de l'art et normes visées dans le CCTP/PGC."
+                        piece_justif = "Fiches techniques et certifications matériels"
+                        statut = "NON_VERIFIE"
+                        
+                    exigences.append({
+                        "id": ex_id,
+                        "piece_source": nom_piece,
+                        "reference": rubrique_courante,
+                        "categorie": categorie,
+                        "eliminatoire": eliminatoire,
+                        "exigence": phrase_clean,
+                        "reponse_entreprise": reponse,
+                        "piece_justificative": piece_justif,
+                        "niveau_confiance": "ÉLEVÉ" if eliminatoire else "MOYEN",
+                        "statut": statut,
+                    })
 
-    # 2. Exigences techniques issues du CCTP
-    exigences.append({
-        "id": "EX-TEC-01",
-        "piece_source": "CCTP",
-        "reference": "Chapitre 1 — Travaux de toiture",
-        "categorie": "Technique",
-        "eliminatoire": True,
-        "exigence": "Dépose des anciennes tuiles et pose de tuiles à emboîtement conformes au DTU 40.21.",
-        "reponse_entreprise": "Mise en œuvre par compagnons couvreurs certifiés selon les prescriptions du DTU 40.21.",
-        "piece_justificative": "Mémoire technique section 4 (Mode opératoire toiture)",
-        "statut": "CONFORME",
-    })
-
-    exigences.append({
-        "id": "EX-TEC-02",
-        "piece_source": "CCTP",
-        "reference": "Chapitre 2 — Accessibilité PMR",
-        "categorie": "Technique",
-        "eliminatoire": True,
-        "exigence": "Création d'une rampe d'accès pente maximale 5 % avec garde-corps double lisse et seuil ≤ 2 cm.",
-        "reponse_entreprise": "Conception d'une rampe béton balayé anti-dérapant avec mains courantes continues conformes PMR.",
-        "piece_justificative": "Mémoire technique section 4 et plans de principe",
-        "statut": "CONFORME",
-    })
-
-    # 3. Exigences Sécurité / SPS issues du PGC et CCAP
-    visite_ok = profil.get("visite_site", {}).get("visite_effectuee", False)
-    exigences.append({
-        "id": "EX-SPS-01",
-        "piece_source": "CCAP / PGC",
-        "reference": "Article 7 — Hygiène et Sécurité",
-        "categorie": "Sécurité / SPS",
-        "eliminatoire": True,
-        "exigence": "Réalisation d'une visite obligatoire sur site préalable au dépôt et remise de l'attestation signée.",
-        "reponse_entreprise": "Visite des lieux effectuée et attestation signée jointe à l'offre." if visite_ok else "Visite des lieux effectuée et attestation signée à joindre impérativement à l'offre.",
-        "piece_justificative": "attestation_visite_signee.pdf",
-        "statut": "CONFORME" if visite_ok else "À COMPLÉTER",
-    })
-
-    exigences.append({
-        "id": "EX-SPS-02",
-        "piece_source": "PGC",
-        "reference": "Fiche 3 — Travaux en hauteur",
-        "categorie": "Sécurité / SPS",
-        "eliminatoire": True,
-        "exigence": "Mise en place d'un échafaudage de pied de classe 4 avec filets anti-chutes et plinthes de retenue.",
-        "reponse_entreprise": "Échafaudage propre certifié NF 800 m² avec PV de montage et vérification journalière.",
-        "piece_justificative": "Notice échafaudage et habilitations monteurs",
-        "statut": "CONFORME",
-    })
-
-    # 4. Exigences environnementales et déchets
-    exigences.append({
-        "id": "EX-ENV-01",
-        "piece_source": "CCTP / CCAP",
-        "reference": "Prescriptions Environnementales",
-        "categorie": "Environnementale",
-        "eliminatoire": False,
-        "exigence": "Tri des déchets de chantier en 5 flux et transmission des bordereaux Trackdéchets.",
-        "reponse_entreprise": "Mise en place d'un SOSED avec tri in situ (bois, gravats, métaux, DIB) et bordereaux électroniques.",
-        "piece_justificative": "SOSED intégré au mémoire technique",
-        "statut": "CONFORME",
-    })
-
-    # 5. Délais et planning
-    exigences.append({
-        "id": "EX-DEL-01",
-        "piece_source": "AE / CCAP",
-        "reference": "Article 3 — Délais d'exécution",
-        "categorie": "Prix / Délai",
-        "eliminatoire": True,
-        "exigence": "Délai global d'exécution fixé à 12 semaines incluant période de préparation.",
-        "reponse_entreprise": "Planning d'intervention optimisé sur 12 semaines strictes avec cadencement par zone.",
-        "piece_justificative": "Planning détaillé d'exécution (Gantt)",
-        "statut": "CONFORME",
-    })
-
+    if not exigences:
+        logger.warning("Aucune exigence déontique n'a été détectée automatiquement dans les pièces fournies.")
+        
     return exigences
 
 

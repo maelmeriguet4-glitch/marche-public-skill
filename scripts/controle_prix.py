@@ -2,7 +2,8 @@
 
 Recalcule chaque ligne (Quantité x Prix Unitaire HT = Total Ligne HT),
 vérifie les sous-totaux et totaux généraux HT et TTC, détecte les prix à zéro
-ou manquants, évalue les marges face à couts.yaml et alerte en cas d'OAB.
+ou manquants, évalue les marges face à couts.yaml et alerte en cas d'OAB
+(offre anormalement basse par rapport à l'estimation MOE ou au déboursé sec).
 """
 
 from __future__ import annotations
@@ -132,7 +133,6 @@ def analyser_lignes_dpgf(chemin_xlsx: Path) -> Tuple[List[Dict[str, Any]], Dict[
                     pass
                     
         if len(nombres) >= 2:
-            # En règle générale : [... (Poste), Quantite, PU, Total]
             if len(nombres) >= 3:
                 qte = nombres[-3]
                 pu = nombres[-2]
@@ -179,9 +179,10 @@ def verifier_arithmetique(
     total_excel: Optional[Decimal],
     taux_tva: Decimal,
     couts_data: Optional[Dict[str, Any]] = None,
-    seuil_oab_pct: Decimal = Decimal("25.0")
+    seuil_oab_pct: Decimal = Decimal("25.0"),
+    estimation_moe: Optional[Decimal] = None
 ) -> Dict[str, Any]:
-    """Exécute la vérification arithmétique rigoureuse en Decimal."""
+    """Exécute la vérification arithmétique rigoureuse en Decimal et l'évaluation OAB."""
     lignes_verifiees = []
     anomalies = []
     total_recalcule_ht = Decimal("0.00")
@@ -195,7 +196,7 @@ def verifier_arithmetique(
         statut_ligne = "OK"
         ecart = Decimal("0.00")
         
-        # Détection prix nul ou manquant
+        # Détection prix nul ou négatif
         if pu <= Decimal("0.00"):
             statut_ligne = "PRIX_MANQUANT"
             anomalies.append({
@@ -203,7 +204,7 @@ def verifier_arithmetique(
                 "ligne": l["ligne_excel"],
                 "poste": l["numero"],
                 "designation": l["designation"],
-                "description": f"Prix unitaire nul ou manquant ({pu} €). Risque d'irrégularité ou OAB."
+                "description": f"Prix unitaire nul ou négatif ({pu} €). Risque d'irrégularité de l'offre (art. L. 2152-2 du CCP)."
             })
             
         # Comparaison avec total ligne affiché dans le fichier Excel
@@ -271,7 +272,25 @@ def verifier_arithmetique(
             "marge_nette_estimee_ht": str(marge_nette_estimee),
             "marge_nette_pct": str(marge_cible_pct),
         }
-        
+
+    # Détection rigoureuse de l'Offre Anormalement Basse (OAB)
+    # 1. Comparaison avec l'estimation de la Maîtrise d'Œuvre si fournie
+    if estimation_moe and estimation_moe > Decimal("0.00"):
+        seuil_oab_moe = arrondi_monnaie(estimation_moe * (Decimal("1.00") - seuil_oab_pct / Decimal("100.0")))
+        if total_recalcule_ht < seuil_oab_moe:
+            ecart_pct = arrondi_monnaie(((estimation_moe - total_recalcule_ht) / estimation_moe) * Decimal("100.0"))
+            anomalies.append({
+                "type": "ALERTE_OFFRE_ANORMALEMENT_BASSE",
+                "valeur_proposee": str(total_recalcule_ht),
+                "estimation_moe": str(estimation_moe),
+                "ecart_pourcentage": str(ecart_pct),
+                "description": (
+                    f"Le total proposé ({total_recalcule_ht} € HT) est inférieur de {ecart_pct} % à l'estimation MOE "
+                    f"({estimation_moe} € HT), dépassant le seuil d'alerte de {seuil_oab_pct} %. "
+                    f"Risque majeur de suspicion d'OAB selon l'article L. 2152-5 du Code de la commande publique."
+                )
+            })
+
     return {
         "nb_lignes_verifiees": len(lignes_verifiees),
         "total_affiche_excel_ht": str(total_excel) if total_excel else None,
@@ -289,11 +308,11 @@ def verifier_arithmetique(
 
 
 def generer_markdown_controle_prix(resultat: Dict[str, Any]) -> str:
-    """Rédige le rapport d'audit du chiffrage en format Markdown."""
+    """Rédige le rapport d'audit du chiffrage en format Markdown (style sobre, zéro emoji)."""
     md = []
     md.append("# Rapport de Contrôle Arithmétique du Chiffrage (DPGF)\n")
     
-    badge = "🟢 CONFORME" if resultat["statut_global"] == "CONFORME" else "🔴 ANOMALIES DÉTECTÉES"
+    badge = "[CONFORME]" if resultat["statut_global"] == "CONFORME" else "[ANOMALIES DÉTECTÉES]"
     md.append(f"## Statut du contrôle : {badge}\n")
     
     total_ht = to_decimal(resultat["total_recalcule_ht"])
@@ -308,7 +327,7 @@ def generer_markdown_controle_prix(resultat: Dict[str, Any]) -> str:
         total_ex = to_decimal(resultat["total_affiche_excel_ht"])
         md.append(f"- **Total inscrit dans le fichier Excel** : `{formater_montant_fr(total_ex)}`")
         if resultat["ecart_total_ht"] != "0.00":
-            md.append(f"- ⚠️ **Écart de total général détecté** : `{resultat['ecart_total_ht']} €`")
+            md.append(f"- **Écart de total général détecté** : `{resultat['ecart_total_ht']} €`")
     md.append("")
     
     if resultat["anomalies"]:
@@ -341,6 +360,7 @@ def main() -> None:
     parser.add_argument("--couts", required=False, help="Chemin du YAML de structure de coûts.")
     parser.add_argument("--tva", default="20.0", help="Taux de TVA en pourcentage (défaut 20.0).")
     parser.add_argument("--seuil-oab-pct", default="25.0", help="Seuil d'alerte OAB en pourcentage (défaut 25.0).")
+    parser.add_argument("--estimation-moe", required=False, type=float, help="Estimation HT de la MOE pour contrôle OAB.")
     parser.add_argument("--output-json", required=True, help="Chemin JSON de sortie.")
     parser.add_argument("--output-md", required=True, help="Chemin Markdown de sortie.")
     args = parser.parse_args()
@@ -359,12 +379,15 @@ def main() -> None:
     lignes, resume = analyser_lignes_dpgf(dpgf_path)
     total_excel = resume.get("total_affiche_ht_excel")
     
+    est_moe = to_decimal(args.estimation_moe) if args.estimation_moe is not None else None
+    
     resultat = verifier_arithmetique(
         lignes=lignes,
         total_excel=total_excel,
         taux_tva=to_decimal(args.tva),
         couts_data=couts_data,
         seuil_oab_pct=to_decimal(args.seuil_oab_pct),
+        estimation_moe=est_moe,
     )
     
     ecrire_json(out_json, resultat)

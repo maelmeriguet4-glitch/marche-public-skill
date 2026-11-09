@@ -1,17 +1,32 @@
 {
-  "verdict": "PRÊT POUR RELECTURE FINALE",
-  "statut_code": "PRET",
-  "total_blocages": 0,
+  "verdict": "PAS PRÊT — BLOCAGES DÉTECTÉS",
+  "statut_code": "PAS_PRET",
+  "total_blocages": 3,
   "total_avertissements": 0,
-  "total_controles_valides": 6,
-  "blocages": [],
+  "total_controles_valides": 5,
+  "blocages": [
+    {
+      "code": "DATE_LIMITE_DEPASSEE",
+      "gravite": "BLOQUANT",
+      "description": "La date limite de remise des offres (24/10/2026 à 12:00) est dépassée. Le pli ne peut plus être déposé."
+    },
+    {
+      "code": "PIECES_CANDIDATURE_MANQUANTES",
+      "gravite": "BLOQUANT",
+      "description": "Pièces de candidature obligatoires manquantes ou invalides : Extrait d'immatriculation au RCS (Kbis < 3 mois), Attestation de régularité fiscale (DGFiP), Attestation de vigilance sociale (URSSAF), Attestation de cotisations CIBTP (Congés BTP)."
+    },
+    {
+      "code": "CONTRADICTION_DCE_BLOQUANTE",
+      "gravite": "BLOQUANT",
+      "description": "L'obligation de visite sur site ou la remise d'une attestation de visite signée est stipulée dans le CCAP mais omise dans le RC."
+    }
+  ],
   "avertissements": [],
   "controles_valides": [
-    "Date limite de remise des plis identifiée et intégrée au rétroplanning.",
     "Concordance parfaite du montant HT entre l'Acte d'Engagement et la DPGF (142 500,00 €).",
     "Vérification arithmétique de la DPGF validée (100 % des lignes conformes sans arrondi parasite).",
     "Délai d'exécution harmonisé à 12 semaines sur l'ensemble des pièces.",
     "Aucune balise [À FOURNIR] résiduelle détectée dans le mémoire technique.",
-    "Dossier de candidature complet (DC1, DC2, Kbis, attestations fiscales, sociales et assurances valides)."
+    "Dossier de l'offre complet (Acte d'engagement, DPGF/BPU et mémoire technique présents)."
   ]
 }

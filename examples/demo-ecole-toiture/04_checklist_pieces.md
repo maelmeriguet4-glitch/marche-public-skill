@@ -2,26 +2,26 @@
 
 ## 1. Dossier de Candidature (Aptitude et Capacités)
 
-| Pièce administrative / technique | Caractère | Statut profil | Action opérationnelle requise |
-| :--- | :---: | :---: | :--- |
-| **Lettre de candidature et habilitation (DC1)** | Obligatoire | 🟢 Prêt | À compléter avec le numéro du lot et à faire signer par le mandataire. |
-| **Déclaration du candidat individuel (DC2)** | Obligatoire | 🟢 Prêt | Vérifier le report exact des 3 derniers bilans comptables. |
-| **Extrait d'immatriculation au RCS (Kbis)** | Obligatoire | 🟢 Prêt | Télécharger un extrait récent de moins de 3 mois sur MonIdenum / Infogreffe. |
-| **Attestation de régularité fiscale (DGFiP)** | Obligatoire | 🟢 Prêt | Télécharger l'attestation annuelle sur l'espace professionnel impots.gouv.fr. |
-| **Attestation de vigilance sociale (URSSAF)** | Obligatoire | 🟢 Prêt | Télécharger l'attestation de vigilance datant de moins de 6 mois sur urssaf.fr. |
-| **Attestation de régularité CIBTP (Congés intempéries BTP)** | Obligatoire | 🟢 Prêt | À joindre pour toute entreprise soumise au régime conventionnel du BTP. |
-| **Attestation d'assurance Décennale en cours de validité** | Obligatoire | 🟢 Prêt | Contrôler expressément que l'activité couverture/zinguerie et travaux de maçonnerie y figurent. |
-| **Attestation d'assurance Responsabilité Civile Professionnelle** | Obligatoire | 🟢 Prêt | Vérifier le montant des garanties par sinistre. |
-| **Certificats de qualification professionnelle (Qualibat / RGE)** | Facultatif | 🟢 Prêt | Joindre les certificats officiels en cours de validité. |
-| **Dossier de références de chantiers récents similaires** | Obligatoire | 🟢 Prêt | Mettre en avant les références en milieu scolaire et ERP. |
+| Pièce administrative / technique | Exigé marché | Caractère | Statut réel | Action opérationnelle requise |
+| :--- | :---: | :---: | :---: | :--- |
+| **Lettre de candidature et habilitation (DC1 / DUME)** | Oui | Obligatoire | 🟠 À compléter | Formulaire DC1 à compléter et signer par le mandataire. |
+| **Déclaration du candidat individuel (DC2)** | Oui | Obligatoire | 🟠 À compléter | Reporter les 3 derniers bilans comptables certifiés. |
+| **Extrait d'immatriculation au RCS (Kbis < 3 mois)** | Oui | Obligatoire | 🔴 À fournir | Télécharger un extrait récent de moins de 3 mois sur Infogreffe / MonIdenum. |
+| **Attestation de régularité fiscale (DGFiP)** | Oui | Obligatoire | 🔴 À fournir | Télécharger l'attestation annuelle sur impots.gouv.fr. |
+| **Attestation de vigilance sociale (URSSAF)** | Oui | Obligatoire | 🔴 À fournir | Télécharger l'attestation de vigilance sur urssaf.fr. |
+| **Attestation de cotisations CIBTP (Congés BTP)** | Oui | Obligatoire | 🔴 À fournir | Télécharger l'attestation annuelle sur l'espace CIBTP. |
+| **Attestation d'assurance Décennale en cours de validité** | Oui | Obligatoire | 🟢 Présent & Vérifié | Attestation décennale valide |
+| **Attestation d'assurance Responsabilité Civile Professionnelle** | Oui | Obligatoire | 🟢 Présent & Vérifié | Attestation RC Pro valide |
+| **Certificats de qualification professionnelle (Qualibat / RGE)** | Non | Facultatif | 🟢 Présent & Vérifié | Qualifications vérifiées |
+| **Dossier de références de chantiers récents similaires** | Oui | Obligatoire | 🟢 Présent & Vérifié | Références prêtes |
 
 ## 2. Dossier de l'Offre (Proposition Technique et Financière)
 
-| Pièce contractuelle de l'offre | Caractère | Statut actuel | Action opérationnelle requise |
-| :--- | :---: | :---: | :--- |
-| **Acte d'Engagement (AE)** | Obligatoire | 🔵 En cours | Renseigner le montant strictement égal à la DPGF et le délai contractuel. |
-| **Cadre de décomposition du prix chiffré (DPGF)** | Obligatoire | 🔵 En cours | Chiffrer chaque ligne et vérifier sous scripts/controle_prix.py. |
-| **Mémoire technique justificatif d'offre** | Obligatoire | 🔵 En cours | Adapter assets/memoire_technique_template.md et supprimer toutes les balises [À FOURNIR]. |
-| **Planning prévisionnel détaillé d'exécution** | Obligatoire | 🔵 En cours | Indiquer les phases de préparation, approvisionnement, toiture, rampe PMR et repliement. |
-| **Attestation de visite des lieux signée** | Obligatoire | 🟢 Prêt | Attestation officielle signée par la mairie prête à être jointe au pli. |
-| **Fiches techniques des produits et avis techniques CSTB** | Facultatif | 🔵 En cours | Compiler en annexe technique du mémoire. |
+| Pièce contractuelle de l'offre | Exigé marché | Caractère | Statut réel | Action opérationnelle requise |
+| :--- | :---: | :---: | :---: | :--- |
+| **Acte d'Engagement (AE)** | Oui | Obligatoire | 🔵 En cours | Renseigner le montant strictement égal à la DPGF et le délai contractuel. |
+| **Cadre de décomposition du prix chiffré (DPGF / BPU)** | Oui | Obligatoire | 🟠 Action requise | Chiffrer chaque ligne et vérifier sous scripts/controle_prix.py. |
+| **Mémoire technique justificatif d'offre** | Oui | Obligatoire | 🟠 Action requise | Adapter assets/memoire_technique_template.md et supprimer toutes les balises [À FOURNIR]. |
+| **Planning prévisionnel détaillé d'exécution** | Oui | Obligatoire | 🔵 En cours | Indiquer les phases de préparation, exécution et repliement. |
+| **Attestation de visite des lieux signée** | Oui | Obligatoire | 🟢 Prêt | Attestation officielle signée prête à être jointe au pli. |
+| **Fiches techniques des produits et avis techniques CSTB** | Oui | Facultatif | 🟠 Action requise | Compiler en annexe technique du mémoire. |

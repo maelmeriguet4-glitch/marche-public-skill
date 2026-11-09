@@ -5,6 +5,24 @@ Toutes les modifications notables apportées à ce projet sont consignées dans 
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère aux principes du [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-11-10
+
+### Modifié
+- `scripts/analyse_marche.py` : suppression des valeurs codées en dur, extraction dynamique universelle des critères, dates et contradictions sans présupposer le scénario d'école.
+- `scripts/matrice_conformite.py` : moteur d'extraction déontique dynamique sur l'ensemble des pièces du DCE avec découpage exact de texte et statut par défaut `NON_VERIFIE`.
+- `scripts/checklist_pieces.py` : vérification physique de présence des pièces justificatives sur disque avec dissociation nette entre statut d'exigence et statut de possession.
+- `scripts/common.py` : conversion stricte `to_decimal`, algorithme de Butcher-Meeus pour le calcul de Pâques, calcul des 11 jours fériés français légaux et rétroplanning en jours ouvrés.
+- `scripts/calendrier.py` : calcul des jalons à rebours basé sur les jours ouvrés légaux et refus d'inventer une date si aucune échéance n'est détectée.
+- `scripts/go_nogo.py` : suppression des notes fixes, calculs dynamiques de l'adéquation technique, de la charge et de la rentabilité.
+- `scripts/controle_prix.py` : prise en compte du seuil d'offre anormalement basse (OAB) face à l'estimation de maîtrise d'œuvre et détection de vente à perte.
+- `scripts/simulateur_note_prix.py` : intégration du paramètre `--estimation-moe` pour la formule d'écart à l'estimation.
+- `scripts/controle_final.py` : reclassification des contradictions critiques en blocages éliminatoires, vérification de l'échéance de la date limite et contrôle des pièces d'offre.
+- `assets/seuils.yaml` : actualisation stricte des seuils réglementaires 2026 (seuil de dispense à 100 000 € HT selon R. 2122-8, seuil européen travaux 2026-2027 à 5 404 000 € HT).
+- `evals/score_eval.py` : exécution dynamique réelle des modules de calcul et d'audit sur l'ensemble des 5 cas de vérité terrain.
+
+### Ajouté
+- Workflow GitHub Actions CI (`.github/workflows/ci.yml`) testant les versions de Python 3.10 à 3.13 à chaque push et pull request.
+
 ## [1.0.0] - 2026-11-09
 
 ### Ajouté

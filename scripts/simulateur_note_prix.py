@@ -1,7 +1,7 @@
 """Simulateur de notation mathématique du critère Prix en marché public.
 
 Calcule les notes selon différentes formules réglementaires (classique moins-disant,
-linéaire avec borne relative, proportionnelle inversée) face à des concurrents.
+linéaire avec borne relative, formule proportionnelle à l'écart d'estimation MOE) face à des concurrents.
 """
 
 from __future__ import annotations
@@ -54,7 +54,8 @@ def calculer_note_prix(
     elif formule == "ecart_estimation":
         # Formule écart estimation MOE : Note = max(0, Pond_max * (1 - |P - P_est| / P_est))
         if not estimation_moe or estimation_moe <= Decimal("0.00"):
-            return pond_max * (prix_min / prix_candidat)
+            note = pond_max * (prix_min / prix_candidat)
+            return note.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         ecart = abs(prix_candidat - estimation_moe)
         ratio = ecart / estimation_moe
         note = pond_max * (Decimal("1.00") - ratio)
@@ -72,7 +73,8 @@ def simuler_marche(
     prix_entreprise: Decimal,
     concurrents: List[Decimal],
     pond_prix: Decimal,
-    formule: str = "classique_moins_disant"
+    formule: str = "classique_moins_disant",
+    estimation_moe: Optional[Decimal] = None
 ) -> Dict[str, Any]:
     """Exécute la simulation concurrentielle et le classement financier."""
     tous_les_prix = [prix_entreprise] + concurrents
@@ -80,7 +82,7 @@ def simuler_marche(
     
     participants = []
     # Entreprise candidate
-    note_ent = calculer_note_prix(prix_entreprise, prix_min, pond_prix, formule)
+    note_ent = calculer_note_prix(prix_entreprise, prix_min, pond_prix, formule, estimation_moe)
     participants.append({
         "nom": "Entreprise (Notre offre)",
         "prix_ht": str(prix_entreprise),
@@ -89,7 +91,7 @@ def simuler_marche(
     })
     
     for idx, pc in enumerate(concurrents, start=1):
-        note_conc = calculer_note_prix(pc, prix_min, pond_prix, formule)
+        note_conc = calculer_note_prix(pc, prix_min, pond_prix, formule, estimation_moe)
         participants.append({
             "nom": f"Concurrent {idx}",
             "prix_ht": str(pc),
@@ -107,6 +109,7 @@ def simuler_marche(
     
     return {
         "formule_utilisee": formule,
+        "estimation_moe": str(estimation_moe) if estimation_moe else None,
         "ponderation_prix_max": str(pond_prix),
         "prix_le_plus_bas": str(prix_min),
         "rang_notre_offre": rang_notre_offre,
@@ -115,10 +118,12 @@ def simuler_marche(
 
 
 def generer_markdown_simulation(resultat: Dict[str, Any]) -> str:
-    """Génère le compte-rendu de simulation financière en Markdown."""
+    """Génère le compte-rendu de simulation financière en Markdown (style sobre, zéro emoji)."""
     md = []
     md.append("# Simulation de la Note du Prix des Offres\n")
     md.append(f"- **Formule appliquée** : `{resultat['formule_utilisee']}`")
+    if resultat.get("estimation_moe"):
+        md.append(f"- **Estimation Maîtrise d'Œuvre (MOE)** : `{formater_montant_fr(to_decimal(resultat['estimation_moe']))}`")
     md.append(f"- **Pondération maximale du critère** : `{resultat['ponderation_prix_max']} points`")
     md.append(f"- **Offre la moins-disante (P_min)** : `{formater_montant_fr(to_decimal(resultat['prix_le_plus_bas']))}`")
     md.append(f"- **Rang financier de l'entreprise** : **{resultat['rang_notre_offre']} / {len(resultat['participants'])}**\n")
@@ -140,7 +145,7 @@ def generer_markdown_simulation(resultat: Dict[str, Any]) -> str:
     if resultat["rang_notre_offre"] == 1:
         md.append("L'offre se positionne en tête sur le volet financier et bénéficie du maximum de points.")
     else:
-        md.append(f"L'offre est devancée de {resultat['participants'][0]['nom']}. Pour combler ce déficit sur la note globale, le mémoire technique doit compenser avec un différentiel technique d'au moins `{meilleure_note - to_decimal(next(p['note_prix'] for p in resultat['participants'] if p['est_notre_offre']))} points`.")
+        md.append(f"L'offre est devancée par {resultat['participants'][0]['nom']}. Pour combler ce déficit sur la note globale, le mémoire technique doit compenser avec un différentiel technique d'au moins `{meilleure_note - to_decimal(next(p['note_prix'] for p in resultat['participants'] if p['est_notre_offre']))} points`.")
     md.append("")
     return "\n".join(md)
 
@@ -151,6 +156,7 @@ def main() -> None:
     parser.add_argument("--concurrents", nargs="*", type=float, default=[], help="Montants HT estimés des concurrents.")
     parser.add_argument("--pond-prix", default=50.0, type=float, help="Pondération du critère prix (ex: 50).")
     parser.add_argument("--formule", default="classique_moins_disant", choices=["classique_moins_disant", "lineaire_borne", "ecart_estimation"], help="Formule de calcul.")
+    parser.add_argument("--estimation-moe", required=False, type=float, help="Estimation MOE HT pour la formule ecart_estimation.")
     parser.add_argument("--output-json", required=True, help="Chemin JSON de sortie.")
     parser.add_argument("--output-md", required=True, help="Chemin Markdown de sortie.")
     args = parser.parse_args()
@@ -161,8 +167,9 @@ def main() -> None:
     p_ent = to_decimal(args.prix_entreprise)
     p_conc = [to_decimal(c) for c in args.concurrents]
     pond = to_decimal(args.pond_prix)
+    est_moe = to_decimal(args.estimation_moe) if args.estimation_moe is not None else None
     
-    sim = simuler_marche(p_ent, p_conc, pond, formule=args.formule)
+    sim = simuler_marche(p_ent, p_conc, pond, formule=args.formule, estimation_moe=est_moe)
     
     ecrire_json(out_json, sim)
     md_content = generer_markdown_simulation(sim)

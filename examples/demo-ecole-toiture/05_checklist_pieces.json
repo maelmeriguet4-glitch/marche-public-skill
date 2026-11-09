@@ -3,86 +3,98 @@
   "total_pieces_offre": 6,
   "candidature": [
     {
-      "piece": "Lettre de candidature et habilitation (DC1)",
+      "piece": "Lettre de candidature et habilitation (DC1 / DUME)",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
-      "description": "Formulaire DAJ officiel avec engagement sur l'honneur d'absence d'interdiction de soumissionner.",
-      "action": "À compléter avec le numéro du lot et à faire signer par le mandataire."
+      "statut": "A_COMPLETER",
+      "description": "Formulaire DAJ officiel ou DUME avec déclaration sur l'honneur.",
+      "action": "Formulaire DC1 à compléter et signer par le mandataire."
     },
     {
       "piece": "Déclaration du candidat individuel (DC2)",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
+      "statut": "A_COMPLETER",
       "description": "Chiffres d'affaires et effectifs déclarés (BÂTIMENT ET COUVERTURE DU CENTRE (BCC)).",
-      "action": "Vérifier le report exact des 3 derniers bilans comptables."
+      "action": "Reporter les 3 derniers bilans comptables certifiés."
     },
     {
-      "piece": "Extrait d'immatriculation au RCS (Kbis)",
+      "piece": "Extrait d'immatriculation au RCS (Kbis < 3 mois)",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
+      "statut": "A_FOURNIR",
       "description": "SIRET 48912345600028 — RCS Bourges.",
-      "action": "Télécharger un extrait récent de moins de 3 mois sur MonIdenum / Infogreffe."
+      "action": "Télécharger un extrait récent de moins de 3 mois sur Infogreffe / MonIdenum."
     },
     {
       "piece": "Attestation de régularité fiscale (DGFiP)",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
-      "description": "Justification de la déclaration et du paiement de l'IS et de la TVA.",
-      "action": "Télécharger l'attestation annuelle sur l'espace professionnel impots.gouv.fr."
+      "statut": "A_FOURNIR",
+      "description": "Justification de souscription des déclarations et paiement de l'IS/TVA.",
+      "action": "Télécharger l'attestation annuelle sur impots.gouv.fr."
     },
     {
       "piece": "Attestation de vigilance sociale (URSSAF)",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
-      "description": "Attestation de conformité travail dissimulé (article L. 243-15 du Code de la sécurité sociale).",
-      "action": "Télécharger l'attestation de vigilance datant de moins de 6 mois sur urssaf.fr."
+      "statut": "A_FOURNIR",
+      "description": "Attestation de conformité travail dissimulé de moins de 6 mois.",
+      "action": "Télécharger l'attestation de vigilance sur urssaf.fr."
     },
     {
-      "piece": "Attestation de régularité CIBTP (Congés intempéries BTP)",
+      "piece": "Attestation de cotisations CIBTP (Congés BTP)",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
-      "description": "Certificat de cotisation auprès de la Caisse des Congés Payés du BTP.",
-      "action": "À joindre pour toute entreprise soumise au régime conventionnel du BTP."
+      "statut": "A_FOURNIR",
+      "description": "Certificat de régularité de cotisations délivré par la caisse des congés payés BTP.",
+      "action": "Télécharger l'attestation annuelle sur l'espace CIBTP."
     },
     {
       "piece": "Attestation d'assurance Décennale en cours de validité",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "VALIDE",
+      "statut": "VERIFIE_PRESENT",
       "description": "Compagnie SMABTP — Police DEC-2024-55102 (Échéance: 2026-12-31).",
-      "action": "Contrôler expressément que l'activité couverture/zinguerie et travaux de maçonnerie y figurent."
+      "action": "Attestation décennale valide"
     },
     {
       "piece": "Attestation d'assurance Responsabilité Civile Professionnelle",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "VALIDE",
+      "statut": "VERIFIE_PRESENT",
       "description": "Compagnie AXA Assurances — Police RC-89412093.",
-      "action": "Vérifier le montant des garanties par sinistre."
+      "action": "Attestation RC Pro valide"
     },
     {
       "piece": "Certificats de qualification professionnelle (Qualibat / RGE)",
+      "exige_par_marche": false,
       "obligatoire": false,
-      "statut": "DISPONIBLE",
+      "statut": "VERIFIE_PRESENT",
       "description": "QUALIBAT 3101, QUALIBAT 3142, QUALIBAT 2111, RGE ",
-      "action": "Joindre les certificats officiels en cours de validité."
+      "action": "Qualifications vérifiées"
     },
     {
       "piece": "Dossier de références de chantiers récents similaires",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
-      "description": "3 fiches chantiers de moins de 5 ans disponibles dans le profil.",
-      "action": "Mettre en avant les références en milieu scolaire et ERP."
+      "statut": "VERIFIE_PRESENT",
+      "description": "3 référence(s) enregistrée(s) dans le profil.",
+      "action": "Références prêtes"
     }
   ],
   "offre": [
     {
       "piece": "Acte d'Engagement (AE)",
+      "exige_par_marche": true,
       "obligatoire": true,
       "statut": "A_COMPLETER",
       "description": "Document contractuel récapitulant le montant total HT/TTC, les délais et le RIB.",
       "action": "Renseigner le montant strictement égal à la DPGF et le délai contractuel."
     },
     {
-      "piece": "Cadre de décomposition du prix chiffré (DPGF)",
+      "piece": "Cadre de décomposition du prix chiffré (DPGF / BPU)",
+      "exige_par_marche": true,
       "obligatoire": true,
       "statut": "A_CHIFFRER",
       "description": "Bordereau officiel au format Excel imposé sans modification d'intitulé.",
@@ -90,6 +102,7 @@
     },
     {
       "piece": "Mémoire technique justificatif d'offre",
+      "exige_par_marche": true,
       "obligatoire": true,
       "statut": "A_REDIGER",
       "description": "Mémoire structuré selon les critères et sous-critères du RC.",
@@ -97,17 +110,19 @@
     },
     {
       "piece": "Planning prévisionnel détaillé d'exécution",
+      "exige_par_marche": true,
       "obligatoire": true,
       "statut": "A_FINALISER",
       "description": "Diagramme de Gantt des travaux respectant le délai global de l'AE.",
-      "action": "Indiquer les phases de préparation, approvisionnement, toiture, rampe PMR et repliement."
+      "action": "Indiquer les phases de préparation, exécution et repliement."
     },
     {
       "piece": "Attestation de visite des lieux signée",
+      "exige_par_marche": true,
       "obligatoire": true,
-      "statut": "DISPONIBLE",
-      "description": "Justificatif de visite sur site signé par le responsable du groupe scolaire / mairie.",
-      "action": "Attestation officielle signée par la mairie prête à être jointe au pli."
+      "statut": "VERIFIE_PRESENT",
+      "description": "Justificatif de visite sur site signé par le responsable de la collectivité.",
+      "action": "Attestation officielle signée prête à être jointe au pli."
     },
     {
       "piece": "Fiches techniques des produits et avis techniques CSTB",

@@ -2,7 +2,7 @@
 
 - **Acheteur public** : Commune de Saint-Pierre-des-Bois
 Date limite de remise des p
-- **Procédure de passation** : MAPA (Procédure Adaptée)
+- **Procédure de passation** : MAPA (Marché à Procédure Adaptée)
 - **Date limite de remise des plis** : 24/10/2026 à 12h00
 - **Date limite pour poser des questions** : 16/10/2026
 
@@ -17,29 +17,24 @@ Date limite de remise des p
 | **Délai d'exécution** | 10 % | Optimisation du planning et durée totale des travaux. |
 
 ## 3. Contradictions contractuelles et pièges détectés
-> [!WARNING] **PIEGE_EXIGENCE_CCAP_ISOLEE (HAUT)**
+> [!WARNING] **PIEGE_EXIGENCE_CCAP_ISOLEE (BLOQUANT)**
 > L'obligation de visite sur site ou la remise d'une attestation de visite signée est stipulée dans le CCAP mais omise dans le RC.
 > *Action recommandée :* Effectuer impérativement la visite et faire tamponner l'attestation sous peine d'élimination de l'offre.
 
 ## 4. Pièces contractuelles exigées
 ### Dossier de Candidature
-- [ ] Lettre de candidature (DC1 ou équivalent DUME)
+- [ ] Lettre de candidature (DC1 ou DUME)
 - [ ] Déclaration du candidat individuel (DC2)
-- [ ] Déclaration de sous-traitance (DC4 le cas échéant)
-- [ ] Extrait Kbis ou immatriculation de moins de 3 mois
-- [ ] Attestations de régularité fiscale (DGFiP) et sociale (URSSAF / CIBTP)
-- [ ] Attestation d'assurance Responsabilité Civile Professionnelle en cours de validité
-- [ ] Attestation d'assurance Décennale en cours de validité couvrant le lot visé
-- [ ] Certificats de qualifications professionnelles (ex. Qualibat, RGE)
-- [ ] Références de travaux similaires réalisés au cours des 5 dernières années
+- [ ] Extrait d'immatriculation au RCS (Kbis < 3 mois)
+- [ ] Attestation d'assurance décennale et RC Pro en cours de validité
+- [ ] Attestations fiscales (DGFiP) et sociales (URSSAF / CIBTP)
 
 ### Dossier de l'Offre
-- [ ] Acte d'Engagement (AE) dûment complété et paraphé
-- [ ] Cadre de décomposition du prix (DPGF ou BPU) intégralement chiffré
-- [ ] Mémoire technique justificatif adapté aux contraintes spécifiques du site
-- [ ] Planning prévisionnel d'intervention et cheminement logistique
-- [ ] Attestation de visite des lieux (obligatoire selon stipulations CCAP)
-- [ ] Fiches techniques des matériaux principaux et avis techniques CSTB
+- [ ] Acte d'Engagement (AE) complété et paraphé
+- [ ] Cadre financier chiffré (DPGF / BPU)
+- [ ] Mémoire technique justificatif adapté aux critères du RC
+- [ ] Planning d'intervention prévisionnel
+- [ ] Attestation de visite des lieux signée
 
 ## 5. Données non détectées avec certitude
 - `delai_global_contractuel_mois [À VÉRIFIER DANS LE CCAP]`

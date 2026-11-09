@@ -7,6 +7,7 @@ d'exécution d'ingénierie.
 
 from __future__ import annotations
 
+import datetime
 import json
 import logging
 import re
@@ -28,25 +29,84 @@ logger = logging.getLogger("marches_publics")
 CENTIME = Decimal("0.01")
 
 
-def to_decimal(val: Union[int, float, str, Decimal, None], default: str = "0.00") -> Decimal:
-    """Convertit de manière sûre une valeur numérique en Decimal.
+def to_decimal(val: Union[int, float, str, Decimal, None], default: str = "0.00", strict: bool = False) -> Decimal:
+    """Convertit une valeur numérique en Decimal.
     
-    Rejette les types float pour éviter les imprécisions d'arrondi binaire.
+    Si strict=True, rejette les floats pour contraindre l'appelant à fournir
+    une chaîne ou un entier afin d'éviter toute perte de précision préalable.
     """
     if val is None:
         return Decimal(default)
     if isinstance(val, Decimal):
         return val
-    if isinstance(val, (int, str)):
-        s = str(val).strip().replace(" ", "").replace(",", ".")
+    if isinstance(val, int):
+        return Decimal(val)
+    if isinstance(val, str):
+        s = val.strip().replace(" ", "").replace(",", ".")
         if not s:
             return Decimal(default)
         return Decimal(s)
     if isinstance(val, float):
-        # Conversion d'un float via représentation textuelle arrondie à 6 décimales
-        # pour éviter les artefacts binaires (ex: 142500.0 -> "142500.0")
-        return Decimal(f"{val:.6f}").quantize(CENTIME, rounding=ROUND_HALF_UP)
+        if strict:
+            raise TypeError(f"Type float interdit en mode strict pour préserver la précision financière: {val}")
+        # Conversion sans perte artificielle par quantification prématurée
+        return Decimal(str(val))
     raise TypeError(f"Type non supporté pour conversion Decimal: {type(val)}")
+
+
+def paques(annee: int) -> datetime.date:
+    """Calcul de la date du dimanche de Pâques (algorithme de Butcher-Meeus)."""
+    a = annee % 19
+    b = annee // 100
+    c = annee % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    mois = (h + l - 7 * m + 114) // 31
+    jour = ((h + l - 7 * m + 114) % 31) + 1
+    return datetime.date(annee, mois, jour)
+
+
+def jours_feries_france(annee: int) -> set[datetime.date]:
+    """Retourne l'ensemble des 11 jours fériés légaux français pour une année."""
+    p = paques(annee)
+    return {
+        datetime.date(annee, 1, 1),    # Jour de l'an
+        p + datetime.timedelta(days=1), # Lundi de Pâques
+        datetime.date(annee, 5, 1),    # Fête du Travail
+        datetime.date(annee, 5, 8),    # Victoire 1945
+        p + datetime.timedelta(days=39),# Ascension
+        p + datetime.timedelta(days=50),# Lundi de Pentecôte
+        datetime.date(annee, 7, 14),   # Fête Nationale
+        datetime.date(annee, 8, 15),   # Assomption
+        datetime.date(annee, 11, 1),   # Toussaint
+        datetime.date(annee, 11, 11),  # Armistice 1918
+        datetime.date(annee, 12, 25),  # Noël
+    }
+
+
+def est_jour_ouvre(d: datetime.date) -> bool:
+    """Vérifie si une date est un jour ouvré (du lundi au vendredi hors jours fériés)."""
+    if d.weekday() >= 5:  # 5 = samedi, 6 = dimanche
+        return False
+    return d not in jours_feries_france(d.year)
+
+
+def reculer_jours_ouvres(date_ref: datetime.date, nb_jours: int) -> datetime.date:
+    """Recule d'un nombre déterminé de jours ouvrés stricts."""
+    cur = date_ref
+    restants = nb_jours
+    while restants > 0:
+        cur -= datetime.timedelta(days=1)
+        if est_jour_ouvre(cur):
+            restants -= 1
+    return cur
 
 
 def arrondi_monnaie(val: Decimal) -> Decimal:
