@@ -195,3 +195,119 @@ def assainir_texte_dce(texte: str) -> str:
     for p in patterns:
         texte_propre = re.sub(p, "[CONTENU_IGNORÉ]", texte_propre, flags=re.IGNORECASE | re.DOTALL)
     return texte_propre
+
+
+class DateTimeWithDateEquality(datetime.datetime):
+    """datetime.datetime préservant heures, minutes, secondes et fuseaux horaires,
+    tout en supportant les comparaisons d'égalité et d'ordre directes avec datetime.date.
+    """
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, datetime.date) and not isinstance(other, datetime.datetime):
+            return self.date() == other
+        return super().__eq__(other)
+
+    def __ne__(self, other: Any) -> bool:
+        return not self.__eq__(other)
+
+    def __lt__(self, other: Any) -> bool:
+        if isinstance(other, datetime.date) and not isinstance(other, datetime.datetime):
+            return self.date() < other
+        return super().__lt__(other)
+
+    def __le__(self, other: Any) -> bool:
+        if isinstance(other, datetime.date) and not isinstance(other, datetime.datetime):
+            return self.date() <= other
+        return super().__le__(other)
+
+    def __gt__(self, other: Any) -> bool:
+        if isinstance(other, datetime.date) and not isinstance(other, datetime.datetime):
+            return self.date() > other
+        return super().__gt__(other)
+
+    def __ge__(self, other: Any) -> bool:
+        if isinstance(other, datetime.date) and not isinstance(other, datetime.datetime):
+            return self.date() >= other
+        return super().__ge__(other)
+
+
+def parser_date_et_echeance(
+    val: Any,
+    maintenant: Optional[datetime.datetime] = None,
+) -> Tuple[Optional[DateTimeWithDateEquality], str, bool]:
+    """Parse une date/datetime (ISO 8601 ou format français) en conservant heures et fuseaux.
+
+    Retourne : (dt_objet, representation_chaine, est_depassee).
+    Si l'heure n'est pas spécifiée, l'heure par défaut est 18:00:00.
+    """
+    if val is None:
+        return None, "", False
+
+    if isinstance(val, DateTimeWithDateEquality):
+        dt = val
+        s_repr = str(val)
+    elif isinstance(val, datetime.datetime):
+        dt = DateTimeWithDateEquality(
+            val.year, val.month, val.day, val.hour, val.minute, val.second, val.microsecond, val.tzinfo
+        )
+        s_repr = str(val)
+    elif isinstance(val, datetime.date):
+        dt = DateTimeWithDateEquality(val.year, val.month, val.day, 18, 0, 0)
+        s_repr = str(val)
+    else:
+        s_str = str(val).strip()
+        if not s_str:
+            return None, "", False
+        s_repr = s_str
+
+        # 1. ISO 8601 : YYYY-MM-DD[T\sHH:MM[:SS]]
+        m_iso = re.search(
+            r"\b(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2})[:h](\d{1,2})(?:[:\.](\d{1,2}))?)?",
+            s_str,
+        )
+        # 2. Format français : JJ/MM/AAAA ou JJ-MM-AAAA ou JJ.MM.AAAA [à HHhMM]
+        m_fr = re.search(
+            r"\b(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})(?:(?:\s*(?:[àa]\s*)?|\s+)(\d{1,2})[h:](\d{1,2})(?:[:\.](\d{1,2}))?)?",
+            s_str,
+            re.IGNORECASE,
+        )
+
+        annee, mois, jour = None, None, None
+        heure, minute, seconde = 18, 0, 0
+
+        if m_iso:
+            annee = int(m_iso.group(1))
+            mois = int(m_iso.group(2))
+            jour = int(m_iso.group(3))
+            if m_iso.group(4) is not None:
+                heure = int(m_iso.group(4))
+                minute = int(m_iso.group(5)) if m_iso.group(5) is not None else 0
+                seconde = int(m_iso.group(6)) if m_iso.group(6) is not None else 0
+        elif m_fr:
+            jour = int(m_fr.group(1))
+            mois = int(m_fr.group(2))
+            annee = int(m_fr.group(3))
+            if annee < 100:
+                annee += 2000
+            if m_fr.group(4) is not None:
+                heure = int(m_fr.group(4))
+                minute = int(m_fr.group(5)) if m_fr.group(5) is not None else 0
+                seconde = int(m_fr.group(6)) if m_fr.group(6) is not None else 0
+        else:
+            return None, s_repr, False
+
+        try:
+            dt = DateTimeWithDateEquality(annee, mois, jour, heure, minute, seconde)
+        except (ValueError, TypeError, OverflowError):
+            return None, s_repr, False
+
+    # Évaluation de dépassement par rapport à maintenant
+    maintenant_dt = maintenant or datetime.datetime.now()
+    if maintenant_dt.tzinfo is not None and dt.tzinfo is None:
+        maintenant_dt = maintenant_dt.replace(tzinfo=None)
+    elif maintenant_dt.tzinfo is None and dt.tzinfo is not None:
+        dt = dt.replace(tzinfo=None)
+
+    est_depassee = dt < maintenant_dt
+    return dt, s_repr, est_depassee
+

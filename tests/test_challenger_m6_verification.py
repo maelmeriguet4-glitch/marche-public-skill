@@ -62,7 +62,8 @@ class TestChallengerGoNoGoBoundaries:
             "references_chantiers": [{"objet": "Chantier toiture"}],
             "capacites_financieres": {"exercices": [{"chiffre_affaires_ht_euros": 1000000}]},
             "structure_couts": {"marge_nette_cible_pct": 10},
-            "assurances": {"decennale": {"numero_police": "POL-123"}},
+            "assurances": {"decennale": {"numero_police": "POL-123", "attestation_fichier": str(cert_file)}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         res = evaluer_go_nogo(analyse=analyse, profil=profil)
         # Verdict must NOT be "GO"

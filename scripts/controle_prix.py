@@ -313,11 +313,19 @@ def verifier_arithmetique(
 
     erreurs_arithmetiques = [a for a in anomalies if a.get("type") != "ALERTE_OFFRE_ANORMALEMENT_BASSE"]
     if not lignes:
+        statut_arithmetique = "NON_CONFORME"
         statut_global = "NON_CONFORME"
-    elif anomalies:
+    elif erreurs_arithmetiques:
+        statut_arithmetique = "ANOMALIES_DETECTEES"
         statut_global = "ANOMALIES_DETECTEES"
     else:
-        statut_global = "CONFORME"
+        statut_arithmetique = "CONFORME"
+        statut_global = "CONFORME" if not alertes_economiques else "VIGILANCE_ECONOMIQUE"
+
+    if alertes_economiques:
+        statut_economique = "ALERTE_OAB"
+    else:
+        statut_economique = "NORMAL"
 
     return {
         "nb_lignes_verifiees": len(lignes_verifiees),
@@ -328,6 +336,8 @@ def verifier_arithmetique(
         "total_recalcule_ttc": str(total_recalcule_ttc),
         "ecart_total_ht": str(ecart_total_ht),
         "statut_global": statut_global,
+        "statut_arithmetique": statut_arithmetique,
+        "statut_economique": statut_economique,
         "nb_anomalies": len(anomalies),
         "nb_erreurs_arithmetiques": len(erreurs_arithmetiques),
         "nb_alertes_economiques": len(alertes_economiques),

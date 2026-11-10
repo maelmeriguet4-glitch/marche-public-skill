@@ -5,6 +5,7 @@ identite:
   capital_social_euros: 80000.00
   siret: "48912345600028"
   rcs_ville: "Bourges"
+  date_kbis: "2026-10-01"
   siege_social:
     adresse: "14 Rue des Métiers"
     code_postal: "18000"
@@ -57,6 +58,7 @@ assurances:
     compagnie: "AXA Assurances"
     numero_police: "RC-89412093"
     date_validite: "2026-12-31"
+    attestation_fichier: "attestation_assurance_rc.pdf"
     activites_couvertes:
       - "Couverture, zinguerie, étanchéité"
       - "Maçonnerie, plâtrerie, accessibilité"
@@ -64,11 +66,18 @@ assurances:
     compagnie: "SMABTP"
     numero_police: "DEC-2024-55102"
     date_validite: "2026-12-31"
+    attestation_fichier: "attestation_assurance_decennale.pdf"
     zone_geographique: "France métropolitaine"
     activites_couvertes:
       - "Couverture"
       - "Étanchéité"
       - "Maçonnerie"
+
+fichiers_justificatifs:
+  attestation_visite: "attestation_visite_signee.pdf"
+  decennale: "attestation_assurance_decennale.pdf"
+  rc_pro: "attestation_assurance_rc.pdf"
+  kbis: "kbis.pdf"
 
 references_chantiers:
   - intitule: "Rénovation de la toiture du groupe scolaire Jules Ferry"

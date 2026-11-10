@@ -1,6 +1,6 @@
 # marché-public-skill (marche-public-skill)
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v1.3.0)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v1.4.0)
 [![Tests](https://img.shields.io/badge/tests-371%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](./LICENSE)
@@ -11,20 +11,22 @@ Boîte à outils d'ingénierie logicielle et d'aide à la décision pour l'analy
 
 ## Changelog
 
-### v1.3.0 — 10 novembre 2026 *(version courante)*
+### v1.4.0 — 10 novembre 2026 *(version courante)*
 
-**Remédiation adversariale complète — moteur métier fiabilisé**
+**Remédiation finale intégrale — architecture fail-closed, vérification physique sur disque et conformité 2026**
 
 | Domaine | Correction apportée |
 | :--- | :--- |
-| **Contrôle final fail-closed** | Une checklist vide ou absente produit désormais `PAS_PRET`. Le contrôle intègre le résultat Go/No-Go et la matrice de conformité. |
-| **Visites de chantier** | Distinction visite obligatoire / recommandée / facultative. Vérification de l'attestation physique sur disque avant la date limite. |
-| **Assurances** | Vérification du fichier physique + date de validité + activités couvertes. Un numéro de police seul ne suffit plus à déclarer une attestation présente. |
-| **Parsing des dates** | Formats français et ISO acceptés. Conservation des heures et fuseaux horaires. Détection d'une échéance dépassée le jour même. |
-| **Contrôle OAB** | Séparation stricte erreurs arithmétiques / alertes économiques. L'OAB n'est plus traité comme une simple erreur de calcul. |
-| **Réglementation 2026** | Seuil 100 000 € HT confirmé (Décret n° 2025-1386 du 29 décembre 2025, entrée en vigueur 1er janvier 2026). |
-| **Go/No-Go** | Critères géographiques et capacité opérationnelle revus. Distance réelle calculée. Effectif disponible ≠ effectif total. |
-| **Suite de tests** | 371 tests passent (unitaires + intégration + benchmark). Couverture des cas dégénérés (données vides, formats invalides, contradictions). |
+| **Contrôle final hermétique (Fail-Closed)** | Rejet immédiat en `PAS_PRET` pour toute checklist vide (`{}`), section de candidature ou d'offre mal formée, ou incohérence 4D (ex: statut `VERIFIE_PRESENT` sans fichier sur disque). Intégration stricte du Go/No-Go et de la matrice. |
+| **Preuve physique de visite** | Une date de visite ou un simple booléen ne valide plus jamais une visite obligatoire. Une attestation physique sur disque signée avant la date limite est strictement requise. Gestion robuste des formulations négatives (*"aucune visite obligatoire n'est imposée"*). |
+| **Attestations d'assurances décennale & RC Pro** | Suppression du bypass par numéro de police. Vérification matérielle du fichier sur disque, contrôle de validité temporelle et d'adéquation aux corps d'état du marché. |
+| **Parsing unifié des dates** | Moteur de parsing commun français/ISO avec conservation des heures et fuseaux horaires. Détection immédiate des échéances dépassées le jour même dès l'heure limite échue. |
+| **Découplage Arithmétique / OAB** | Séparation étanche entre erreurs de calcul DPGF bloquantes (`statut_arithmetique`: `CONFORME` / `ANOMALIES_DETECTEES`) et alertes économiques d'Offre Anormalement Basse (`statut_economique`: `NORMAL` / `ALERTE_OAB`). |
+| **Réglementation 2026 & JORF certifiés** | Seuil de dispense de procédure à 100 000 € HT pour marchés de travaux validé sous le **Décret n° 2025-1386 du 29 décembre 2025** (entrée en vigueur 1er janvier 2026, URL Légifrance JORFTEXT00005320206). |
+| **Suite de tests & Benchmark** | 371 tests passants (100%), benchmark de déclenchement 30 requêtes (Précision 100%, Rappel 100%, F1 100%), vérité terrain validée sur 5 cas réels. |
+
+### v1.3.0 — 10 novembre 2026
+Remédiation initiale des constats P0/P1 : premier contrôle final fail-closed, détection d'antériorité de visite, séparation OAB/calcul.
 
 ### v1.2.0 — 9 novembre 2026
 Première remédiation des constats d'audit : extraction dynamique des DCE, seuils réglementaires mis à jour, contrôle final avec blocages effectifs, intégration continue CI.

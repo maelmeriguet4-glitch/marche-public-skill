@@ -20,6 +20,7 @@ from common import (
     ecrire_fichier_securise,
     ecrire_json,
     est_jour_ouvre,
+    parser_date_et_echeance,
     reculer_jours_ouvres,
     resoudre_chemin_securise,
 )
@@ -28,23 +29,11 @@ logger = logging.getLogger("calendrier")
 
 
 def parser_date_fr(date_str: str) -> Optional[datetime.datetime]:
-    """Tente de parser une date au format français standard (JJ/MM/AAAA ou JJ-MM-AAAA)."""
-    match = re.search(r"(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})(?:\s+[àa]\s+(\d{1,2})[hH:](\d{0,2}))?", date_str)
-    if not match:
+    """Parse une date au format français standard ou ISO 8601 via le parseur unifié."""
+    if not date_str:
         return None
-    
-    jour = int(match.group(1))
-    mois = int(match.group(2))
-    annee = int(match.group(3))
-    if annee < 100:
-        annee += 2000
-    heure = int(match.group(4)) if match.group(4) else 12
-    minute = int(match.group(5)) if match.group(5) else 0
-    
-    try:
-        return datetime.datetime(annee, mois, jour, heure, minute)
-    except ValueError:
-        return None
+    dt, _, _ = parser_date_et_echeance(date_str)
+    return dt
 
 
 def calculer_retroplanning(date_limite: datetime.datetime, contradictions: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:

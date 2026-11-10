@@ -136,8 +136,8 @@ class TestTier1R1GoNoGoEngine:
             "capacites_financieres": {"exercices": [{"chiffre_affaires_ht_euros": 1800000.0}]},
             "references_chantiers": [{"intitule": "Chantier 1"}, {"intitule": "Chantier 2"}, {"intitule": "Chantier 3"}],
             "qualifications_et_certifications": [{"code": "3101", "organisme": "QUALIBAT"}],
-            "assurances": {"decennale": {"numero_police": "DEC-12345"}},
-            "visite_site": {"visite_effectuee": True},
+            "assurances": {"decennale": {"numero_police": "DEC-12345", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         analyse = {"objet": "Travaux de couverture et toiture", "contradictions_detectees": []}
 
@@ -156,8 +156,8 @@ class TestTier1R1GoNoGoEngine:
                 "raison_sociale": "Entreprise Berry",
                 "siege_social": {"adresse": "14 Rue des Métiers", "code_postal": "18000", "ville": "Bourges"},
             },
-            "assurances": {"decennale": {"numero_police": "DEC-12345"}},
-            "visite_site": {"visite_effectuee": True},
+            "assurances": {"decennale": {"numero_police": "DEC-12345", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         analyse = {
             "objet": "Réfection toiture école",
@@ -179,8 +179,8 @@ class TestTier1R1GoNoGoEngine:
         profil = {
             "identite": {"raison_sociale": "Entreprise Test"},
             "structure_couts": {"frais_generaux_pct": 14.0, "marge_nette_cible_pct": 10.0},
-            "assurances": {"decennale": {"numero_police": "DEC-12345"}},
-            "visite_site": {"visite_effectuee": True},
+            "assurances": {"decennale": {"numero_police": "DEC-12345", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         analyse = {"contradictions_detectees": []}
 
@@ -217,8 +217,8 @@ class TestTier1R1GoNoGoEngine:
         """R1.5 : pieces_exigees dictionnaire avec visite_effectuee: True -> pas de drapeau rouge de visite."""
         profil = {
             "identite": {"raison_sociale": "Test SAS"},
-            "assurances": {"decennale": {"numero_police": "DEC-12345"}},
-            "visite_site": {"visite_effectuee": True},
+            "assurances": {"decennale": {"numero_police": "DEC-12345", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         analyse = {
             "objet": "Marché toiture",

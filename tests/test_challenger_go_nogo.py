@@ -52,9 +52,17 @@ def profil_parfait() -> Dict[str, Any]:
         "qualifications_et_certifications": [
             {"code": "3101", "intitule": "Couverture toiture etanchéité"}
         ],  # aligné -> 20 pts
-        "assurances": {"decennale": {"numero_police": "POL-99999"}},
+        "assurances": {
+            "decennale": {
+                "numero_police": "POL-99999",
+                "attestation_fichier": "attestation_assurance_decennale.pdf",
+            }
+        },
         "structure_couts": {"marge_nette_cible_pct": 12.0},  # >= 10% -> 10 pts
-        "visite_site": {"visite_effectuee": True},
+        "visite_site": {
+            "visite_effectuee": True,
+            "attestation_fichier": "attestation_visite_signee.pdf",
+        },
     }
 
 

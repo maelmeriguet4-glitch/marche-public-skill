@@ -9,7 +9,7 @@ seuils_travaux:
   dispense_procedure_formalites_prealables:
     montant_ht_euros: 100000.00
     statut: "CONFORME"
-    source_url: "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000050864321"
+    source_url: "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT00005320206"
     date_verification: "2026-11-10"
     date_application: "2026-01-01"
     description: "Seuil de dispense de procédure pour les marchés de travaux (Décret n° 2025-1386 du 29 décembre 2025, Article R. 2122-8 du Code de la commande publique applicable au 01/01/2026)."
@@ -71,4 +71,4 @@ regles_financieres:
     statut: "INDICATIF"
     source_url: "https://www.economie.gouv.fr/daj/guide-prix-marches-publics"
     date_verification: "2026-01-01"
-    description: "Écart type par rapport à la moyenne des offres déclenchant la suspicion d'Offre Anormalement Basse."
+    description: "Seuil indicatif d'alerte d'Offre Anormalement Basse (OAB) calculé par rapport à l'estimation de maîtrise d'œuvre (ou à la moyenne des offres concourantes)."

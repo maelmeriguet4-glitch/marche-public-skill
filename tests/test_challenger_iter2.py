@@ -221,19 +221,19 @@ class TestAdversarialSiteVisitIter2:
 
         # Case 1: visite_site.effectuee == True
         p1 = dict(profil_parfait)
-        p1["visite_site"] = {"effectuee": True}
+        p1["visite_site"] = {"effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"}
         res1 = go_nogo.evaluer_go_nogo(analyse, p1, config_go_nogo)
         assert not any("VISITE" in (d.get("code") or "") for d in res1["drapeaux_rouges"])
 
         # Case 2: visite_site.date_visite provided
         p2 = dict(profil_parfait)
-        p2["visite_site"] = {"date_visite": "15/10/2026"}
+        p2["visite_site"] = {"date_visite": "15/10/2026", "attestation_fichier": "attestation_visite_signee.pdf"}
         res2 = go_nogo.evaluer_go_nogo(analyse, p2, config_go_nogo)
         assert not any("VISITE" in (d.get("code") or "") for d in res2["drapeaux_rouges"])
 
         # Case 3: top-level visite_site_effectuee == True
         p3 = dict(profil_parfait)
-        p3["visite_site"] = {}
+        p3["visite_site"] = {"attestation_fichier": "attestation_visite_signee.pdf"}
         p3["visite_site_effectuee"] = True
         res3 = go_nogo.evaluer_go_nogo(analyse, p3, config_go_nogo)
         assert not any("VISITE" in (d.get("code") or "") for d in res3["drapeaux_rouges"])

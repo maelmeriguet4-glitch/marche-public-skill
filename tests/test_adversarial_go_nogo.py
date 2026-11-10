@@ -47,8 +47,16 @@ def profil_base_valide() -> Dict[str, Any]:
             "exercices": [{"chiffre_affaires_ht_euros": 1500000}]
         },
         "structure_couts": {"marge_nette_cible_pct": 8.0},
-        "assurances": {"decennale": {"numero_police": "POL-999"}},
-        "visite_site": {"visite_effectuee": True},
+        "assurances": {
+            "decennale": {
+                "numero_police": "POL-999",
+                "attestation_fichier": "attestation_assurance_decennale.pdf",
+            }
+        },
+        "visite_site": {
+            "visite_effectuee": True,
+            "attestation_fichier": "attestation_visite_signee.pdf",
+        },
     }
 
 

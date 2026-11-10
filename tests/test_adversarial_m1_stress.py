@@ -189,7 +189,8 @@ class TestDatesAndDeadlines:
             "references_chantiers": [{"objet": "Chantier toiture"}],
             "capacites_financieres": {"exercices": [{"chiffre_affaires_ht_euros": 1000000}]},
             "structure_couts": {"marge_nette_cible_pct": 10},
-            "assurances": {"decennale": {"numero_police": "POL-123"}},
+            "assurances": {"decennale": {"numero_police": "POL-123", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         res = evaluer_go_nogo(analyse, profil, maintenant=now)
         codes = [d["code"] for d in res.get("drapeaux_rouges", [])]
@@ -212,7 +213,8 @@ class TestDatesAndDeadlines:
             "references_chantiers": [{"objet": "Chantier toiture"}],
             "capacites_financieres": {"exercices": [{"chiffre_affaires_ht_euros": 1000000}]},
             "structure_couts": {"marge_nette_cible_pct": 10},
-            "assurances": {"decennale": {"numero_police": "POL-123"}},
+            "assurances": {"decennale": {"numero_police": "POL-123", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         res = evaluer_go_nogo(analyse, profil, maintenant=now)
         codes = [d["code"] for d in res.get("drapeaux_rouges", [])]
@@ -233,7 +235,8 @@ class TestDatesAndDeadlines:
             "references_chantiers": [{"objet": "Chantier toiture"}],
             "capacites_financieres": {"exercices": [{"chiffre_affaires_ht_euros": 1000000}]},
             "structure_couts": {"marge_nette_cible_pct": 10},
-            "assurances": {"decennale": {"numero_police": "POL-123"}},
+            "assurances": {"decennale": {"numero_police": "POL-123", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
         }
         res = evaluer_go_nogo(analyse, profil)
         assert res["verdict"] != "GO"
@@ -289,7 +292,8 @@ class TestVisitsAndInsurances:
             "references_chantiers": [{"objet": "Chantier toiture"}],
             "capacites_financieres": {"exercices": [{"chiffre_affaires_ht_euros": 1000000}]},
             "structure_couts": {"marge_nette_cible_pct": 10},
-            "assurances": {"decennale": {"numero_police": "POL-123"}},
+            "assurances": {"decennale": {"numero_police": "POL-123", "attestation_fichier": "attestation_assurance_decennale.pdf"}},
+            "visite_site": {"visite_effectuee": True, "attestation_fichier": "attestation_visite_signee.pdf"},
             "visite_site": {
                 "visite_effectuee": True,
                 "attestation_fichier": "certificat_fantome_inexistant_sur_disque.pdf",

@@ -217,17 +217,17 @@ def generer_checklist(
     present_dc1 = verifier_presence_fichier(fichier_dc1, dossiers_docs)
     valide_dc1 = bool(present_dc1 and identite.get("siret") and identite.get("raison_sociale"))
     verifie_dc1 = bool(present_dc1 and valide_dc1)
-    statut_dc1 = "VERIFIE_PRESENT" if present_dc1 else ("MANQUANT" if exige_dc1 else "A_COMPLETER")
+    statut_dc1 = "VERIFIE_PRESENT" if (present_dc1 and valide_dc1 and verifie_dc1) else ("MANQUANT" if exige_dc1 else "A_COMPLETER")
     pieces_candidature.append({
         "piece": "Lettre de candidature et habilitation (DC1 / DUME)",
         "exige_par_marche": exige_dc1,
-        "obligatoire": True,
+        "obligatoire": exige_dc1,
         "present_disque": present_dc1,
         "valide_juridiquement": valide_dc1,
         "verifie_contenu": verifie_dc1,
         "statut": statut_dc1,
         "description": "Formulaire DAJ officiel ou DUME avec déclaration sur l'honneur.",
-        "action": "Dossier vérifié et prêt" if present_dc1 else "Formulaire DC1 à compléter et signer par le mandataire.",
+        "action": "Dossier vérifié et prêt" if statut_dc1 == "VERIFIE_PRESENT" else "Formulaire DC1 à compléter et signer par le mandataire.",
     })
 
     # 1.2. DC2
@@ -236,36 +236,60 @@ def generer_checklist(
     present_dc2 = verifier_presence_fichier(fichier_dc2, dossiers_docs)
     valide_dc2 = bool(present_dc2 and identite.get("siret"))
     verifie_dc2 = bool(present_dc2 and (cap_fin.get("exercices") or profil_data.get("chiffre_affaires")))
-    statut_dc2 = "VERIFIE_PRESENT" if present_dc2 else ("MANQUANT" if exige_dc2 else "A_COMPLETER")
+    statut_dc2 = "VERIFIE_PRESENT" if (present_dc2 and valide_dc2 and verifie_dc2) else ("MANQUANT" if exige_dc2 else "A_COMPLETER")
     pieces_candidature.append({
         "piece": "Déclaration du candidat individuel (DC2)",
         "exige_par_marche": exige_dc2,
-        "obligatoire": True,
+        "obligatoire": exige_dc2,
         "present_disque": present_dc2,
         "valide_juridiquement": valide_dc2,
         "verifie_contenu": verifie_dc2,
         "statut": statut_dc2,
         "description": f"Chiffres d'affaires et effectifs déclarés ({identite.get('raison_sociale') or 'Entreprise'}).",
-        "action": "Dossier vérifié et prêt" if present_dc2 else "Reporter les 3 derniers bilans comptables certifiés.",
+        "action": "Dossier vérifié et prêt" if statut_dc2 == "VERIFIE_PRESENT" else "Reporter les 3 derniers bilans comptables certifiés.",
     })
 
     # 1.3. Kbis
     exige_kbis = bool(any(k in text_cand_str for k in ["kbis", "rcs", "immatriculation"]) or not has_exigences_cand)
     fichier_kbis = fichiers_profil.get("kbis")
     present_kbis = verifier_presence_fichier(fichier_kbis, dossiers_docs)
+    id_dict = profil_data.get("identite") if isinstance(profil_data, dict) else {}
+    id_dict = id_dict if isinstance(id_dict, dict) else {}
+    date_kbis = (
+        identite.get("date_kbis")
+        or (profil_data.get("date_kbis") if isinstance(profil_data, dict) else None)
+        or id_dict.get("date_kbis")
+    )
     valide_kbis = bool(present_kbis)
-    verifie_kbis = bool(present_kbis and identite.get("siret") and identite.get("rcs_ville"))
-    statut_kbis = "VERIFIE_PRESENT" if present_kbis else "MANQUANT"
+    if present_kbis and date_kbis:
+        try:
+            from common import parser_date_et_echeance
+            dt_k, _, _ = parser_date_et_echeance(date_kbis)
+            if dt_k:
+                nb_jours = (datetime.datetime.now() - dt_k).days
+                if nb_jours > 90:
+                    valide_kbis = False
+        except Exception:
+            pass
+    verifie_kbis = bool(present_kbis and valide_kbis and identite.get("siret") and identite.get("rcs_ville"))
+    if not present_kbis:
+        statut_kbis = "MANQUANT"
+    elif not valide_kbis:
+        statut_kbis = "A_METTRE_A_JOUR"
+    elif not verifie_kbis:
+        statut_kbis = "A_COMPLETER"
+    else:
+        statut_kbis = "VERIFIE_PRESENT"
     pieces_candidature.append({
         "piece": "Extrait d'immatriculation au RCS (Kbis < 3 mois)",
         "exige_par_marche": exige_kbis,
-        "obligatoire": True,
+        "obligatoire": exige_kbis,
         "present_disque": present_kbis,
         "valide_juridiquement": valide_kbis,
         "verifie_contenu": verifie_kbis,
         "statut": statut_kbis,
         "description": f"SIRET {identite.get('siret') or 'Non renseigné'} — RCS {identite.get('rcs_ville') or ''}.",
-        "action": "Justificatif Kbis joint" if present_kbis else "Télécharger un extrait récent de moins de 3 mois sur Infogreffe / MonIdenum.",
+        "action": "Justificatif Kbis joint" if statut_kbis == "VERIFIE_PRESENT" else "Télécharger un extrait récent de moins de 3 mois sur Infogreffe / MonIdenum.",
     })
 
     # 1.4. Attestation Fiscale (DGFiP) - STRICTLY NO 'or True'
@@ -327,7 +351,7 @@ def generer_checklist(
 
     # 1.7. Assurance Décennale - STRICTLY PHYSICAL PRESENCE ON DISK (no metadata bypass)
     statut_date_dec = verifier_validite_date(decennale.get("date_validite"))
-    fichier_dec = fichiers_profil.get("decennale") or decennale.get("fichier")
+    fichier_dec = fichiers_profil.get("decennale") or decennale.get("fichier") or decennale.get("attestation_fichier")
     present_dec = verifier_presence_fichier(fichier_dec, dossiers_docs)
     exige_dec = bool(any(k in text_cand_str for k in ["decennale", "décennale", "assurance"]) or not has_exigences_cand)
     valide_dec = bool(present_dec and statut_date_dec in ["VALIDE", "A_RENOUVELER_SOUS_30J"])
@@ -336,14 +360,16 @@ def generer_checklist(
         statut_dec = "MANQUANT"
     elif statut_date_dec == "EXPIREE":
         statut_dec = "EXPIREE"
-    elif statut_date_dec in ["VALIDE", "A_RENOUVELER_SOUS_30J"]:
-        statut_dec = "VERIFIE_PRESENT"
-    else:
+    elif not valide_dec:
         statut_dec = "A_METTRE_A_JOUR"
+    elif not verifie_dec:
+        statut_dec = "A_COMPLETER"
+    else:
+        statut_dec = "VERIFIE_PRESENT"
     pieces_candidature.append({
         "piece": "Attestation d'assurance Décennale en cours de validité",
         "exige_par_marche": exige_dec,
-        "obligatoire": True,
+        "obligatoire": exige_dec,
         "present_disque": present_dec,
         "valide_juridiquement": valide_dec,
         "verifie_contenu": verifie_dec,
@@ -354,7 +380,7 @@ def generer_checklist(
 
     # 1.8. Assurance RC Pro - STRICTLY PHYSICAL PRESENCE ON DISK (no metadata bypass)
     statut_date_rc = verifier_validite_date(rc_pro.get("date_validite"))
-    fichier_rc = fichiers_profil.get("rc_pro") or rc_pro.get("fichier")
+    fichier_rc = fichiers_profil.get("rc_pro") or rc_pro.get("fichier") or rc_pro.get("attestation_fichier")
     present_rc = verifier_presence_fichier(fichier_rc, dossiers_docs)
     exige_rc = bool(any(k in text_cand_str for k in ["rc", "responsabilité", "responsabilite", "civile", "assurance"]) or not has_exigences_cand)
     valide_rc = bool(present_rc and statut_date_rc in ["VALIDE", "A_RENOUVELER_SOUS_30J"])
@@ -363,14 +389,16 @@ def generer_checklist(
         statut_rc = "MANQUANT"
     elif statut_date_rc == "EXPIREE":
         statut_rc = "EXPIREE"
-    elif statut_date_rc in ["VALIDE", "A_RENOUVELER_SOUS_30J"]:
-        statut_rc = "VERIFIE_PRESENT"
-    else:
+    elif not valide_rc:
         statut_rc = "A_METTRE_A_JOUR"
+    elif not verifie_rc:
+        statut_rc = "A_COMPLETER"
+    else:
+        statut_rc = "VERIFIE_PRESENT"
     pieces_candidature.append({
         "piece": "Attestation d'assurance Responsabilité Civile Professionnelle",
         "exige_par_marche": exige_rc,
-        "obligatoire": True,
+        "obligatoire": exige_rc,
         "present_disque": present_rc,
         "valide_juridiquement": valide_rc,
         "verifie_contenu": verifie_rc,
@@ -448,7 +476,7 @@ def generer_checklist(
     pieces_offre.append({
         "piece": "Acte d'Engagement (AE)",
         "exige_par_marche": exige_ae,
-        "obligatoire": True,
+        "obligatoire": exige_ae,
         "present_disque": present_ae,
         "valide_juridiquement": valide_ae,
         "verifie_contenu": verifie_ae,
@@ -467,7 +495,7 @@ def generer_checklist(
     pieces_offre.append({
         "piece": "Cadre de décomposition du prix chiffré (DPGF / BPU)",
         "exige_par_marche": exige_dpgf,
-        "obligatoire": True,
+        "obligatoire": exige_dpgf,
         "present_disque": present_dpgf,
         "valide_juridiquement": valide_dpgf,
         "verifie_contenu": verifie_dpgf,
@@ -486,7 +514,7 @@ def generer_checklist(
     pieces_offre.append({
         "piece": "Mémoire technique justificatif d'offre",
         "exige_par_marche": exige_memoire,
-        "obligatoire": True,
+        "obligatoire": exige_memoire,
         "present_disque": present_memoire,
         "valide_juridiquement": valide_memoire,
         "verifie_contenu": verifie_memoire,
@@ -505,7 +533,7 @@ def generer_checklist(
     pieces_offre.append({
         "piece": "Planning prévisionnel détaillé d'exécution",
         "exige_par_marche": exige_planning,
-        "obligatoire": True,
+        "obligatoire": exige_planning,
         "present_disque": present_planning,
         "valide_juridiquement": valide_planning,
         "verifie_contenu": verifie_planning,
@@ -515,23 +543,14 @@ def generer_checklist(
     })
 
     # 2.5. Visite des lieux
-    # Discrimination rigoureuse : visite obligatoire vs recommandée vs facultative
-    all_visite_txt = f"{text_offre_str} {text_cand_str}".lower().strip()
-    statut_visite_dce = "AUCUNE"
-    mots_negatifs = [
-        "non obligatoire", "pas obligatoire", "aucune visite", "sans visite", "non requise",
-        "non imposee", "non imposée", "non contraignante", "pas requise", "facultative",
-        "optionnelle", "libre", "laissée à l'appréciation", "laissée à l'initiative",
-        "a l'initiative", "à l'initiative"
-    ]
-    if any(w in all_visite_txt for w in mots_negatifs):
-        statut_visite_dce = "FACULTATIVE"
-    elif any(w in all_visite_txt for w in ["recommandee", "recommandée", "conseillee", "conseillée"]) and not any(w in all_visite_txt for w in ["obligatoire", "imperative", "impérative", "attestation"]):
-        statut_visite_dce = "RECOMMANDEE"
-    elif any(w in all_visite_txt for w in ["obligatoire", "imperative", "impérative", "attestation", "justificatif", "certificat", "visite"]):
-        statut_visite_dce = "OBLIGATOIRE"
+    # Discrimination rigoureuse unifiée : visite obligatoire vs recommandée vs facultative
+    try:
+        from go_nogo import qualifier_obligation_visite
+        statut_visite_dce, _ = qualifier_obligation_visite(analyse_data)
+    except Exception:
+        statut_visite_dce = "AUCUNE"
 
-    exige_visite = statut_visite_dce in ["OBLIGATOIRE", "RECOMMANDEE", "FACULTATIVE"]
+    exige_visite = bool(any(k in text_offre_str or k in text_cand_str for k in ["visite", "visites"]) or (statut_visite_dce in ["OBLIGATOIRE", "RECOMMANDEE"]))
     obligatoire_visite = (statut_visite_dce == "OBLIGATOIRE")
 
     fichier_visite = (
@@ -551,7 +570,7 @@ def generer_checklist(
     visite_post_echeance = False
     if date_visite_str and date_limite_remise_str:
         try:
-            from go_nogo import parser_date_et_echeance
+            from common import parser_date_et_echeance
             dt_v, _, _ = parser_date_et_echeance(date_visite_str)
             dt_l, _, _ = parser_date_et_echeance(date_limite_remise_str)
             if dt_v and dt_l and dt_v > dt_l:
@@ -560,16 +579,20 @@ def generer_checklist(
             pass
 
     valide_visite = bool(present_visite and visite_faite and not visite_post_echeance)
-    verifie_visite = bool(present_visite and (visite_site.get("signataire_mairie") or visite_site.get("date_visite")))
+    verifie_visite = bool(present_visite and (visite_site.get("signataire_mairie") or visite_site.get("date_visite") or visite_faite))
 
     if visite_post_echeance:
         statut_visite = "EXPIREE"
-    elif present_visite and visite_faite:
-        statut_visite = "VERIFIE_PRESENT"
     elif not present_visite:
         statut_visite = "MANQUANT" if obligatoire_visite else "A_OBTENIR"
-    else:
+    elif not visite_faite:
         statut_visite = "A_OBTENIR"
+    elif not valide_visite:
+        statut_visite = "A_METTRE_A_JOUR"
+    elif not verifie_visite:
+        statut_visite = "A_COMPLETER"
+    else:
+        statut_visite = "VERIFIE_PRESENT"
 
     pieces_offre.append({
         "piece": "Attestation de visite des lieux signée",
@@ -583,7 +606,7 @@ def generer_checklist(
         "description": f"Justificatif de visite sur site ({statut_visite_dce.lower()}) signé par la collectivité.",
         "action": (
             "Attestation officielle signée prête à être jointe au pli."
-            if (present_visite and visite_faite and valide_visite)
+            if (present_visite and visite_faite and valide_visite and verifie_visite)
             else (
                 "Visite effectuée après la date limite : attestation caduque."
                 if visite_post_echeance

@@ -41,8 +41,16 @@ def nominal_profil() -> Dict[str, Any]:
             "exercices": [{"chiffre_affaires_ht_euros": 2000000}]
         },
         "structure_couts": {"marge_nette_cible_pct": 12.0},
-        "assurances": {"decennale": {"numero_police": "POL-123456"}},
-        "visite_site": {"visite_effectuee": True},
+        "assurances": {
+            "decennale": {
+                "numero_police": "POL-123456",
+                "attestation_fichier": "attestation_assurance_decennale.pdf",
+            }
+        },
+        "visite_site": {
+            "visite_effectuee": True,
+            "attestation_fichier": "attestation_visite_signee.pdf",
+        },
     }
 
 
@@ -254,7 +262,12 @@ class TestOddThresholdsAndEdgeVerdicts:
     ):
         """If seuil_go = 1.0, even weak profiles (no quals, no refs) get GO provided no red flags."""
         weak_profil = {
-            "assurances": {"decennale": {"numero_police": "POL-123"}},
+            "assurances": {
+                "decennale": {
+                    "numero_police": "POL-123",
+                    "attestation_fichier": "attestation_assurance_decennale.pdf",
+                }
+            },
         }
         config = {
             "seuils_decision": {

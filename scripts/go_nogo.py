@@ -23,10 +23,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import yaml
 
 from common import (
+    DateTimeWithDateEquality,
     charger_json,
     ecrire_fichier_securise,
     ecrire_json,
     est_jour_ouvre,
+    parser_date_et_echeance,
     resoudre_chemin_securise,
     to_decimal,
 )
@@ -483,7 +485,12 @@ def qualifier_obligation_visite(analyse: Dict[str, Any]) -> Tuple[str, str]:
         "non obligatoire", "pas obligatoire", "aucune visite exigee", "aucune visite requise",
         "sans visite obligatoire", "non requise", "non imposee", "non contraignante",
         "pas requise", "facultative", "optionnelle", "libre", "laissée à l'appréciation",
-        "laissée à l'initiative", "a l'initiative", "à l'initiative"
+        "laissée à l'initiative", "a l'initiative", "à l'initiative",
+        "aucune visite", "pas de visite", "sans visite", "sans obligation de visite",
+        "aucune obligation de visite", "pas d obligation de visite", "pas d'obligation de visite",
+        "pas dimposition", "n est pas obligatoire", "nest pas obligatoire", "n'est pas obligatoire",
+        "n est imposee", "nest imposee", "n'est imposee", "n'est pas imposee", "n'est imposée",
+        "n est pas imposee"
     ]
     kw_recommandee = [
         "recommandee", "recommandée", "conseillee", "conseillée",
@@ -493,8 +500,9 @@ def qualifier_obligation_visite(analyse: Dict[str, Any]) -> Tuple[str, str]:
         "obligatoire", "prealable obligatoire", "préalable obligatoire", "imperative", "impérative",
         "indispensable", "requise", "exigee", "exigée", "sous peine de rejet",
         "sous peine d irrecevabilite", "sous peine d'irrecevabilité", "condition de recevabilite",
-        "condition de recevabilité", "attestation de visite", "certificat de visite",
-        "recepisse de visite", "justificatif de visite", "preuve de visite",
+        "condition de recevabilité", "attestation de visite", "attestation visite", "certificat de visite",
+        "certificat visite", "recepisse de visite", "recepisse visite", "justificatif de visite",
+        "justificatif visite", "preuve de visite", "preuve visite",
         "visite obligatoire sur site", "visite des lieux impérative", "visite sur place impérative"
     ]
 
@@ -534,26 +542,28 @@ def qualifier_obligation_visite(analyse: Dict[str, Any]) -> Tuple[str, str]:
         return "AUCUNE", ""
 
     # Évaluation priorisée :
-    # 1. Vérification si une formulation négative ou de liberté est présente
+    # 1. Vérification d'une obligation stricte sur le marché (clause contractuelle obligatoire prioritaire)
+    # Une mention obligatoire dans une clause contractuelle prime sur une éventuelle mention facultative isolée.
+    for t in mentions_visite:
+        t_norm = _normaliser_texte(t)
+        # Ne pas traiter comme obligatoire si la phrase contient une négation explicite (ex: "non obligatoire")
+        if any(kw in t_norm for kw in kw_obligatoire) and not any(kw in t_norm for kw in kw_facultative):
+            return "OBLIGATOIRE", f"Visite obligatoire exigée : '{t}'"
+
+    # 2. Vérification si une formulation négative ou de liberté est présente
     for t in mentions_visite:
         t_norm = _normaliser_texte(t)
         if any(kw in t_norm for kw in kw_facultative):
             return "FACULTATIVE", f"Visite déclarée facultative ou libre : '{t}'"
 
-    # 2. Vérification d'une recommandation pure (non obligatoire)
+    # 3. Vérification d'une recommandation pure (non obligatoire)
     for t in mentions_visite:
         t_norm = _normaliser_texte(t)
         if any(kw in t_norm for kw in kw_recommandee) and not any(kw in t_norm for kw in kw_obligatoire):
             return "RECOMMANDEE", f"Visite recommandée mais non éliminatoire : '{t}'"
 
-    # 3. Vérification d'une obligation stricte
-    for t in mentions_visite:
-        t_norm = _normaliser_texte(t)
-        if any(kw in t_norm for kw in kw_obligatoire):
-            return "OBLIGATOIRE", f"Visite obligatoire exigée : '{t}'"
-
-    # 4. Par défaut si le mot visite apparaît sans mention d'obligation
-    return "RECOMMANDEE", f"Mention de visite identifiée sans clause éliminatoire : '{mentions_visite[0]}'"
+    # 4. Par défaut si le mot visite apparaît sans mention d'obligation ni recommandation
+    return "FACULTATIVE", f"Mention de visite identifiée sans clause éliminatoire : '{mentions_visite[0]}'"
 
 
 def detecter_obligation_visite(analyse: Dict[str, Any]) -> Tuple[bool, str]:
@@ -638,9 +648,11 @@ def verifier_visite_effectuee_profil(
     date_limite_dt: Optional[datetime.datetime] = None,
     dossiers_docs: Optional[List[Union[str, Path]]] = None,
 ) -> Tuple[bool, str, Optional[str]]:
-    """Vérifie si la visite sur site obligatoire a été réalisée, attestée et dans les délais.
+    """Vérifie si la visite sur site obligatoire a été réalisée, attestée physiquement et dans les délais.
 
     Retourne : (est_validee, motif, code_erreur_optionnel).
+    Règle absolue : une date ou un booléen seul ne valide JAMAIS une visite obligatoire.
+    Une attestation physique de visite sur le disque est strictement obligatoire.
     """
     if not isinstance(profil, dict):
         return False, "Profil entreprise absent ou invalide.", "VISITE_OBLIGATOIRE_MANQUEE"
@@ -649,26 +661,26 @@ def verifier_visite_effectuee_profil(
     if not isinstance(v_info, dict):
         v_info = {}
 
-    visite_faite = (
-        v_info.get("visite_effectuee") is True
-        or v_info.get("effectuee") is True
-        or profil.get("visite_effectuee") is True
-        or profil.get("visite_site_effectuee") is True
-    )
-
     fich_attest = v_info.get("attestation_fichier") or (
         profil.get("fichiers_justificatifs", {}).get("attestation_visite")
         if isinstance(profil.get("fichiers_justificatifs"), dict)
         else None
     )
-    fich_present = False
-    if fich_attest:
-        fich_present = verifier_presence_fichier_sur_disque(fich_attest, dossiers_docs)
-        if not fich_present:
-            return False, f"Fichier d'attestation de visite déclaré ('{fich_attest}') introuvable sur disque.", "VISITE_OBLIGATOIRE_MANQUEE"
 
-    if not visite_faite and not fich_present and not v_info.get("date_visite"):
-        return False, "Aucune attestation ni preuve de visite enregistrée dans le profil entreprise.", "VISITE_OBLIGATOIRE_MANQUEE"
+    if not fich_attest:
+        return (
+            False,
+            "Aucun fichier d'attestation physique de visite n'est renseigné dans le profil (une date ou un booléen seul ne valide jamais une visite obligatoire).",
+            "VISITE_OBLIGATOIRE_MANQUEE",
+        )
+
+    fich_present = verifier_presence_fichier_sur_disque(fich_attest, dossiers_docs)
+    if not fich_present:
+        return (
+            False,
+            f"Fichier d'attestation de visite déclaré ('{fich_attest}') introuvable sur disque.",
+            "VISITE_OBLIGATOIRE_MANQUEE",
+        )
 
     # Vérification d'antériorité par rapport à la date limite
     date_visite_raw = v_info.get("date_visite")
@@ -681,7 +693,7 @@ def verifier_visite_effectuee_profil(
                 "VISITE_POSTERIEURE_ECHEANCE",
             )
 
-    return True, "Visite effectuée et justifiée.", None
+    return True, "Visite effectuée et justifiée par attestation physique sur disque.", None
 
 
 # =============================================================================
@@ -817,26 +829,23 @@ def verifier_assurances_go_nogo(
         or (fich_justifs.get("decennale") if isinstance(fich_justifs, dict) else None)
     )
 
-    if not num_pol and not fich_assur:
+    # Règle absolue P0.2 : Un numéro de police sans attestation physique ne peut jamais valider l'assurance
+    if not fich_assur:
         drapeaux.append({
             "id": "DEFAUT_ASSURANCE_DECENNALE",
             "code": "DEFAUT_ASSURANCE_DECENNALE",
-            "motif": "Ni numéro de police ni fichier d'attestation décennale n'est renseigné.",
-            "description": "Ni numéro de police ni fichier d'attestation décennale n'est renseigné.",
+            "motif": "Aucun fichier d'attestation physique d'assurance décennale n'est renseigné dans le profil entreprise (un numéro de police seul ne constitue pas une preuve de couverture).",
+            "description": "Aucun fichier d'attestation physique d'assurance décennale n'est renseigné dans le profil entreprise (un numéro de police seul ne constitue pas une preuve de couverture).",
             "bloquant": True,
         })
-        return drapeaux
-
-    # Vérification fichier physique si déclaré
-    if fich_assur:
-        if not verifier_presence_fichier_sur_disque(fich_assur, dossiers_docs):
-            drapeaux.append({
-                "id": "ATTESTATION_DECENNALE_INEXISTANTE_DISQUE",
-                "code": "ATTESTATION_DECENNALE_INEXISTANTE_DISQUE",
-                "motif": f"Fichier d'attestation décennale déclaré ('{fich_assur}') introuvable physiquement sur le disque.",
-                "description": f"Fichier d'attestation décennale déclaré ('{fich_assur}') introuvable physiquement sur le disque.",
-                "bloquant": True,
-            })
+    elif not verifier_presence_fichier_sur_disque(fich_assur, dossiers_docs):
+        drapeaux.append({
+            "id": "ATTESTATION_DECENNALE_INEXISTANTE_DISQUE",
+            "code": "ATTESTATION_DECENNALE_INEXISTANTE_DISQUE",
+            "motif": f"Fichier d'attestation décennale déclaré ('{fich_assur}') introuvable physiquement sur le disque.",
+            "description": f"Fichier d'attestation décennale déclaré ('{fich_assur}') introuvable physiquement sur le disque.",
+            "bloquant": True,
+        })
 
     # Vérification péremption date de validité
     date_val = decennale.get("date_validite") or decennale.get("date_echeance")

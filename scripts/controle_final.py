@@ -24,6 +24,7 @@ from common import (
     ecrire_fichier_securise,
     ecrire_json,
     formater_montant_fr,
+    parser_date_et_echeance,
     resoudre_chemin_securise,
     to_decimal,
 )
@@ -56,34 +57,9 @@ def auditer_dossier(
         or ""
     )
     if date_limite_str:
-        # Analyse format ISO ou format français avec heures et minutes
-        dt_limite = None
-        # ISO
-        m_iso = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2})[:hH](\d{1,2})(?:[:\.](\d{1,2}))?)?", str(date_limite_str))
-        if m_iso:
-            a, m, j = int(m_iso.group(1)), int(m_iso.group(2)), int(m_iso.group(3))
-            h = int(m_iso.group(4)) if m_iso.group(4) else 18
-            mn = int(m_iso.group(5)) if m_iso.group(5) else 0
-            try:
-                dt_limite = datetime.datetime(a, m, j, h, mn)
-            except ValueError:
-                pass
-        if dt_limite is None:
-            # Français
-            m_fr = re.search(r"(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})(?:\s+[àa]\s+(\d{1,2})[hH:](\d{0,2}))?", str(date_limite_str))
-            if m_fr:
-                j, m, a = int(m_fr.group(1)), int(m_fr.group(2)), int(m_fr.group(3))
-                if a < 100:
-                    a += 2000
-                h = int(m_fr.group(4)) if m_fr.group(4) else 18
-                mn = int(m_fr.group(5)) if m_fr.group(5) else 0
-                try:
-                    dt_limite = datetime.datetime(a, m, j, h, mn)
-                except ValueError:
-                    pass
-
+        dt_limite, _, est_depassee = parser_date_et_echeance(date_limite_str, maintenant=now)
         if dt_limite is not None:
-            if now > dt_limite:
+            if est_depassee:
                 blocages.append({
                     "code": "DATE_LIMITE_DEPASSEE",
                     "gravite": "BLOQUANT",
@@ -182,7 +158,7 @@ def auditer_dossier(
         controles_valides.append("Aucune balise [À FOURNIR] résiduelle détectée dans le mémoire technique.")
 
     # 6. Complétude des pièces obligatoires de la checklist (Candidature ET Offre)
-    # Règle Fail-Closed : une checklist vide ou absente ne doit jamais être validée par défaut
+    # Règle Fail-Closed P0 : une checklist vide, absente ou mal formée doit TOUJOURS bloquer
     STATUTS_INCOMPLETS = {
         "MANQUANT", "A_FOURNIR", "EXPIREE", "A_COMPLETER", "A_METTRE_A_JOUR",
         "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR"
@@ -196,16 +172,27 @@ def auditer_dossier(
         })
     else:
         candidature_pieces = checklist.get("candidature")
-        if candidature_pieces is None or (isinstance(candidature_pieces, list) and len(candidature_pieces) == 0):
+        if not isinstance(candidature_pieces, list) or len(candidature_pieces) == 0:
             blocages.append({
                 "code": "CHECKLIST_CANDIDATURE_VIDE",
                 "gravite": "BLOQUANT",
-                "description": "Aucune pièce de candidature n'a été répertoriée ou vérifiée dans la checklist.",
+                "description": "Section candidature absente, vide ou mal formée dans la checklist.",
             })
         else:
+            # Contrôle de cohérence du modèle 4D sur chaque pièce
+            for p in candidature_pieces:
+                if isinstance(p, dict):
+                    if p.get("statut") == "VERIFIE_PRESENT":
+                        if p.get("present_disque") is False or p.get("valide_juridiquement") is False or p.get("verifie_contenu") is False:
+                            blocages.append({
+                                "code": "INCOHERENCE_STATUT_4D",
+                                "gravite": "BLOQUANT",
+                                "description": f"Incohérence 4D sur la pièce '{p.get('piece')}': le statut VERIFIE_PRESENT est contradictoire avec une dimension invalidée.",
+                            })
+
             manquantes_cand = [
                 p["piece"] for p in candidature_pieces 
-                if isinstance(p, dict) and p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
+                if isinstance(p, dict) and p.get("obligatoire", True) and p.get("exige_par_marche", True) and p.get("statut") in STATUTS_INCOMPLETS
             ]
             if manquantes_cand:
                 blocages.append({
@@ -217,16 +204,27 @@ def auditer_dossier(
                 controles_valides.append("Dossier de candidature complet (DC1, DC2, Kbis, attestations fiscales, sociales et assurances valides).")
 
         offre_pieces = checklist.get("offre")
-        if offre_pieces is None or (isinstance(offre_pieces, list) and len(offre_pieces) == 0):
+        if not isinstance(offre_pieces, list) or len(offre_pieces) == 0:
             blocages.append({
                 "code": "CHECKLIST_OFFRE_VIDE",
                 "gravite": "BLOQUANT",
-                "description": "Aucune pièce d'offre n'a été répertoriée ou vérifiée dans la checklist.",
+                "description": "Section offre absente, vide ou mal formée dans la checklist.",
             })
         else:
+            # Contrôle de cohérence du modèle 4D sur chaque pièce de l'offre
+            for p in offre_pieces:
+                if isinstance(p, dict):
+                    if p.get("statut") == "VERIFIE_PRESENT":
+                        if p.get("present_disque") is False or p.get("valide_juridiquement") is False or p.get("verifie_contenu") is False:
+                            blocages.append({
+                                "code": "INCOHERENCE_STATUT_4D",
+                                "gravite": "BLOQUANT",
+                                "description": f"Incohérence 4D sur la pièce d'offre '{p.get('piece')}': le statut VERIFIE_PRESENT est contradictoire avec une dimension invalidée.",
+                            })
+
             manquantes_offre = [
                 p["piece"] for p in offre_pieces 
-                if isinstance(p, dict) and p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
+                if isinstance(p, dict) and p.get("obligatoire", True) and p.get("exige_par_marche", True) and p.get("statut") in STATUTS_INCOMPLETS
             ]
             if manquantes_offre:
                 blocages.append({
