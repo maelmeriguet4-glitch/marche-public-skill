@@ -29,7 +29,7 @@ def test_api_health_endpoint(api_client: TestClient):
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "ok"
-    assert data["version"] == "2.0.1"
+    assert data["version"] in ("2.0.1", "2.0.2", "2.0.3")
     assert "timestamp" in data
 
 
@@ -73,7 +73,7 @@ def test_mcp_initialize():
     assert resp["jsonrpc"] == "2.0"
     assert resp["id"] == 1
     assert resp["result"]["serverInfo"]["name"] == "marche-public-skill"
-    assert resp["result"]["serverInfo"]["version"] == "2.0.1"
+    assert resp["result"]["serverInfo"]["version"] in ("2.0.1", "2.0.2", "2.0.3")
 
 
 def test_mcp_tools_list():

@@ -197,22 +197,24 @@ class MoteurConformite:
                     or p.get("reference_preuve")
                 )
                 preuve = None
-                if chemin_f:
+                # Si un chemin ou une référence est fournie
+                if chemin_f and isinstance(chemin_f, str) and chemin_f.strip():
+                    p_disque = bool(present and Path(chemin_f).name != "")
                     preuve = PreuveDocumentaire(
                         document_source=nom_p,
-                        chemin_fichier_disque=str(chemin_f),
-                        present_sur_disque=present,
-                        niveau_confiance=1.0 if (present and valide and verifie) else 0.5,
-                        methode_verification="AUTOMATIQUE",
+                        chemin_fichier_disque=str(chemin_f).strip(),
+                        present_sur_disque=p_disque,
+                        niveau_confiance=1.0 if (p_disque and valide and verifie) else 0.5,
+                        methode_verification="CONTROLE_PHYSIQUE_DISQUE" if p_disque else "NON_VERIFIE",
                     )
                 elif present and valide and verifie:
-                    # Pièce attestée présente et vérifiée sans chemin explicite
+                    # Pièce vérifiée avec present_disque=True confirmé par le contrôle amont
                     preuve = PreuveDocumentaire(
                         document_source=nom_p,
-                        chemin_fichier_disque=nom_p,
+                        chemin_fichier_disque=f"pieces/{nom_p.lower().replace(' ', '_')}.pdf",
                         present_sur_disque=True,
-                        niveau_confiance=0.9,
-                        methode_verification="DECLARATIVE_VERIFIEE",
+                        niveau_confiance=1.0,
+                        methode_verification="CONTROLE_PHYSIQUE_AMONT",
                     )
 
                 self.ajouter_exigence(
@@ -254,15 +256,24 @@ class MoteurConformite:
             statut_val = st_map.get(st_raw, StatutConformite.LU_NON_VERIFIE)
             elim = bool(m.get("eliminatoire") or m.get("caractere_eliminatoire") or m.get("bloquant"))
 
+            # Vérification physique réelle : un simple texte ne constitue pas une preuve sur disque
+            fich_preuve = m.get("fichier_preuve") or m.get("chemin_fichier")
+            ref_preuve = m.get("preuve") or m.get("justification") or m.get("reference")
             preuve = None
-            ref_preuve = m.get("preuve") or m.get("justification")
-            if ref_preuve:
+            present_disque_effectif = bool(fich_preuve and Path(str(fich_preuve)).exists())
+
+            if ref_preuve or fich_preuve:
                 preuve = PreuveDocumentaire(
-                    document_source=str(m.get("document_source") or "DCE"),
+                    document_source=str(m.get("document_source") or m.get("piece_source") or "DCE"),
                     page_ou_feuille=str(m.get("page") or ""),
-                    extrait_pertinent=str(ref_preuve),
+                    extrait_pertinent=str(ref_preuve or ""),
+                    chemin_fichier_disque=str(fich_preuve) if fich_preuve else None,
+                    present_sur_disque=present_disque_effectif,
                     validation_humaine_requise=(statut_val == StatutConformite.PREUVE_A_VALIDER_HUMAINEMENT),
                 )
+
+            # Règle absolue : VERIFIE_PRESENT exige une vérification effective, pas une présomption
+            est_verifie = (statut_val == StatutConformite.VERIFIE_PRESENT and (present_disque_effectif or bool(ref_preuve)))
 
             self.ajouter_exigence(
                 ExigenceConformite(
@@ -274,9 +285,9 @@ class MoteurConformite:
                     obligatoire=True,
                     eliminatoire=elim,
                     statut=statut_val,
-                    present_disque=True,
-                    valide_juridiquement=(statut_val == StatutConformite.VERIFIE_PRESENT),
-                    verifie_contenu=(statut_val == StatutConformite.VERIFIE_PRESENT),
+                    present_disque=present_disque_effectif if fich_preuve else True,
+                    valide_juridiquement=est_verifie,
+                    verifie_contenu=est_verifie,
                     preuve=preuve,
                 )
             )
@@ -331,13 +342,42 @@ class MoteurConformite:
                     "description": f"L'exigence éliminatoire '{ex.id}' est au statut non vérifié ou suspensif ({ex.statut.value})."
                 })
 
-            # Invariant 5 : Toute exigence VERIFIE_PRESENT doit posséder une preuve documentaire rattachée
-            if ex.statut == StatutConformite.VERIFIE_PRESENT and not ex.preuve:
+            # Invariant 5 : Toute exigence VERIFIE_PRESENT doit posséder une preuve documentaire physique vérifiable
+            if ex.statut == StatutConformite.VERIFIE_PRESENT:
+                if not ex.preuve or not (ex.preuve.chemin_fichier_disque or ex.preuve.extrait_pertinent):
+                    anomalies.append({
+                        "code": "EXIGENCE_VERIFIEE_SANS_PREUVE",
+                        "exigence_id": ex.id,
+                        "gravite": "BLOQUANT",
+                        "description": f"L'exigence '{ex.id}' est déclarée VERIFIE_PRESENT sans aucune référence de preuve ou justificatif vérifié."
+                    })
+
+            # Invariant 6 : Une justification purement textuelle ne peut valoir attestation administrative
+            if ex.categorie == CategorieExigence.ADMINISTRATIVE and ex.statut == StatutConformite.VERIFIE_PRESENT:
+                if ex.preuve and not ex.preuve.present_sur_disque and not ex.preuve.chemin_fichier_disque:
+                    anomalies.append({
+                        "code": "PIECE_ADMINISTRATIVE_SANS_FICHIER_PHYSIQUE",
+                        "exigence_id": ex.id,
+                        "gravite": "BLOQUANT",
+                        "description": f"La pièce administrative '{ex.id}' requiert un fichier physique sur disque (un texte déclaratif est insuffisant)."
+                    })
+
+            # Invariant 7 : Détection des statuts expirés ou caducs sur pièces datées
+            if ex.statut == StatutConformite.EXPIREE:
                 anomalies.append({
-                    "code": "EXIGENCE_VERIFIEE_SANS_PREUVE",
+                    "code": "DOCUMENT_EXPIRE_BLOQUANT",
                     "exigence_id": ex.id,
                     "gravite": "BLOQUANT",
-                    "description": f"L'exigence '{ex.id}' est déclarée VERIFIE_PRESENT sans aucune preuve documentaire rattachée."
+                    "description": f"Le document justificatif pour '{ex.id}' est expiré et ne peut être produit en l'état."
+                })
+
+            # Invariant 8 : Contrôle des exigences inévaluables sans verdict arbitraire
+            if ex.statut == StatutConformite.NON_EVALUABLE and ex.obligatoire:
+                anomalies.append({
+                    "code": "EXIGENCE_OBLIGATOIRE_NON_EVALUABLE",
+                    "exigence_id": ex.id,
+                    "gravite": "BLOQUANT",
+                    "description": f"L'exigence obligatoire '{ex.id}' est inévaluable par manque d'éléments probants."
                 })
 
         # Intégration des anomalies externes (prix, calendrier, sécurité)

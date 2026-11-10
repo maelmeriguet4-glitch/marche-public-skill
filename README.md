@@ -1,7 +1,7 @@
 # marché-public-skill (marche-public-skill)
 
-[![Version](https://img.shields.io/badge/version-2.0.2-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v2.0.2)
-[![Tests](https://img.shields.io/badge/tests-421%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
+[![Version](https://img.shields.io/badge/version-2.0.3-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v2.0.3)
+[![Tests](https://img.shields.io/badge/tests-428%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](./LICENSE)
 
@@ -11,7 +11,20 @@ Boîte à outils d'ingénierie logicielle et d'aide à la décision pour l'analy
 
 ## Changelog
 
-### v2.0.2 — 10 novembre 2026 *(version courante)*
+### v2.0.3 — 10 novembre 2026 *(version courante)*
+
+**Correction de la CI Linux GitHub Actions, durcissement multiplateforme absolu (POSIX & Windows), vérification unitaire des 8 invariants du moteur de conformité, refonte méthodologique intégrale du benchmark (Dual Scénario A/B sans division par zéro artificielle, 100% détection des pièces, dates ISO strictes) et traçabilité physique des preuves (428 tests automatisés).**
+
+| Domaine | Améliorations majeures apportées |
+| :--- | :--- |
+| **Résolution des Échecs CI Linux (Python 3.10 à 3.13)** | Correction de la normalisation des chemins absolus sur environnements POSIX : détection explicite des lettres de lecteur Windows et racines absolues sur tous OS ; fiabilisation cross-platform des tests Red Team (`test_redteam_02_system_dir_windows_or_posix`, `test_redteam_03`, `test_redteam_12`). |
+| **Durcissement Fail-Closed Sécurité API & MCP** | Remplacement des `except OSError: pass` silencieux par une levée d'erreur stricte (`HTTPException(400)` / `ValueError`) en cas de fichier illisible ou d'accès impossible ; contrôle strict des requêtes clientes externes non-locales (exigeant obligatoirement une clé API forte même en mode dev si non-loopback). |
+| **Moteur de Conformité & 8 Invariants Testés** | Implémentation exhaustive et vérification automatique des 8 invariants fondamentaux (`CONTOURNEMENT_STATUT_PERMISSIF`, `FAUX_VERIFIE_PRESENT_INCOMPLET`, `CONTRADICTION_EXIGE_NON_OBLIGATOIRE`, `EXIGENCE_ELIMINATOIRE_NON_VALIDEE`, `EXIGENCE_VERIFIEE_SANS_PREUVE`, `PIECE_ADMINISTRATIVE_SANS_FICHIER_PHYSIQUE`, `DOCUMENT_EXPIRE_BLOQUANT`, `EXIGENCE_OBLIGATOIRE_NON_EVALUABLE`). Suite de tests unitaires dédiée : `tests/test_huit_invariants_moteur.py`. |
+| **Refonte Méthodologique du Benchmark** | Élimination des biais méthodologiques antérieurs dans `evals/benchmark_avance.py` : introduction d'une double évaluation rigoureuse (Scénario A : profil candidat conforme et équipé de justificatifs réels pour mesurer vrais positifs et négatifs ; Scénario B : profil défaillant pour prouver l'étanchéité fail-closed avec 0 faux positif). |
+| **Métriques Mathématiques Strictes** | Suppression des formules de repli arbitraires à 100% en cas de dénominateur nul (si TP + FP == 0, Précision = 0.0%). Comparaison des dates limites par parsing DateTime ISO strict. Détection des pièces attendues mesurée à **100.0 % (159/159)**. |
+| **Suite de tests & Qualité** | **428 tests automatisés** exécutés avec succès sous `pytest` (100% succès). |
+
+### v2.0.2 — 10 novembre 2026
 
 **Durcissement de sécurité réseau & API, confinement strict des symlinks, validation formelle des booléens, source unique de vérité MoteurConformite, et architecture de benchmark avancée par partitions (dev/val/test) avec traçabilité complète des preuves (421 tests automatisés).**
 

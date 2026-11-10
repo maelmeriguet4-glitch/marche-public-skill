@@ -25,17 +25,24 @@ def test_redteam_01_traversal_etc_passwd():
     assert exc_info.value.status_code in (403, 400)
 
 
-# 2. Chemin Windows vers un répertoire système (C:\Windows\System32)
-def test_redteam_02_system_dir_windows():
+# 2. Chemin vers un répertoire système (Windows ou Linux/POSIX)
+def test_redteam_02_system_dir_windows_or_posix():
+    path_test = "C:\\Windows\\System32\\cmd.exe" if sys.platform == "win32" else "/etc/shadow"
     with pytest.raises(HTTPException) as exc_info:
-        resoudre_et_securiser_chemin("C:\\Windows\\System32\\cmd.exe")
+        resoudre_et_securiser_chemin(path_test)
     assert exc_info.value.status_code == 403
 
 
 # 3. Chemin absolu extérieur aux racines autorisées
 def test_redteam_03_absolute_path_outside_allowed_roots():
+    import tempfile
+    ext_dir = Path(tempfile.gettempdir()).resolve()
+    # Si le tempdir est dans un volume différent ou en dehors de REPO_ROOT
+    ext_path = str(ext_dir / "external_unauthorized_folder" / "secret.txt")
+    if sys.platform != "win32":
+        ext_path = "/var/tmp/external_secret.txt"
     with pytest.raises(HTTPException) as exc_info:
-        resoudre_et_securiser_chemin("C:\\some_arbitrary_external_folder\\secret.txt")
+        resoudre_et_securiser_chemin(ext_path)
     assert exc_info.value.status_code == 403
 
 
@@ -138,8 +145,9 @@ def test_redteam_11_unusual_characters():
 
 # 12. Accès MCP à un fichier extérieur aux racines
 def test_redteam_12_mcp_access_outside_root():
+    ext_path = "C:/some_outside_dir/document.pdf" if sys.platform == "win32" else "/opt/outside_dir/document.pdf"
     with pytest.raises(PermissionError):
-        _resoudre_chemin_mcp("C:/some_outside_dir/document.pdf")
+        _resoudre_chemin_mcp(ext_path)
 
 
 # 13. Accès API sans authentification en configuration réseau / production
@@ -236,3 +244,35 @@ def test_redteam_18_strict_boolean_validation():
 
     with pytest.raises(TypeError):
         parse_bool_strict(None)
+
+
+# 19. Requête cliente externe (non-loopback) refusée en dev sans authentification
+def test_redteam_19_api_non_local_client_requires_key():
+    from unittest.mock import MagicMock
+    from scripts import api
+
+    mock_request = MagicMock()
+    mock_request.client.host = "192.168.1.50"
+
+    old_env = api.API_ENVIRONMENT
+    old_key = api.API_KEY_ENV
+    try:
+        api.API_ENVIRONMENT = "development"
+        api.API_KEY_ENV = "a_valid_secret_key_16_chars"
+
+        # Sans clé : 401
+        with pytest.raises(HTTPException) as exc_info:
+            api.verifier_authentification(request=mock_request, x_api_key=None)
+        assert exc_info.value.status_code == 401
+
+        # Avec mauvaise clé : 401
+        with pytest.raises(HTTPException) as exc_info:
+            api.verifier_authentification(request=mock_request, x_api_key="bad_token")
+        assert exc_info.value.status_code == 401
+
+        # Avec bonne clé : succès
+        res = api.verifier_authentification(request=mock_request, x_api_key="a_valid_secret_key_16_chars")
+        assert res is True
+    finally:
+        api.API_ENVIRONMENT = old_env
+        api.API_KEY_ENV = old_key

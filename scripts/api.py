@@ -28,7 +28,7 @@ REPO_ROOT = SCRIPTS_DIR.parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Security, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Security, status
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
@@ -79,14 +79,28 @@ SYSTEM_FORBIDDEN_PATHS = [
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-def verifier_authentification(x_api_key: Optional[str] = Security(api_key_header)) -> bool:
-    """Vérifie l'authentification par clé API avec comparaison en temps constant et gestion d'environnement."""
+def verifier_authentification(
+    request: Request,
+    x_api_key: Optional[str] = Security(api_key_header),
+) -> bool:
+    """Vérifie l'authentification par clé API avec comparaison en temps constant et contrôle strict d'interface réseau."""
     import secrets
 
-    # En environnement de production ou réseau, une clé d'API valide est strictement obligatoire
-    if API_ENVIRONMENT in ("production", "prod", "network"):
+    # Gestion de compatibilité avec appels directs (x_api_key passé en premier argument ou None)
+    if isinstance(request, str):
+        x_api_key = request
+        request = None
+    elif not isinstance(x_api_key, str):
+        x_api_key = None
+
+    # Détection de l'origine réseau du client
+    client_host = getattr(getattr(request, "client", None), "host", "127.0.0.1")
+    est_boucle_locale = client_host in ("127.0.0.1", "::1", "localhost", "testclient")
+
+    # En environnement de production, réseau, ou si la requête provient d'une IP non-locale
+    if API_ENVIRONMENT in ("production", "prod", "network") or not est_boucle_locale:
         if not API_KEY_ENV or len(API_KEY_ENV) < 16:
-            logger.error("Configuration de production incomplète : MARCHE_PUBLIC_API_KEY absente ou trop courte (>= 16 chars).")
+            logger.error("Configuration d'accès non-local incomplète : MARCHE_PUBLIC_API_KEY absente ou trop courte (>= 16 chars).")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Erreur de configuration serveur : authentification réseau non configurée de façon sécurisée.",
@@ -98,7 +112,7 @@ def verifier_authentification(x_api_key: Optional[str] = Security(api_key_header
             )
         return True
 
-    # En environnement de développement local (127.0.0.1)
+    # En environnement de développement local (127.0.0.1) avec clé configurée
     if API_KEY_ENV:
         if not x_api_key or not secrets.compare_digest(x_api_key, API_KEY_ENV):
             raise HTTPException(
@@ -125,7 +139,7 @@ def resoudre_et_securiser_chemin(
 
     # 1. Détection des encodages alternatifs et traversée de répertoire explicite
     import urllib.parse
-    chemin_normalise = urllib.parse.unquote(chemin_str)
+    chemin_normalise = urllib.parse.unquote(chemin_str).strip()
     
     # Remplacer les antislashs pour normaliser les parties
     parties = Path(chemin_normalise.replace("\\", "/")).parts
@@ -135,9 +149,17 @@ def resoudre_et_securiser_chemin(
             detail="Accès interdit : tentative de traversée de répertoire détectée ('..').",
         )
 
-    # 2. Résolution canonique (résolution des liens symboliques et normalisation absolue)
+    # Détection explicite de tentative d'accès à une lettre de lecteur Windows ou racine absolue POSIX
     p_init = Path(chemin_normalise)
-    if not p_init.is_absolute():
+    est_absolu_explicite = (
+        p_init.is_absolute()
+        or (len(chemin_normalise) >= 2 and chemin_normalise[1] == ":")
+        or chemin_normalise.startswith("/")
+        or chemin_normalise.startswith("\\")
+    )
+
+    # 2. Résolution canonique (résolution des liens symboliques et normalisation absolue)
+    if not est_absolu_explicite:
         p_resolu = (REPO_ROOT / p_init).resolve()
     else:
         p_resolu = p_init.resolve()
@@ -205,18 +227,22 @@ def resoudre_et_securiser_chemin(
             taille = p_resolu.stat().st_size
             if taille > MAX_FILE_SIZE_BYTES:
                 raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                     detail=f"Fichier trop volumineux ({taille} octets). La limite autorisée est de {MAX_FILE_SIZE_BYTES} octets.",
                 )
-        except OSError:
-            pass
+        except OSError as err:
+            logger.error(f"Erreur d'accès aux métadonnées du fichier {p_resolu}: {err}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Erreur d'accès ou lecture impossible du fichier spécifié.",
+            )
 
     return p_resolu
 
 
 app = FastAPI(
     title="Marché Public Skill — API d'Audit & Décision BTP",
-    version="2.0.2",
+    version="2.0.3",
     description="API REST d'ingénierie et d'aide à la décision pour marchés publics de travaux.",
 )
 
@@ -227,7 +253,7 @@ app = FastAPI(
 
 class HealthResponse(BaseModel):
     status: str = "ok"
-    version: str = "2.0.1"
+    version: str = "2.0.3"
     timestamp: str = Field(default_factory=lambda: datetime.datetime.now().isoformat())
     moteur: str = "marche-public-skill"
     securite_auth_activee: bool = bool(API_KEY_ENV)

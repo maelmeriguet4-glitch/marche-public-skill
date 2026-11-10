@@ -83,13 +83,20 @@ def _resoudre_chemin_mcp(
         raise ValueError("Le chemin fourni est vide ou invalide.")
 
     import urllib.parse
-    chemin_normalise = urllib.parse.unquote(p_str)
+    chemin_normalise = urllib.parse.unquote(p_str).strip()
     parties = Path(chemin_normalise.replace("\\", "/")).parts
     if ".." in parties:
         raise PermissionError("Accès interdit : traversée de répertoire détectée ('..').")
 
     p_init = Path(chemin_normalise)
-    if not p_init.is_absolute():
+    est_absolu_explicite = (
+        p_init.is_absolute()
+        or (len(chemin_normalise) >= 2 and chemin_normalise[1] == ":")
+        or chemin_normalise.startswith("/")
+        or chemin_normalise.startswith("\\")
+    )
+
+    if not est_absolu_explicite:
         p_resolu = (REPO_ROOT / p_init).resolve()
     else:
         p_resolu = p_init.resolve()
@@ -133,8 +140,9 @@ def _resoudre_chemin_mcp(
             taille = p_resolu.stat().st_size
             if taille > MAX_FILE_SIZE_BYTES:
                 raise ValueError(f"Fichier trop volumineux ({taille} octets). Limite autorisée : {MAX_FILE_SIZE_BYTES} octets.")
-        except OSError:
-            pass
+        except OSError as err:
+            logger.error(f"Erreur d'accès fichier MCP {p_resolu}: {err}")
+            raise ValueError(f"Erreur d'accès ou fichier illisible : '{p_str}'.")
 
     return p_resolu
 
@@ -344,7 +352,7 @@ def traiter_requete(requete: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                 },
                 "serverInfo": {
                     "name": "marche-public-skill",
-                    "version": "2.0.1"
+                    "version": "2.0.3"
                 }
             }
         }
