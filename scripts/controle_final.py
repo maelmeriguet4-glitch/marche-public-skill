@@ -37,44 +37,71 @@ def auditer_dossier(
     prix: Dict[str, Any],
     memoire_texte: str,
     delai_ae_semaines: int,
-    montant_ae_ht: Decimal
+    montant_ae_ht: Decimal,
+    go_nogo: Optional[Dict[str, Any]] = None,
+    matrice: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
+    maintenant: Optional[datetime.datetime] = None,
 ) -> Dict[str, Any]:
     """Exécute l'ensemble des tests d'audit croisé avant soumission."""
     blocages = []
     avertissements = []
     controles_valides = []
+    now = maintenant or datetime.datetime.now()
     
     # 1. Contrôle de la date limite de remise
-    date_limite_str = analyse.get("calendrier", {}).get("date_limite_retenue", "")
-    date_expiree = False
+    date_limite_str = (
+        analyse.get("calendrier", {}).get("date_limite_retenue")
+        or analyse.get("date_limite")
+        or analyse.get("date_limite_remise")
+        or ""
+    )
     if date_limite_str:
-        # Tentative d'analyse de date JJ/MM/AAAA ou AAAA-MM-JJ
-        match = re.search(r"(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})(?:\s+[àa]\s+(\d{1,2})[hH:](\d{0,2}))?", date_limite_str)
-        if match:
-            j, m, a = int(match.group(1)), int(match.group(2)), int(match.group(3))
-            if a < 100:
-                a += 2000
-            h = int(match.group(4)) if match.group(4) else 12
-            mn = int(match.group(5)) if match.group(5) else 0
+        # Analyse format ISO ou format français avec heures et minutes
+        dt_limite = None
+        # ISO
+        m_iso = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2})[:hH](\d{1,2})(?:[:\.](\d{1,2}))?)?", str(date_limite_str))
+        if m_iso:
+            a, m, j = int(m_iso.group(1)), int(m_iso.group(2)), int(m_iso.group(3))
+            h = int(m_iso.group(4)) if m_iso.group(4) else 18
+            mn = int(m_iso.group(5)) if m_iso.group(5) else 0
             try:
                 dt_limite = datetime.datetime(a, m, j, h, mn)
-                if datetime.datetime.now() > dt_limite:
-                    date_expiree = True
-                    blocages.append({
-                        "code": "DATE_LIMITE_DEPASSEE",
-                        "gravite": "BLOQUANT",
-                        "description": f"La date limite de remise des offres ({dt_limite.strftime('%d/%m/%Y à %H:%M')}) est dépassée. Le pli ne peut plus être déposé."
-                    })
-                else:
-                    controles_valides.append(f"Date limite de remise des plis active et respectée ({dt_limite.strftime('%d/%m/%Y à %H:%M')}).")
             except ValueError:
-                controles_valides.append(f"Date limite de remise des plis identifiée : {date_limite_str}.")
+                pass
+        if dt_limite is None:
+            # Français
+            m_fr = re.search(r"(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})(?:\s+[àa]\s+(\d{1,2})[hH:](\d{0,2}))?", str(date_limite_str))
+            if m_fr:
+                j, m, a = int(m_fr.group(1)), int(m_fr.group(2)), int(m_fr.group(3))
+                if a < 100:
+                    a += 2000
+                h = int(m_fr.group(4)) if m_fr.group(4) else 18
+                mn = int(m_fr.group(5)) if m_fr.group(5) else 0
+                try:
+                    dt_limite = datetime.datetime(a, m, j, h, mn)
+                except ValueError:
+                    pass
+
+        if dt_limite is not None:
+            if now > dt_limite:
+                blocages.append({
+                    "code": "DATE_LIMITE_DEPASSEE",
+                    "gravite": "BLOQUANT",
+                    "description": f"La date limite de remise des offres ({dt_limite.strftime('%d/%m/%Y à %H:%M')}) est dépassée. Le pli ne peut plus être déposé."
+                })
+            else:
+                controles_valides.append(f"Date limite de remise des plis active et respectée ({dt_limite.strftime('%d/%m/%Y à %H:%M')}).")
         else:
-            controles_valides.append(f"Date limite de remise des plis identifiée : {date_limite_str}.")
+            blocages.append({
+                "code": "DATE_LIMITE_INVALIDE",
+                "gravite": "BLOQUANT",
+                "description": f"Date limite de remise identifiée mais format non vérifiable ('{date_limite_str}')."
+            })
     else:
-        avertissements.append({
-            "code": "DATE_LIMITE_NON_DETECTEE",
-            "description": "Aucune date limite de remise des plis n'a pu être confirmée dans le DCE."
+        blocages.append({
+            "code": "DATE_LIMITE_NON_VERIFIABLE",
+            "gravite": "BLOQUANT",
+            "description": "Aucune date limite de remise des plis n'a pu être vérifiée dans le DCE. Un dépôt ne peut être validé sans échéance certaine."
         })
 
     # 2. Concordance stricte Montant DPGF vs Montant Acte d'Engagement
@@ -89,16 +116,44 @@ def auditer_dossier(
     else:
         controles_valides.append(f"Concordance parfaite du montant HT entre l'Acte d'Engagement et la DPGF ({formater_montant_fr(montant_ae_ht)}).")
 
-    # 3. Contrôle des anomalies arithmétiques du DPGF
-    nb_anomalies_prix = prix.get("nb_anomalies", 0)
-    if nb_anomalies_prix > 0:
+    # 3. Contrôle des anomalies arithmétiques du DPGF (dissocié des alertes OAB)
+    anomalies_prix = prix.get("anomalies", [])
+    if "erreurs_arithmetiques" in prix:
+        erreurs_calcul = prix.get("erreurs_arithmetiques", [])
+    else:
+        erreurs_calcul = [
+            a for a in anomalies_prix 
+            if a.get("type") in ["ECART_LIGNE_ARITHMETIQUE", "ECART_TOTAL_GENERAL_HT", "PRIX_MANQUANT", "DPGF_VIDE_OU_NON_EXPLOITABLE"]
+        ]
+        if not erreurs_calcul and prix.get("nb_anomalies", 0) > 0 and not any(a.get("type") == "ALERTE_OFFRE_ANORMALEMENT_BASSE" for a in anomalies_prix):
+            erreurs_calcul = [{"description": f"{prix.get('nb_anomalies')} anomalie(s) de prix signalée(s)."}]
+
+    if erreurs_calcul:
         blocages.append({
             "code": "ERREURS_ARITHMETIQUES_DPGF",
             "gravite": "BLOQUANT",
-            "description": f"Le cadre de prix comporte {nb_anomalies_prix} anomalie(s) ou écart(s) arithmétique(s) non corrigé(s)."
+            "description": f"Le cadre de prix comporte {len(erreurs_calcul)} anomalie(s) ou écart(s) arithmétique(s) non corrigé(s)."
         })
     else:
         controles_valides.append("Vérification arithmétique de la DPGF validée (100 % des lignes conformes sans arrondi parasite).")
+
+    # 3 bis. Alertes économiques et détection OAB (traitement séparé non bloquant pour le calcul)
+    alertes_oab = [
+        a for a in anomalies_prix 
+        if a.get("type") == "ALERTE_OFFRE_ANORMALEMENT_BASSE"
+    ]
+    if "alertes_economiques" in prix:
+        for a_eco in prix.get("alertes_economiques", []):
+            if a_eco not in alertes_oab:
+                alertes_oab.append(a_eco)
+    if alertes_oab:
+        for al in alertes_oab:
+            avertissements.append({
+                "code": "ALERTE_OAB_A_JUSTIFIER",
+                "description": al.get("description", "Suspicion d'Offre Anormalement Basse : préparer impérativement les sous-détails de prix justificatifs (Art. L. 2152-5 CCP)."),
+            })
+    else:
+        controles_valides.append("Contrôle économique : aucune anomalie d'offre anormalement basse (OAB) relevée.")
 
     # 4. Contrôle des délais d'exécution (AE vs Mémoire)
     pat_delai_memoire = re.findall(r"(\d{1,2})\s+semaines", memoire_texte, re.IGNORECASE)
@@ -127,38 +182,60 @@ def auditer_dossier(
         controles_valides.append("Aucune balise [À FOURNIR] résiduelle détectée dans le mémoire technique.")
 
     # 6. Complétude des pièces obligatoires de la checklist (Candidature ET Offre)
+    # Règle Fail-Closed : une checklist vide ou absente ne doit jamais être validée par défaut
     STATUTS_INCOMPLETS = {
         "MANQUANT", "A_FOURNIR", "EXPIREE", "A_COMPLETER", "A_METTRE_A_JOUR",
         "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR"
     }
 
-    candidature_pieces = checklist.get("candidature", [])
-    manquantes_cand = [
-        p["piece"] for p in candidature_pieces 
-        if p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
-    ]
-    if manquantes_cand:
+    if not isinstance(checklist, dict) or not checklist:
         blocages.append({
-            "code": "PIECES_CANDIDATURE_MANQUANTES",
+            "code": "CHECKLIST_NON_CONFORME_OU_VIDE",
             "gravite": "BLOQUANT",
-            "description": f"Pièces de candidature obligatoires manquantes ou invalides : {', '.join(manquantes_cand)}."
+            "description": "La checklist des pièces justificatives est absente, vide ou invalide. Pli non éligible au dépôt.",
         })
     else:
-        controles_valides.append("Dossier de candidature complet (DC1, DC2, Kbis, attestations fiscales, sociales et assurances valides).")
+        candidature_pieces = checklist.get("candidature")
+        if candidature_pieces is None or (isinstance(candidature_pieces, list) and len(candidature_pieces) == 0):
+            blocages.append({
+                "code": "CHECKLIST_CANDIDATURE_VIDE",
+                "gravite": "BLOQUANT",
+                "description": "Aucune pièce de candidature n'a été répertoriée ou vérifiée dans la checklist.",
+            })
+        else:
+            manquantes_cand = [
+                p["piece"] for p in candidature_pieces 
+                if isinstance(p, dict) and p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
+            ]
+            if manquantes_cand:
+                blocages.append({
+                    "code": "PIECES_CANDIDATURE_MANQUANTES",
+                    "gravite": "BLOQUANT",
+                    "description": f"Pièces de candidature obligatoires manquantes ou invalides : {', '.join(manquantes_cand)}."
+                })
+            else:
+                controles_valides.append("Dossier de candidature complet (DC1, DC2, Kbis, attestations fiscales, sociales et assurances valides).")
 
-    offre_pieces = checklist.get("offre", [])
-    manquantes_offre = [
-        p["piece"] for p in offre_pieces 
-        if p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
-    ]
-    if manquantes_offre:
-        blocages.append({
-            "code": "PIECES_OFFRE_MANQUANTES",
-            "gravite": "BLOQUANT",
-            "description": f"Pièces de l'offre obligatoires manquantes ou incomplètes : {', '.join(manquantes_offre)}."
-        })
-    else:
-        controles_valides.append("Dossier de l'offre complet (Acte d'engagement, DPGF/BPU et mémoire technique présents).")
+        offre_pieces = checklist.get("offre")
+        if offre_pieces is None or (isinstance(offre_pieces, list) and len(offre_pieces) == 0):
+            blocages.append({
+                "code": "CHECKLIST_OFFRE_VIDE",
+                "gravite": "BLOQUANT",
+                "description": "Aucune pièce d'offre n'a été répertoriée ou vérifiée dans la checklist.",
+            })
+        else:
+            manquantes_offre = [
+                p["piece"] for p in offre_pieces 
+                if isinstance(p, dict) and p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
+            ]
+            if manquantes_offre:
+                blocages.append({
+                    "code": "PIECES_OFFRE_MANQUANTES",
+                    "gravite": "BLOQUANT",
+                    "description": f"Pièces de l'offre obligatoires manquantes ou incomplètes : {', '.join(manquantes_offre)}."
+                })
+            else:
+                controles_valides.append("Dossier de l'offre complet (Acte d'engagement, DPGF/BPU et mémoire technique présents).")
 
     # 6 bis. Limite de pages du mémoire technique si fixée au RC
     rc_limite_pages = analyse.get("rc_limite_pages")
@@ -173,20 +250,69 @@ def auditer_dossier(
             })
 
     # 7. Contradictions contractuelles du marché
-    # CORRECTION CRITIQUE : Les contradictions bloquantes sont des BLOCAGES, pas de simples avertissements !
-    contradictions = analyse.get("contradictions_detectees", [])
+    contradictions = analyse.get("contradictions_detectees", []) if isinstance(analyse, dict) else []
     for c in contradictions:
-        gravite = c.get("gravite", "MOYEN")
-        if gravite == "BLOQUANT":
+        if isinstance(c, dict):
+            gravite = c.get("gravite", "MOYEN")
+            if gravite == "BLOQUANT":
+                blocages.append({
+                    "code": "CONTRADICTION_DCE_BLOQUANTE",
+                    "gravite": "BLOQUANT",
+                    "description": c.get("description", "Contradiction juridique ou technique bloquante non résolue dans le DCE.")
+                })
+            else:
+                avertissements.append({
+                    "code": "CONTRADICTION_DCE_ATTENTION",
+                    "description": c.get("description", "Contradiction ou incertitude mineure dans le DCE.")
+                })
+
+    # 8. Intégration des résultats Go / No-Go
+    if go_nogo:
+        v_go = go_nogo.get("verdict")
+        if v_go == "NO-GO":
             blocages.append({
-                "code": "CONTRADICTION_DCE_BLOQUANTE",
+                "code": "DECISION_GO_NOGO_DEFAVORABLE",
                 "gravite": "BLOQUANT",
-                "description": c.get("description", "Contradiction juridique ou technique bloquante non résolue dans le DCE.")
+                "description": f"L'évaluation d'opportunité préalable a conclu à un NO-GO : {go_nogo.get('commentaire', 'Risques critiques identifiés')}.",
             })
-        else:
+        elif v_go == "NON_EVALUABLE":
+            blocages.append({
+                "code": "DECISION_GO_NOGO_INCOMPLETE",
+                "gravite": "BLOQUANT",
+                "description": "L'évaluation préalable d'opportunité est inévaluable en raison de données manquantes critiques.",
+            })
+        for dr in go_nogo.get("drapeaux_rouges", []):
+            if isinstance(dr, dict):
+                dr_code = dr.get("code") or dr.get("id", "DRAPEAU_ROUGE")
+                dr_desc = dr.get("description") or dr.get("motif", "Drapeau rouge d'opportunité levé.")
+                if not any(b["code"] == dr_code for b in blocages):
+                    blocages.append({
+                        "code": dr_code,
+                        "gravite": "BLOQUANT",
+                        "description": dr_desc,
+                    })
+
+    # 9. Intégration de la Matrice de Conformité
+    if matrice:
+        exigences_mat = matrice.get("exigences", []) if isinstance(matrice, dict) else (matrice if isinstance(matrice, list) else [])
+        non_conformes_mat = [
+            e for e in exigences_mat
+            if isinstance(e, dict) and e.get("statut") in ["NON_CONFORME", "NON CONFORME"]
+        ]
+        if non_conformes_mat:
+            blocages.append({
+                "code": "EXIGENCES_DCE_NON_CONFORMES",
+                "gravite": "BLOQUANT",
+                "description": f"{len(non_conformes_mat)} exigence(s) contractuelle(s) non satisfaite(s) dans la matrice de conformité (ex: '{non_conformes_mat[0].get('id', 'EX')}').",
+            })
+        non_verifiees_mat = [
+            e for e in exigences_mat
+            if isinstance(e, dict) and e.get("statut") in ["NON_VERIFIE", "NON VÉRIFIÉ", "A_VALIDER"]
+        ]
+        if non_verifiees_mat:
             avertissements.append({
-                "code": "CONTRADICTION_DCE_ATTENTION",
-                "description": c.get("description", "Contradiction ou incertitude mineure dans le DCE.")
+                "code": "EXIGENCES_DCE_NON_VERIFIEES",
+                "description": f"{len(non_verifiees_mat)} exigence(s) contractuelle(s) restent en statut NON VÉRIFIÉ dans la matrice et requièrent une validation humaine.",
             })
 
     # Verdict final rigoureux

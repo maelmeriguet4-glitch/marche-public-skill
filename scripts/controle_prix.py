@@ -283,12 +283,15 @@ def verifier_arithmetique(
         }
 
     # Détection rigoureuse de l'Offre Anormalement Basse (OAB)
-    # 1. Comparaison avec l'estimation de la Maîtrise d'Œuvre si fournie
+    # Heuristique DAJ : écart significatif par rapport à l'estimation MOE
+    # Limites juridiques : L'article L. 2152-5 du CCP interdit tout rejet automatique.
+    # L'acheteur est tenu de solliciter des justifications écrites avant tout rejet.
+    alertes_economiques: List[Dict[str, Any]] = []
     if estimation_moe and estimation_moe > Decimal("0.00"):
         seuil_oab_moe = arrondi_monnaie(estimation_moe * (Decimal("1.00") - seuil_oab_pct / Decimal("100.0")))
         if total_recalcule_ht < seuil_oab_moe:
             ecart_pct = arrondi_monnaie(((estimation_moe - total_recalcule_ht) / estimation_moe) * Decimal("100.0"))
-            anomalies.append({
+            alerte_oab = {
                 "type": "ALERTE_OFFRE_ANORMALEMENT_BASSE",
                 "valeur_proposee": str(total_recalcule_ht),
                 "estimation_moe": str(estimation_moe),
@@ -296,9 +299,25 @@ def verifier_arithmetique(
                 "description": (
                     f"Le total proposé ({total_recalcule_ht} € HT) est inférieur de {ecart_pct} % à l'estimation MOE "
                     f"({estimation_moe} € HT), dépassant le seuil d'alerte de {seuil_oab_pct} %. "
-                    f"Risque majeur de suspicion d'OAB selon l'article L. 2152-5 du Code de la commande publique."
-                )
-            })
+                    f"Alerte économique : risque de demande de justifications au titre de l'article L. 2152-5 du CCP "
+                    f"(cette alerte ne constitue pas une erreur arithmétique de calcul)."
+                ),
+                "limite_heuristique": (
+                    "Le seuil d'alerte de 25% est une heuristique administrative (guide DAJ). "
+                    "Un prix bas peut être économiquement justifié par des procédés d'exécution innovants, "
+                    "des conditions d'approvisionnement favorables ou des moyens propres."
+                ),
+            }
+            alertes_economiques.append(alerte_oab)
+            anomalies.append(alerte_oab)
+
+    erreurs_arithmetiques = [a for a in anomalies if a.get("type") != "ALERTE_OFFRE_ANORMALEMENT_BASSE"]
+    if not lignes:
+        statut_global = "NON_CONFORME"
+    elif anomalies:
+        statut_global = "ANOMALIES_DETECTEES"
+    else:
+        statut_global = "CONFORME"
 
     return {
         "nb_lignes_verifiees": len(lignes_verifiees),
@@ -308,8 +327,12 @@ def verifier_arithmetique(
         "montant_tva": str(montant_tva),
         "total_recalcule_ttc": str(total_recalcule_ttc),
         "ecart_total_ht": str(ecart_total_ht),
-        "statut_global": "CONFORME" if not anomalies else ("NON_CONFORME" if not lignes else "ANOMALIES_DETECTEES"),
+        "statut_global": statut_global,
         "nb_anomalies": len(anomalies),
+        "nb_erreurs_arithmetiques": len(erreurs_arithmetiques),
+        "nb_alertes_economiques": len(alertes_economiques),
+        "erreurs_arithmetiques": erreurs_arithmetiques,
+        "alertes_economiques": alertes_economiques,
         "anomalies": anomalies,
         "analyse_rentabilite": analyse_rentabilite,
         "lignes": lignes_verifiees,

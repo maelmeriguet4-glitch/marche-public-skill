@@ -101,22 +101,46 @@ def extraire_exigences(dce_extrait: Dict[str, Any], profil: Dict[str, Any]) -> L
                     
                     t_lower = phrase_clean.lower()
                     if "décennale" in t_lower or "assurance" in t_lower:
-                        if profil.get("assurances", {}).get("decennale", {}).get("numero_police"):
+                        fich_dec = (
+                            profil.get("fichiers_justificatifs", {}).get("decennale")
+                            or profil.get("assurances", {}).get("decennale", {}).get("fichier")
+                        )
+                        fich_present = False
+                        if fich_dec:
+                            try:
+                                from checklist_pieces import verifier_presence_fichier
+                                fich_present = verifier_presence_fichier(fich_dec)
+                            except Exception:
+                                fich_present = False
+                        if fich_present and profil.get("assurances", {}).get("decennale", {}).get("numero_police"):
                             statut = "CONFORME"
-                            reponse = f"Attestation {profil['assurances']['decennale'].get('compagnie')} en cours de validité."
-                            piece_justif = "Attestation_Decennale.pdf"
+                            reponse = f"Attestation {profil['assurances']['decennale'].get('compagnie', 'Assureur')} vérifiée sur disque."
+                            piece_justif = str(fich_dec)
                         else:
                             statut = "À COMPLÉTER"
-                            reponse = "Attestation d'assurance décennale non renseignée dans le profil."
+                            reponse = "Attestation d'assurance décennale physique non trouvée sur le disque."
+                            piece_justif = "[À FOURNIR]"
                     elif "visite" in t_lower:
+                        fich_vis = (
+                            profil.get("fichiers_justificatifs", {}).get("attestation_visite")
+                            or profil.get("visite_site", {}).get("attestation_fichier")
+                        )
                         visite_ok = profil.get("visite_site", {}).get("visite_effectuee", False)
-                        if visite_ok:
+                        fich_vis_present = False
+                        if fich_vis:
+                            try:
+                                from checklist_pieces import verifier_presence_fichier
+                                fich_vis_present = verifier_presence_fichier(fich_vis)
+                            except Exception:
+                                fich_vis_present = False
+                        if visite_ok and fich_vis_present:
                             statut = "CONFORME"
-                            reponse = "Visite sur site effectuée et attestation signée obtenue."
-                            piece_justif = "attestation_visite_signee.pdf"
+                            reponse = "Visite sur site effectuée et attestation signée vérifiée sur disque."
+                            piece_justif = str(fich_vis)
                         else:
                             statut = "À COMPLÉTER"
-                            reponse = "Visite obligatoire sur site à réaliser avant remise."
+                            reponse = "Attestation de visite signée physique non trouvée sur le disque."
+                            piece_justif = "[À FOURNIR]"
                     elif "dc1" in t_lower or "dc2" in t_lower:
                         reponse = "Formulaire de candidature à renseigner et signer par le mandataire."
                         piece_justif = "DC1.pdf, DC2.pdf"
@@ -129,17 +153,25 @@ def extraire_exigences(dce_extrait: Dict[str, Any], profil: Dict[str, Any]) -> L
                         reponse = "Respect strict des règles de l'art et normes visées dans le CCTP/PGC."
                         piece_justif = "Fiches techniques et certifications matériels"
                         statut = "NON_VERIFIE"
+
+                    degre_confiance = "ÉLEVÉ" if len(phrase_clean) > 35 else "MOYEN"
                         
                     exigences.append({
                         "id": ex_id,
                         "piece_source": nom_piece,
                         "reference": rubrique_courante,
+                        "page": piece.get("page"),
                         "categorie": categorie,
-                        "eliminatoire": eliminatoire,
+                        "obligation_detectee": phrase_clean,
                         "exigence": phrase_clean,
                         "reponse_entreprise": reponse,
+                        "preuve_apportee": piece_justif,
                         "piece_justificative": piece_justif,
-                        "niveau_confiance": "ÉLEVÉ" if eliminatoire else "MOYEN",
+                        "validation_humaine": "A_VALIDER",
+                        "caractere_eliminatoire": eliminatoire,
+                        "eliminatoire": eliminatoire,
+                        "degre_confiance_extraction": degre_confiance,
+                        "niveau_confiance": degre_confiance,
                         "statut": statut,
                     })
 
@@ -147,6 +179,28 @@ def extraire_exigences(dce_extrait: Dict[str, Any], profil: Dict[str, Any]) -> L
         logger.warning("Aucune exigence déontique n'a été détectée automatiquement dans les pièces fournies.")
         
     return exigences
+
+
+def detecter_doublons_et_contradictions(exigences: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Détecte les doublons ou incohérences entre exigences de la matrice."""
+    vus: Dict[str, str] = {}
+    doublons: List[Dict[str, Any]] = []
+    
+    for ex in exigences:
+        norm = re.sub(r"\s+", " ", ex.get("exigence", "").lower().strip())
+        if norm in vus:
+            doublons.append({
+                "exigence_id": ex.get("id"),
+                "doublon_de": vus[norm],
+                "texte": ex.get("exigence"),
+            })
+        else:
+            vus[norm] = ex.get("id")
+            
+    return {
+        "nb_doublons": len(doublons),
+        "doublons": doublons,
+    }
 
 
 def generer_markdown_matrice(exigences: List[Dict[str, Any]]) -> str:

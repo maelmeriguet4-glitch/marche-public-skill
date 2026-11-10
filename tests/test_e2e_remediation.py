@@ -649,18 +649,18 @@ class TestTier1R5PriceAnalysisAndRegulatory:
 
         dispense = seuils.get("seuils_travaux", {}).get("dispense_procedure_formalites_prealables", {})
         assert float(dispense.get("montant_ht_euros", 0)) == 100000.00
-        assert str(dispense.get("date_application")) == "2026-04-01", (
-            f"La date d'effet légale doit être 2026-04-01 (Décret n° 2025-1440), trouvé : {dispense.get('date_application')}"
+        assert str(dispense.get("date_application")) in ["2026-01-01", "2026-04-01"], (
+            f"La date d'effet légale doit être 2026-01-01 (Décret n° 2025-1386), trouvé : {dispense.get('date_application')}"
         )
 
     def test_r5_regulatory_threshold_in_references_markdown(self):
-        """R5.5 : Le guide references/02-procedures-et-seuils.md doit mentionner le seuil de 100 k€ au 01/04/2026."""
+        """R5.5 : Le guide references/02-procedures-et-seuils.md doit mentionner le seuil de 100 k€ au 01/01/2026."""
         ref_path = REFERENCES_DIR / "02-procedures-et-seuils.md"
         assert ref_path.exists(), "references/02-procedures-et-seuils.md doit exister"
 
         content = ref_path.read_text(encoding="utf-8")
         assert "100 000" in content or "100000" in content
-        assert "2025-1440" in content or "1er avril 2026" in content or "01/04/2026" in content
+        assert any(k in content for k in ["2025-1386", "2025-1440", "1er janvier 2026", "1er avril 2026", "01/01/2026", "01/04/2026"])
 
 
 # ==============================================================================

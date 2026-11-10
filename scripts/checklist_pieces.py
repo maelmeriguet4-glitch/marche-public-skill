@@ -515,31 +515,85 @@ def generer_checklist(
     })
 
     # 2.5. Visite des lieux
-    exige_visite = bool(any(k in text_offre_str for k in ["visite"]) or any(k in text_cand_str for k in ["visite"]))
+    # Discrimination rigoureuse : visite obligatoire vs recommandée vs facultative
+    all_visite_txt = f"{text_offre_str} {text_cand_str}".lower().strip()
+    statut_visite_dce = "AUCUNE"
+    mots_negatifs = [
+        "non obligatoire", "pas obligatoire", "aucune visite", "sans visite", "non requise",
+        "non imposee", "non imposée", "non contraignante", "pas requise", "facultative",
+        "optionnelle", "libre", "laissée à l'appréciation", "laissée à l'initiative",
+        "a l'initiative", "à l'initiative"
+    ]
+    if any(w in all_visite_txt for w in mots_negatifs):
+        statut_visite_dce = "FACULTATIVE"
+    elif any(w in all_visite_txt for w in ["recommandee", "recommandée", "conseillee", "conseillée"]) and not any(w in all_visite_txt for w in ["obligatoire", "imperative", "impérative", "attestation"]):
+        statut_visite_dce = "RECOMMANDEE"
+    elif any(w in all_visite_txt for w in ["obligatoire", "imperative", "impérative", "attestation", "justificatif", "certificat", "visite"]):
+        statut_visite_dce = "OBLIGATOIRE"
+
+    exige_visite = statut_visite_dce in ["OBLIGATOIRE", "RECOMMANDEE", "FACULTATIVE"]
+    obligatoire_visite = (statut_visite_dce == "OBLIGATOIRE")
+
     fichier_visite = (
         fichiers_profil.get("attestation_visite")
         or fichiers_profil.get("visite")
         or visite_site.get("attestation_fichier")
     )
     present_visite = verifier_presence_fichier(fichier_visite, dossiers_docs)
-    valide_visite = bool(present_visite and visite_faite)
+
+    # Contrôle si la visite a été effectuée postérieurement à l'échéance de remise
+    date_limite_remise_str = (
+        analyse_data.get("calendrier", {}).get("date_limite_retenue")
+        or analyse_data.get("date_limite")
+        or ""
+    )
+    date_visite_str = visite_site.get("date_visite")
+    visite_post_echeance = False
+    if date_visite_str and date_limite_remise_str:
+        try:
+            from go_nogo import parser_date_et_echeance
+            dt_v, _, _ = parser_date_et_echeance(date_visite_str)
+            dt_l, _, _ = parser_date_et_echeance(date_limite_remise_str)
+            if dt_v and dt_l and dt_v > dt_l:
+                visite_post_echeance = True
+        except Exception:
+            pass
+
+    valide_visite = bool(present_visite and visite_faite and not visite_post_echeance)
     verifie_visite = bool(present_visite and (visite_site.get("signataire_mairie") or visite_site.get("date_visite")))
-    if present_visite and visite_faite:
+
+    if visite_post_echeance:
+        statut_visite = "EXPIREE"
+    elif present_visite and visite_faite:
         statut_visite = "VERIFIE_PRESENT"
     elif not present_visite:
-        statut_visite = "MANQUANT" if exige_visite else "A_OBTENIR"
+        statut_visite = "MANQUANT" if obligatoire_visite else "A_OBTENIR"
     else:
         statut_visite = "A_OBTENIR"
+
     pieces_offre.append({
         "piece": "Attestation de visite des lieux signée",
         "exige_par_marche": exige_visite,
-        "obligatoire": exige_visite,
+        "obligatoire": obligatoire_visite,
         "present_disque": present_visite,
         "valide_juridiquement": valide_visite,
         "verifie_contenu": verifie_visite,
         "statut": statut_visite,
-        "description": "Justificatif de visite sur site signé par le responsable de la collectivité.",
-        "action": "Attestation officielle signée prête à être jointe au pli." if (present_visite and visite_faite) else "Prendre rendez-vous avant la date limite stipulée au CCAP.",
+        "nature_obligation": statut_visite_dce,
+        "description": f"Justificatif de visite sur site ({statut_visite_dce.lower()}) signé par la collectivité.",
+        "action": (
+            "Attestation officielle signée prête à être jointe au pli."
+            if (present_visite and visite_faite and valide_visite)
+            else (
+                "Visite effectuée après la date limite : attestation caduque."
+                if visite_post_echeance
+                else (
+                    "Prendre rendez-vous impérativement avant la date limite."
+                    if obligatoire_visite
+                    else "Visite recommandée ou facultative : attestation conseillée si effectuée."
+                )
+            )
+        ),
     })
 
     # 2.6. Fiches techniques CSTB

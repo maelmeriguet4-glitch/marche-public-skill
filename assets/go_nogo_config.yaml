@@ -1,8 +1,10 @@
 # Configuration de l'algorithme d'aide à la décision Go / No-Go
-# Poids total = 100 points
-# Score minimal requis pour GO : 70 points
+# Poids total = 100 points strictement vérifié
+# Règle d'intégrité : aucun point forfaitaire de complaisance sur données manquantes (0 pt + NON_EVALUABLE)
+# Score minimal requis pour GO : 70 points (avec date limite vérifiée)
 # Score entre 50 et 69 : GO SOUS RÉSERVE
-# Score < 50 ou présence d'un drapeau rouge : NO-GO
+# Score < 50 ou présence d'un drapeau rouge bloquant : NO-GO
+# Si > 30 points ou >= 3 critères non évaluables : NON_EVALUABLE
 
 seuils_decision:
   seuil_go: 70.0
@@ -20,7 +22,7 @@ criteres:
 
   references_comparables:
     poids: 15
-    description: "Existence de chantiers similaires réalisés au cours des 3 à 5 dernières années."
+    description: "Existence de chantiers similaires réalisés au cours des 3 à 5 dernières années (Art. R. 2142-13 CCP)."
     bareme:
       trois_references_similaires_ou_plus: 15
       une_a_deux_references: 10
@@ -38,7 +40,7 @@ criteres:
 
   charge_travail_et_disponibilite:
     poids: 15
-    description: "Disponibilité de l'encadrement et des équipes travaux sur la période d'exécution prévisionnelle."
+    description: "Disponibilité opérationnelle de l'encadrement et des équipes travaux sur la période d'exécution prévisionnelle."
     bareme:
       ressources_disponibles_immediatement: 15
       charge_moderee_ajustement_mineur: 12
@@ -47,7 +49,7 @@ criteres:
 
   localisation_eloignement:
     poids: 10
-    description: "Distance du chantier par rapport au siège ou au dépôt (frais de déplacement, réactivité)."
+    description: "Distance orthodromique et routière réelle du chantier par rapport aux implantations de l'entreprise (Haversine)."
     bareme:
       distance_inf_30km: 10
       distance_entre_30_et_70km: 7
@@ -56,7 +58,7 @@ criteres:
 
   rentabilite_estimee:
     poids: 10
-    description: "Marge brute prévisionnelle et adéquation avec les ratios cibles de l'entreprise."
+    description: "Marge brute/nette prévisionnelle et adéquation avec les ratios cibles de l'entreprise."
     bareme:
       marge_au_dessus_de_l_objectif: 10
       marge_alignee_sur_l_objectif: 7
@@ -65,7 +67,7 @@ criteres:
 
   risques_contractuels:
     poids: 10
-    description: "Analyse des pénalités de retard journalières, clauses exorbitantes ou délais irréalistes."
+    description: "Analyse des pénalités de retard journalières, clauses dérogatoires ou contradictions contractuelles bloquantes."
     bareme:
       clauses_standards_ccag_sans_piege: 10
       penalites_moderees_delai_tendu: 6
@@ -83,10 +85,20 @@ criteres:
 
 drapeaux_rouges_bloquants:
   - id: "DATE_LIMITE_DEPASSEE"
-    description: "La date limite de remise des plis est déjà expirée."
+    description: "La date limite de remise des plis est déjà expirée (y compris le jour même)."
   - id: "VISITE_OBLIGATOIRE_MANQUEE"
-    description: "Une visite sur site est obligatoire et toutes les dates de visite sont passées sans attestation."
+    description: "Une visite sur site est obligatoire et n'a pas été effectuée ou attestée avant la date limite."
+  - id: "VISITE_POSTERIEURE_ECHEANCE"
+    description: "La visite sur site a été réalisée postérieurement à la date limite de remise des plis."
   - id: "DEFAUT_ASSURANCE_DECENNALE"
-    description: "Absence d'attestation d'assurance décennale valide couvrant les activités spécifiques du marché."
+    description: "Absence d'attestation d'assurance décennale enregistrée dans le profil entreprise."
+  - id: "ATTESTATION_DECENNALE_INEXISTANTE_DISQUE"
+    description: "Fichier d'attestation d'assurance décennale déclaré mais introuvable physiquement sur le disque."
+  - id: "ASSURANCE_DECENNALE_EXPIREE"
+    description: "La date de validité de l'attestation d'assurance décennale est expirée."
+  - id: "ASSURANCE_ACTIVITES_NON_COUVERTES"
+    description: "Les activités garanties par la police d'assurance ne couvrent pas les travaux principaux du marché."
   - id: "INTERDICTION_SOUMISSIONNER"
     description: "Condamnation pénale, liquidation judiciaire sans plan de continuation ou manquement fiscal/social non régularisé."
+  - id: "CONTRADICTION_CONTRACTUELLE_BLOQUANTE"
+    description: "Contradiction juridique bloquante non résolue identifiée dans les pièces du DCE."

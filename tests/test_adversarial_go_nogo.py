@@ -109,7 +109,7 @@ class TestProfileSchemaParsingChallenges:
         assert extraire_effectif_total(None) == 0  # type: ignore
 
     def test_postal_code_corsica_2a_and_2b(self, profil_base_valide: Dict[str, Any]):
-        """EMPIRICAL FINDING: Corsica codes (2A000, 2B200) are extracted as 2A/2B."""
+        """EMPIRICAL FINDING: Corsica codes (2A000, 2B200) are extracted as 2A/2B and properly evaluated."""
         profil_base_valide["identite"]["siege_social"]["code_postal"] = "2A000"
         assert extraire_code_postal(profil_base_valide) == "2A000"
 
@@ -121,21 +121,22 @@ class TestProfileSchemaParsingChallenges:
         }
         res = evaluer_go_nogo(analyse_ajaccio, profil_base_valide)
         crit_geo = next(c for c in res["criteres"] if c["id"] == "localisation_eloignement")
-        assert crit_geo["points_obtenus"] == 6.0
-        assert "[DISTANCE NON CALCULÉE]" in crit_geo["justification"]
+        assert crit_geo["points_obtenus"] == 10.0
+        assert "[DISTANCE NON CALCULÉE]" not in crit_geo["justification"]
 
     def test_postal_code_overseas_dom_tom_collision(self, profil_base_valide: Dict[str, Any]):
-        """Overseas departments prefix handling."""
+        """Overseas departments prefix handling: distinct DOMs (974 vs 971) must not collide."""
         profil_base_valide["identite"]["siege_social"]["code_postal"] = "97400"  # La Réunion
         analyse_guadeloupe = {
             "objet": "Travaux école",
             "lieu_execution": "Pointe-à-Pitre (97100)",
+            "acheteur": {"nom": "Ville de Pointe-à-Pitre"},
             "contradictions_detectees": [],
         }
         res = evaluer_go_nogo(analyse_guadeloupe, profil_base_valide)
         crit_geo = next(c for c in res["criteres"] if c["id"] == "localisation_eloignement")
-        assert crit_geo["points_obtenus"] == 10.0
-        assert "même département (97)" in crit_geo["justification"]
+        assert crit_geo["points_obtenus"] == 0.0
+        assert "même département" not in crit_geo["justification"]
 
     def test_postal_code_foreign_format(self, profil_base_valide: Dict[str, Any]):
         """Foreign postal codes like B-1000 slice first 2 chars ('B-') as department."""
@@ -158,7 +159,7 @@ class TestProfileSchemaParsingChallenges:
             "capacites_financieres": None,
         }
         res = evaluer_go_nogo(analyse_base_valide, profil_broken)
-        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]
         crit_fin = next(c for c in res["criteres"] if c["id"] == "capacite_financiere_et_taille")
         assert "Chiffre d'affaires non renseigné" in crit_fin["justification"]
 
@@ -169,7 +170,7 @@ class TestProfileSchemaParsingChallenges:
             "qualifications_et_certifications": None,
         }
         res = evaluer_go_nogo(analyse_base_valide, profil_broken)
-        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]
         crit_tech = next(c for c in res["criteres"] if c["id"] == "adequation_technique")
         assert crit_tech["points_obtenus"] == 0.0
 
@@ -180,7 +181,7 @@ class TestProfileSchemaParsingChallenges:
             "qualifications_et_certifications": ["QUALIBAT 3101", "QUALIBAT 3111"],
         }
         res = evaluer_go_nogo(analyse_base_valide, profil_strings)
-        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]
         crit_tech = next(c for c in res["criteres"] if c["id"] == "adequation_technique")
         assert crit_tech["points_obtenus"] >= 14.0
 
@@ -191,20 +192,21 @@ class TestProfileSchemaParsingChallenges:
             "references_chantiers": None,
         }
         res = evaluer_go_nogo(analyse_base_valide, profil_broken)
-        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]
         crit_ref = next(c for c in res["criteres"] if c["id"] == "references_comparables")
         assert crit_ref["points_obtenus"] == 0.0
 
     def test_crash_on_none_contradictions_detectees(self, profil_base_valide: Dict[str, Any]):
-        """Defensive handling: If 'contradictions_detectees' is None, engine treats it as empty without crashing."""
+        """Defensive handling: If 'contradictions_detectees' is None, engine does not crash and marks as non-evaluable."""
         analyse_broken = {
             "objet": "Travaux",
             "contradictions_detectees": None,
         }
         res = evaluer_go_nogo(analyse_broken, profil_base_valide)
-        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]
         crit_risq = next(c for c in res["criteres"] if c["id"] == "risques_contractuels")
-        assert crit_risq["points_obtenus"] == 10.0
+        assert crit_risq["points_obtenus"] == 0.0
+        assert crit_risq["statut"] == "NON_EVALUABLE"
 
     def test_crash_on_string_amount_with_currency(
         self, profil_base_valide: Dict[str, Any], analyse_base_valide: Dict[str, Any]
@@ -212,7 +214,7 @@ class TestProfileSchemaParsingChallenges:
         """Defensive handling: Formatted string amounts with currency ('150 000 €') are parsed safely."""
         analyse_base_valide["montant_estime_ht"] = "150 000 €"
         res = evaluer_go_nogo(analyse_base_valide, profil_base_valide)
-        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]
         crit_fin = next(c for c in res["criteres"] if c["id"] == "capacite_financiere_et_taille")
         assert crit_fin["points_obtenus"] == 15.0
 
@@ -343,4 +345,4 @@ class TestDynamicConfigurationExploitationChallenges:
         assert len(res["criteres"]) == 8
         total_poids = sum(c["poids_max"] for c in res["criteres"])
         assert total_poids == 100
-        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+        assert res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]

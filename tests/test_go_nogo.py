@@ -58,13 +58,22 @@ def couts_nominal() -> Dict[str, Any]:
 
 
 def test_go_nogo_profil_nominal(profil_nominal: Dict[str, Any], config_nominale: Dict[str, Any]):
-    """Test historique nominal de non-régression."""
-    analyse_fictive = {
+    """Test nominal complet de non-régression."""
+    analyse_nominale = {
+        "objet": "Travaux de couverture, zinguerie et réfection de toiture",
+        "lieu_execution": "Bourges (18000)",
+        "acheteur": {"nom": "Ville de Bourges"},
+        "montant_estime_ht": 180000.0,
+        "calendrier": {
+            "date_limite_retenue": "2026-12-15T12:00:00",
+            "delai_jours": 35,
+        },
         "contradictions_detectees": [],
         "allotissement": {"est_alloti": False},
+        "visite_site": {"visite_effectuee": True},
     }
 
-    criteres, score, drapeaux = evaluer_criteres(analyse_fictive, profil_nominal, config_nominale)
+    criteres, score, drapeaux = evaluer_criteres(analyse_nominale, profil_nominal, config_nominale)
 
     assert len(criteres) == 8
     assert score >= 70.0
@@ -72,6 +81,17 @@ def test_go_nogo_profil_nominal(profil_nominal: Dict[str, Any], config_nominale:
 
     verdict, comm = determiner_verdict(score, drapeaux, 70.0, 50.0)
     assert verdict == "GO"
+
+
+def test_go_nogo_empty_analyse_yields_non_evaluable(profil_nominal: Dict[str, Any], config_nominale: Dict[str, Any]):
+    """Vérifie qu'une analyse vide sans données marché ne donne pas un GO complaisant."""
+    analyse_vide = {
+        "contradictions_detectees": [],
+        "allotissement": {"est_alloti": False},
+    }
+    res = evaluer_go_nogo(analyse_vide, profil_nominal, config_nominale)
+    assert res["verdict"] == "NON_EVALUABLE"
+    assert res["score_sur_100"] < 70.0
 
 
 def test_go_nogo_profil_nominal_complete_extraction(
@@ -82,12 +102,18 @@ def test_go_nogo_profil_nominal_complete_extraction(
         "objet": "Travaux de réfection couverture et zinguerie",
         "lieu_execution": "Bourges (18000)",
         "acheteur": {"nom": "Ville de Bourges 18000"},
+        "montant_estime_ht": 150000.0,
+        "calendrier": {
+            "date_limite_retenue": "2026-12-15T12:00:00",
+            "delai_jours": 35,
+        },
         "contradictions_detectees": [],
         "allotissement": {"est_alloti": False},
         "pieces_exigees": {
             "candidature": ["DC1"],
             "offre": ["Attestation de visite des lieux signée"],
         },
+        "visite_site": {"visite_effectuee": True},
     }
 
     res = evaluer_go_nogo(analyse, profil_nominal, config_nominale, couts=couts_nominal)
@@ -380,7 +406,7 @@ def test_evaluer_go_nogo_public_interface(profil_nominal: Dict[str, Any]):
 
     assert isinstance(res, dict)
     assert "score_sur_100" in res and isinstance(res["score_sur_100"], float)
-    assert "verdict" in res and res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE"]
+    assert "verdict" in res and res["verdict"] in ["GO", "NO-GO", "GO SOUS RÉSERVE", "NON_EVALUABLE"]
     assert "commentaire" in res and isinstance(res["commentaire"], str)
     assert "drapeaux_rouges" in res and isinstance(res["drapeaux_rouges"], list)
     assert "criteres" in res and isinstance(res["criteres"], list)

@@ -7,7 +7,7 @@ La passation des marchés publics de travaux obéit aux principes fondamentaux d
 ## 1. Typologie des procédures en marchés de travaux
 
 ### A. Marchés sans formalités préalables (dispense de procédure)
-- **Seuil applicable** : Montant estimé inférieur à 100 000 € HT (applicable au 1er avril 2026 selon Décret n° 2025-1440 modifiant l'article R. 2122-8, voir `assets/seuils.yaml`).
+- **Seuil applicable** : Montant estimé inférieur à 100 000 € HT (applicable au 1er janvier 2026 selon Décret n° 2025-1386 du 29 décembre 2025 modifiant l'article R. 2122-8 du Code de la commande publique, voir `assets/seuils.yaml`).
 - **Règles d'action** : L'acheteur peut passer un marché sans publicité ni mise en concurrence préalables, mais doit choisir une offre pertinente, faire une bonne utilisation des deniers publics et ne pas contracter systématiquement avec le même opérateur économique (article R. 2122-8).
 
 ### B. Marchés à Procédure Adaptée (MAPA)

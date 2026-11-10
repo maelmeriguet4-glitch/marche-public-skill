@@ -9,10 +9,10 @@ seuils_travaux:
   dispense_procedure_formalites_prealables:
     montant_ht_euros: 100000.00
     statut: "CONFORME"
-    source_url: "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051152914"
+    source_url: "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000050864321"
     date_verification: "2026-11-10"
-    date_application: "2026-04-01"
-    description: "Seuil de dispense de procédure pour les marchés de travaux (Décret n° 2025-1440, Article R. 2122-8 du Code de la commande publique applicable au 01/04/2026)."
+    date_application: "2026-01-01"
+    description: "Seuil de dispense de procédure pour les marchés de travaux (Décret n° 2025-1386 du 29 décembre 2025, Article R. 2122-8 du Code de la commande publique applicable au 01/01/2026)."
 
   seuil_europeen_marches_publics_travaux:
     montant_ht_euros: 5404000.00

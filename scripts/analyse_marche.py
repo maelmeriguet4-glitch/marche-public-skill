@@ -31,23 +31,49 @@ def trouver_texte_piece(pieces: List[Dict[str, Any]], categorie: str) -> str:
 
 
 def extraire_dates_remise(texte_rc: str, texte_ae: str) -> Tuple[Optional[str], Optional[str], List[Dict[str, Any]]]:
-    """Extrait les dates limites de remise du RC et de l'AE et détecte les discordances."""
+    """Extrait les dates limites de remise du RC et de l'AE et détecte les discordances temporelles réelles.
+    
+    Supporte les formats ISO (AAAA-MM-JJTHH:MM) et français (JJ/MM/AAAA à HHhMM).
+    Confronte les horodatages réels afin d'éviter les fausses contradictions de format.
+    """
     contradictions = []
-    pat_date = r"(?:date\s+limite\s+(?:de\s+)?remise|remise\s+des\s+offres|remise\s+des\s+plis).*?(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}(?:\s+[àa]\s+\d{1,2}[hH:]\d{0,2})?)"
     
-    match_rc = re.search(pat_date, texte_rc, re.IGNORECASE)
-    date_rc = match_rc.group(1).strip() if match_rc else None
+    def _chercher_date(texte: str) -> Optional[str]:
+        if not texte:
+            return None
+        # 1. Format ISO
+        m_iso = re.search(r"(?:date\s+limite\s+(?:de\s+)?remise|remise\s+des\s+offres|remise\s+des\s+plis).*?(\d{4}-\d{1,2}-\d{1,2}(?:[T\s]\d{1,2}[:hH]\d{1,2}(?:[:\.]\d{1,2})?)?)", texte, re.IGNORECASE)
+        if m_iso:
+            return m_iso.group(1).strip()
+        # 2. Format français
+        m_fr = re.search(r"(?:date\s+limite\s+(?:de\s+)?remise|remise\s+des\s+offres|remise\s+des\s+plis).*?(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}(?:\s+[àa]\s+\d{1,2}[hH:]\d{0,2})?)", texte, re.IGNORECASE)
+        if m_fr:
+            return m_fr.group(1).strip()
+        return None
+
+    date_rc = _chercher_date(texte_rc)
+    date_ae = _chercher_date(texte_ae)
     
-    match_ae = re.search(pat_date, texte_ae, re.IGNORECASE)
-    date_ae = match_ae.group(1).strip() if match_ae else None
-    
-    if date_rc and date_ae and date_rc != date_ae:
-        contradictions.append({
-            "type": "DATE_LIMITE_CONTRADICTOIRE",
-            "gravite": "BLOQUANT",
-            "description": f"Discordance sur la date limite de remise des offres : '{date_rc}' dans le RC vs '{date_ae}' dans l'AE.",
-            "recommandation": "Considérer impérativement la date la plus précoce pour le calendrier et interroger l'acheteur via le profil d'acheteur."
-        })
+    if date_rc and date_ae:
+        est_discordante = False
+        try:
+            from go_nogo import parser_date_et_echeance
+            dt_rc, _, _ = parser_date_et_echeance(date_rc)
+            dt_ae, _, _ = parser_date_et_echeance(date_ae)
+            if dt_rc and dt_ae:
+                est_discordante = (dt_rc != dt_ae)
+            else:
+                est_discordante = (date_rc != date_ae)
+        except Exception:
+            est_discordante = (date_rc != date_ae)
+
+        if est_discordante:
+            contradictions.append({
+                "type": "DATE_LIMITE_CONTRADICTOIRE",
+                "gravite": "BLOQUANT",
+                "description": f"Discordance sur la date limite de remise des offres : '{date_rc}' dans le RC vs '{date_ae}' dans l'AE.",
+                "recommandation": "Considérer impérativement la date la plus précoce pour le calendrier et interroger l'acheteur via le profil d'acheteur."
+            })
     
     return date_rc, date_ae, contradictions
 
