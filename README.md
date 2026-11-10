@@ -1,6 +1,39 @@
 # marché-public-skill (marche-public-skill)
 
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v1.3.0)
+[![Tests](https://img.shields.io/badge/tests-371%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](./LICENSE)
+
 Boîte à outils d'ingénierie logicielle et d'aide à la décision pour l'analyse documentaire, le contrôle arithmétique et la préparation méthodique des réponses aux marchés publics de travaux (BTP) en France.
+
+---
+
+## Changelog
+
+### v1.3.0 — 10 novembre 2026 *(version courante)*
+
+**Remédiation adversariale complète — moteur métier fiabilisé**
+
+| Domaine | Correction apportée |
+| :--- | :--- |
+| **Contrôle final fail-closed** | Une checklist vide ou absente produit désormais `PAS_PRET`. Le contrôle intègre le résultat Go/No-Go et la matrice de conformité. |
+| **Visites de chantier** | Distinction visite obligatoire / recommandée / facultative. Vérification de l'attestation physique sur disque avant la date limite. |
+| **Assurances** | Vérification du fichier physique + date de validité + activités couvertes. Un numéro de police seul ne suffit plus à déclarer une attestation présente. |
+| **Parsing des dates** | Formats français et ISO acceptés. Conservation des heures et fuseaux horaires. Détection d'une échéance dépassée le jour même. |
+| **Contrôle OAB** | Séparation stricte erreurs arithmétiques / alertes économiques. L'OAB n'est plus traité comme une simple erreur de calcul. |
+| **Réglementation 2026** | Seuil 100 000 € HT confirmé (Décret n° 2025-1386 du 29 décembre 2025, entrée en vigueur 1er janvier 2026). |
+| **Go/No-Go** | Critères géographiques et capacité opérationnelle revus. Distance réelle calculée. Effectif disponible ≠ effectif total. |
+| **Suite de tests** | 371 tests passent (unitaires + intégration + benchmark). Couverture des cas dégénérés (données vides, formats invalides, contradictions). |
+
+### v1.2.0 — 9 novembre 2026
+Première remédiation des constats d'audit : extraction dynamique des DCE, seuils réglementaires mis à jour, contrôle final avec blocages effectifs, intégration continue CI.
+
+### v1.1.0 — 9 novembre 2026
+Corrections du cas de démonstration et harmonisation des modules de décision.
+
+### v1.0.0 — 9 novembre 2026
+Release initiale : 10 scripts Python, 10 guides de référence, pipeline en 8 étapes.
 
 ---
 
