@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from decimal import Decimal
 from pathlib import Path
 import sys
@@ -13,8 +14,8 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 from fastapi.testclient import TestClient
-from api import app
-from mcp_server import traiter_requete, executer_outil
+from api import app, resoudre_et_securiser_chemin
+from mcp_server import traiter_requete, executer_outil, MCP_TOOLS
 
 
 @pytest.fixture
@@ -28,7 +29,7 @@ def test_api_health_endpoint(api_client: TestClient):
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "ok"
-    assert data["version"] == "2.0.0"
+    assert data["version"] == "2.0.1"
     assert "timestamp" in data
 
 
@@ -42,6 +43,12 @@ def test_api_extract_dce_endpoint(api_client: TestClient):
     data = resp.json()
     assert data["total_pieces"] >= 1
     assert "sommaire_classification" in data
+
+
+def test_api_path_traversal_blocked(api_client: TestClient):
+    """Vérifie le blocage immédiat des tentatives de path traversal."""
+    resp = api_client.post("/api/v1/dce/extract", json={"repertoire_dce": "../../Windows"})
+    assert resp.status_code in (400, 403, 404)
 
 
 def test_api_controle_prix_endpoint(api_client: TestClient):
@@ -66,7 +73,7 @@ def test_mcp_initialize():
     assert resp["jsonrpc"] == "2.0"
     assert resp["id"] == 1
     assert resp["result"]["serverInfo"]["name"] == "marche-public-skill"
-    assert resp["result"]["serverInfo"]["version"] == "2.0.0"
+    assert resp["result"]["serverInfo"]["version"] == "2.0.1"
 
 
 def test_mcp_tools_list():
@@ -82,6 +89,11 @@ def test_mcp_tools_list():
     tools = resp["result"]["tools"]
     tool_names = [t["name"] for t in tools]
     assert "extraire_dce" in tool_names
+    assert "analyser_marche_dce" in tool_names
+    assert "consulter_exigences" in tool_names
+    assert "consulter_pieces_manquantes" in tool_names
+    assert "consulter_anomalies" in tool_names
+    assert "consulter_preuves" in tool_names
     assert "evaluer_go_nogo" in tool_names
     assert "verifier_dpgf" in tool_names
     assert "generer_checklist_4d" in tool_names
@@ -99,13 +111,56 @@ def test_mcp_tool_call_verifier_dpgf():
             "name": "verifier_dpgf",
             "arguments": {
                 "chemin_dpgf": str(dpgf_path),
-                "estimation_acheteur_ht": 150000.0
+                "estimation_acheteur_ht": 145000.0
+            }
+        }
+    }
+    resp = traiter_requete(req)
+    assert resp["jsonrpc"] == "2.0"
+    assert resp["id"] == 3
+    assert resp["result"]["isError"] is False
+    content_text = resp["result"]["content"][0]["text"]
+    data = json.loads(content_text)
+    assert "total_recalcule_ht" in data
+    assert data["total_recalcule_ht"] == "142500.00"
+
+
+def test_mcp_tool_call_consulter_exigences():
+    """Vérifie l'outil MCP consulter_exigences."""
+    demo_dir = Path(__file__).resolve().parent.parent / "examples" / "demo-ecole-toiture" / "dce_resolu"
+    if not demo_dir.exists():
+        demo_dir = Path(__file__).resolve().parent.parent / "examples" / "demo-ecole-toiture"
+    req = {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+            "name": "consulter_exigences",
+            "arguments": {
+                "repertoire_dce": str(demo_dir),
             }
         }
     }
     resp = traiter_requete(req)
     assert resp["jsonrpc"] == "2.0"
     assert resp["result"]["isError"] is False
-    content_text = resp["result"]["content"][0]["text"]
-    data = json.loads(content_text)
-    assert "total_recalcule_ht" in data
+    data = json.loads(resp["result"]["content"][0]["text"])
+    assert data["total_exigences"] >= 1
+
+
+def test_mcp_path_traversal_blocked():
+    """Vérifie le blocage de traversée de chemin dans les outils MCP."""
+    req = {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+            "name": "extraire_dce",
+            "arguments": {
+                "repertoire_dce": "../../secret",
+            }
+        }
+    }
+    resp = traiter_requete(req)
+    assert resp["result"]["isError"] is True
+    assert "Accès interdit" in resp["result"]["content"][0]["text"]

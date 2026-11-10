@@ -86,7 +86,16 @@ def extraire_pdf(chemin: Path) -> Dict[str, Any]:
             total_caracteres += lg
             if lg < 20:
                 pages_vides += 1
-            pages_extraites.append({"page": num, "longueur": lg, "texte": texte_page})
+            confiance_page = 0.2 if lg < 20 else (0.95 if lg > 200 else 0.7)
+            statut_page = "NON_OCR" if lg < 20 else "TEXTUEL_EXTRAIT"
+            pages_extraites.append({
+                "page": num,
+                "longueur": lg,
+                "texte": texte_page,
+                "methode_extraction": "PYPDF_TEXT",
+                "confiance": confiance_page,
+                "statut": statut_page,
+            })
             texte_integral.append(texte_page)
         
         statut = "OK"
@@ -147,7 +156,7 @@ def extraire_docx(chemin: Path) -> Dict[str, Any]:
             "nb_paragraphes": len(paragraphes),
             "total_caracteres": len(texte_complet),
             "alertes": [],
-            "pages": [{"page": 1, "longueur": len(texte_complet), "texte": texte_complet}],
+            "pages": [{"page": 1, "longueur": len(texte_complet), "texte": texte_complet, "methode_extraction": "PYTHON_DOCX", "confiance": 0.95, "statut": "TEXTUEL_EXTRAIT"}],
             "texte_complet": texte_complet,
         }
     except Exception as exc:
@@ -198,7 +207,7 @@ def extraire_xlsx(chemin: Path) -> Dict[str, Any]:
             "feuilles": feuilles_donnees,
             "total_caracteres": len(texte_complet),
             "alertes": [],
-            "pages": [{"page": 1, "longueur": len(texte_complet), "texte": texte_complet}],
+            "pages": [{"page": 1, "longueur": len(texte_complet), "texte": texte_complet, "methode_extraction": "OPENPYXL_DATA_ONLY", "confiance": 0.98, "statut": "TABULAIRE_EXTRAIT"}],
             "texte_complet": texte_complet,
         }
     except Exception as exc:
@@ -222,7 +231,7 @@ def extraire_texte_brut(chemin: Path) -> Dict[str, Any]:
             "statut": "OK",
             "total_caracteres": len(texte_propre),
             "alertes": [],
-            "pages": [{"page": 1, "longueur": len(texte_propre), "texte": texte_propre}],
+            "pages": [{"page": 1, "longueur": len(texte_propre), "texte": texte_propre, "methode_extraction": "TEXT_DECODE_UTF8", "confiance": 1.0, "statut": "TEXTUEL_EXTRAIT"}],
             "texte_complet": texte_propre,
         }
     except Exception as exc:

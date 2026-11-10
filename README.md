@@ -1,7 +1,7 @@
 # marché-public-skill (marche-public-skill)
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v2.0.0)
-[![Tests](https://img.shields.io/badge/tests-377%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
+[![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v2.0.1)
+[![Tests](https://img.shields.io/badge/tests-403%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](./LICENSE)
 
@@ -11,7 +11,22 @@ Boîte à outils d'ingénierie logicielle et d'aide à la décision pour l'analy
 
 ## Changelog
 
-### v2.0.0 — 10 novembre 2026 *(version courante)*
+### v2.0.1 — 10 novembre 2026 *(version courante)*
+
+**Finalisation de la qualité professionnelle (Objectif 9.9/10) : Packaging standard PEP 621 (`pyproject.toml`), sécurisation absolue de l'API REST et du serveur MCP, séparation méthodologique stricte du benchmark synthétique et du corpus indépendant, détection des lignes masquées en DPGF, moteur centralisé de conformité avec 8 invariants fondamentaux, et suite Red Team de 20 scénarios adversariaux (403 tests automatisés).**
+
+| Domaine | Améliorations majeures apportées |
+| :--- | :--- |
+| **Packaging & Reproductibilité (CI)** | Création de `pyproject.toml` (PEP 621), `requirements.txt` et `requirements-dev.txt`. Résolution des dépendances FastAPI/Uvicorn/Httpx en CI multi-version (Python 3.10 à 3.13). Tests d'installation reproductible validés. |
+| **Sécurisation API REST & Serveur MCP** | Blocage hermétique du path traversal (`resoudre_et_securiser_chemin`), interdiction stricte d'accès aux répertoires système (`C:\Windows`, `/etc`, etc.), authentification par clé API (`X-API-Key`), limitation de taille à 50 Mo, masquage des traces d'erreurs internes, binding localhost par défaut (`127.0.0.1`). |
+| **Moteur centralisé & Invariants** | Implémentation complète de `scripts/moteur_conformite.py` avec vérification automatique des 8 invariants fondamentaux lors de toute synthèse (`synthetiser()`). Verdicts normalisés : `GO`, `GO_SOUS_RESERVE`, `NO_GO`, `NON_EVALUABLE`. |
+| **Contrôle Final Fail-Closed** | Sécurisation de `scripts/controle_final.py` : vérification stricte des types (interdiction des types non hashables ou non booléens), validation de l'existence effective d'une preuve/justificatif pour `VERIFIE_PRESENT`, rejet immédiat des montants AE négatifs et des délais d'exécution invalides. |
+| **Contrôle Financier & Lignes masquées** | Détection et alerte des lignes masquées (`row_dimensions.hidden`) contenant des données dans les DPGF Excel (`openpyxl`), détection des quantités négatives et séparation stricte des anomalies arithmétiques et des alertes économiques DAJ (Art. L. 2152-5 CCP). |
+| **Méthodologie du Benchmark** | Séparation claire entre **Catégorie A** (benchmark synthétique d'invariants et de régression, 20 dossiers dans `evals/corpus_synthetique/`, 100% conformité) et **Catégorie B** (corpus documentaire indépendant sous licence ouverte, affichant explicitement le statut `BENCHMARK REEL NON VALIDE OU NON DISPONIBLE` en l'absence de données réelles certifiées). |
+| **Robustesse Red Team** | Création de `tests/test_redteam_v201.py` couvrant les 20 scénarios d'attaque et de rupture de robustesse (pièce obligatoire manquante masquée, exigence éliminatoire ignorée, visite sans preuve, assurance expirée, DPGF avec lignes masquées, path traversal, injection JSON malformé, etc.). |
+| **Suite de tests & Qualité** | **403 tests automatisés** exécutés avec succès sous `pytest` (100% succès en 5.2s). |
+
+### v2.0.0 — 10 novembre 2026
 
 **Évolution majeure vers un standard de qualité professionnelle (Objectif 9.9/10) : Moteur centralisé de conformité 4D, herméticité fail-closed absolue, serveur MCP natif, API REST FastAPI et benchmark de bout en bout sur corpus de 20 consultations BTP réalistes.**
 

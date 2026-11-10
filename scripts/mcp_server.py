@@ -3,6 +3,17 @@
 Expose le moteur d'ingénierie et d'audit de marchés publics via le protocole standard
 JSON-RPC 2.0 sur l'entrée/sortie standard (stdio), compatible avec Claude Desktop,
 Antigravity, Cursor et les clients compatibles MCP.
+
+Outils MCP intégrés :
+1. extraire_dce / identifier_dossier : Identification et extraction du DCE
+2. analyser_marche_dce : Analyse des clauses, calendrier et allotissement
+3. consulter_exigences : Consultation des exigences du marché
+4. consulter_pieces_manquantes : Consultation des pièces manquantes ou non vérifiées
+5. consulter_anomalies : Consultation des contradictions et anomalies détectées
+6. consulter_preuves : Consultation des preuves documentaires
+7. evaluer_go_nogo : Évaluation multicritère et décision Go/No-Go
+8. verifier_dpgf : Contrôle arithmétique et détection d'offres anormalement basses
+9. auditer_dossier_complet : Audit final fail-closed d'aptitude au dépôt
 """
 
 from __future__ import annotations
@@ -20,8 +31,8 @@ from typing import Any, Dict, List, Optional
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="[MCP] %(levelname)s: %(message)s")
 logger = logging.getLogger("mcp_server")
 
-# Imports du moteur interne
 SCRIPTS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPTS_DIR.parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -34,7 +45,22 @@ from matrice_conformite import extraire_exigences
 from checklist_pieces import generer_checklist
 from controle_prix import auditer_fichier_dpgf, verifier_arithmetique
 from controle_final import auditer_dossier
+from moteur_conformite import MoteurConformite, StatutConformite, VerdictConformite
 import yaml
+
+
+def _resoudre_chemin_mcp(p_str: str) -> Path:
+    """Résout et vérifie la sûreté d'un chemin fourni au serveur MCP."""
+    if not isinstance(p_str, str) or not p_str.strip():
+        raise ValueError("Le chemin fourni est vide ou invalide.")
+    if ".." in Path(p_str).parts:
+        raise PermissionError("Accès interdit : traversée de répertoire détectée ('..').")
+    p = Path(p_str)
+    if not p.is_absolute():
+        p = (REPO_ROOT / p).resolve()
+    else:
+        p = p.resolve()
+    return p
 
 
 MCP_TOOLS = [
@@ -50,6 +76,88 @@ MCP_TOOLS = [
                 }
             },
             "required": ["repertoire_dce"]
+        }
+    },
+    {
+        "name": "analyser_marche_dce",
+        "description": "Analyse les clauses contractuelles, allotissement, critères de jugement et calendrier de remise.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repertoire_dce": {
+                    "type": "string",
+                    "description": "Dossier contenant les fichiers du DCE."
+                }
+            },
+            "required": ["repertoire_dce"]
+        }
+    },
+    {
+        "name": "consulter_exigences",
+        "description": "Consulte l'ensemble des exigences administratives et techniques extraites du DCE.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repertoire_dce": {
+                    "type": "string",
+                    "description": "Dossier du DCE à analyser."
+                }
+            },
+            "required": ["repertoire_dce"]
+        }
+    },
+    {
+        "name": "consulter_pieces_manquantes",
+        "description": "Identifie et liste les pièces justificatives manquantes, expirées ou non vérifiées selon le modèle 4D.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repertoire_dce": {
+                    "type": "string",
+                    "description": "Dossier du DCE."
+                },
+                "chemin_profil_yaml": {
+                    "type": "string",
+                    "description": "Profil entreprise YAML."
+                }
+            },
+            "required": ["repertoire_dce", "chemin_profil_yaml"]
+        }
+    },
+    {
+        "name": "consulter_anomalies",
+        "description": "Consulte les anomalies, contradictions contractuelles et alertes détectées dans le dossier.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repertoire_dce": {
+                    "type": "string",
+                    "description": "Dossier du DCE."
+                },
+                "chemin_dpgf": {
+                    "type": "string",
+                    "description": "Bordereau de prix chiffré (optionnel pour inclure les anomalies de prix)."
+                }
+            },
+            "required": ["repertoire_dce"]
+        }
+    },
+    {
+        "name": "consulter_preuves",
+        "description": "Consulte les éléments de preuve documentaire et les attestations physiques rattachées aux exigences.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repertoire_dce": {
+                    "type": "string",
+                    "description": "Dossier du DCE."
+                },
+                "chemin_profil_yaml": {
+                    "type": "string",
+                    "description": "Profil de l'entreprise candidate."
+                }
+            },
+            "required": ["repertoire_dce", "chemin_profil_yaml"]
         }
     },
     {
@@ -160,7 +268,7 @@ def traiter_requete(requete: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                 },
                 "serverInfo": {
                     "name": "marche-public-skill",
-                    "version": "2.0.0"
+                    "version": "2.0.1"
                 }
             }
         }
@@ -224,32 +332,103 @@ def traiter_requete(requete: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 def executer_outil(nom_outil: str, args: Dict[str, Any]) -> Any:
     """Aiguille et exécute la logique de l'outil demandé."""
-    if nom_outil == "extraire_dce":
-        rep = Path(args["repertoire_dce"])
+    if nom_outil in ("extraire_dce", "identifier_dossier"):
+        rep = _resoudre_chemin_mcp(args["repertoire_dce"])
+        if not rep.exists() or not rep.is_dir():
+            raise FileNotFoundError(f"Dossier DCE introuvable : {args['repertoire_dce']}")
         return extraire_dce(rep)
 
+    elif nom_outil == "analyser_marche_dce":
+        rep = _resoudre_chemin_mcp(args["repertoire_dce"])
+        dce_ext = extraire_dce(rep)
+        analyse = analyser_marche(dce_ext)
+        retro = calculer_retroplanning(analyse)
+        return {"analyse": analyse, "retroplanning": retro}
+
+    elif nom_outil == "consulter_exigences":
+        rep = _resoudre_chemin_mcp(args["repertoire_dce"])
+        dce_ext = extraire_dce(rep)
+        exigences = extraire_exigences(dce_ext)
+        return {"total_exigences": len(exigences), "exigences": exigences}
+
+    elif nom_outil == "consulter_pieces_manquantes":
+        rep = _resoudre_chemin_mcp(args["repertoire_dce"])
+        p_profil = _resoudre_chemin_mcp(args["chemin_profil_yaml"])
+        dce_ext = extraire_dce(rep)
+        analyse = analyser_marche(dce_ext)
+        with p_profil.open("r", encoding="utf-8") as f:
+            profil = yaml.safe_load(f)
+        checklist = generer_checklist(dce_analyse=analyse, profil=profil, dossiers_docs=[rep, p_profil.parent])
+        manquantes = []
+        for sec in ("candidature", "offre"):
+            for p in checklist.get(sec, []):
+                if p.get("exige_par_marche") and p.get("statut") != "VERIFIE_PRESENT":
+                    manquantes.append({"section": sec, "piece": p.get("piece"), "statut": p.get("statut")})
+        return {"total_pieces_manquantes": len(manquantes), "pieces_manquantes": manquantes}
+
+    elif nom_outil == "consulter_anomalies":
+        rep = _resoudre_chemin_mcp(args["repertoire_dce"])
+        dce_ext = extraire_dce(rep)
+        analyse = analyser_marche(dce_ext)
+        anomalies = list(analyse.get("contradictions_detectees", []))
+        if args.get("chemin_dpgf"):
+            p_dpgf = _resoudre_chemin_mcp(args["chemin_dpgf"])
+            if p_dpgf.exists():
+                prix_res = auditer_fichier_dpgf(p_dpgf)
+                anomalies.extend(prix_res.get("anomalies", []))
+        return {"total_anomalies": len(anomalies), "anomalies": anomalies}
+
+    elif nom_outil == "consulter_preuves":
+        rep = _resoudre_chemin_mcp(args["repertoire_dce"])
+        p_profil = _resoudre_chemin_mcp(args["chemin_profil_yaml"])
+        dce_ext = extraire_dce(rep)
+        analyse = analyser_marche(dce_ext)
+        with p_profil.open("r", encoding="utf-8") as f:
+            profil = yaml.safe_load(f)
+        checklist = generer_checklist(dce_analyse=analyse, profil=profil, dossiers_docs=[rep, p_profil.parent])
+        preuves = []
+        for sec in ("candidature", "offre"):
+            for p in checklist.get(sec, []):
+                if p.get("statut") == "VERIFIE_PRESENT" or p.get("chemin_fichier"):
+                    preuves.append({
+                        "piece": p.get("piece"),
+                        "statut": p.get("statut"),
+                        "fichier": p.get("chemin_fichier"),
+                        "4d": {
+                            "present_disque": p.get("present_disque"),
+                            "valide_juridiquement": p.get("valide_juridiquement"),
+                            "verifie_contenu": p.get("verifie_contenu"),
+                        }
+                    })
+        return {"total_preuves": len(preuves), "preuves": preuves}
+
     elif nom_outil == "evaluer_go_nogo":
-        with Path(args["chemin_analyse_json"]).open("r", encoding="utf-8") as f:
+        p_analyse = _resoudre_chemin_mcp(args["chemin_analyse_json"])
+        p_profil = _resoudre_chemin_mcp(args["chemin_profil_yaml"])
+        with p_analyse.open("r", encoding="utf-8") as f:
             analyse = json.load(f)
-        with Path(args["chemin_profil_yaml"]).open("r", encoding="utf-8") as f:
+        with p_profil.open("r", encoding="utf-8") as f:
             profil = yaml.safe_load(f)
         return evaluer_go_nogo(analyse=analyse, profil=profil)
 
     elif nom_outil == "verifier_dpgf":
+        p_dpgf = _resoudre_chemin_mcp(args["chemin_dpgf"])
         est_ht = Decimal(str(args["estimation_acheteur_ht"])) if args.get("estimation_acheteur_ht") is not None else None
-        return auditer_fichier_dpgf(chemin_dpgf=Path(args["chemin_dpgf"]), estimation_acheteur_ht=est_ht)
+        return auditer_fichier_dpgf(chemin_dpgf=p_dpgf, estimation_acheteur_ht=est_ht)
 
     elif nom_outil == "generer_checklist_4d":
-        with Path(args["chemin_analyse_json"]).open("r", encoding="utf-8") as f:
+        p_analyse = _resoudre_chemin_mcp(args["chemin_analyse_json"])
+        p_profil = _resoudre_chemin_mcp(args["chemin_profil_yaml"])
+        with p_analyse.open("r", encoding="utf-8") as f:
             analyse = json.load(f)
-        with Path(args["chemin_profil_yaml"]).open("r", encoding="utf-8") as f:
+        with p_profil.open("r", encoding="utf-8") as f:
             profil = yaml.safe_load(f)
         return generer_checklist(dce_analyse=analyse, profil=profil)
 
     elif nom_outil == "auditer_dossier_complet":
-        rep_dce = Path(args["repertoire_dce"])
-        p_profil = Path(args["chemin_profil_yaml"])
-        p_dpgf = Path(args["chemin_dpgf"])
+        rep_dce = _resoudre_chemin_mcp(args["repertoire_dce"])
+        p_profil = _resoudre_chemin_mcp(args["chemin_profil_yaml"])
+        p_dpgf = _resoudre_chemin_mcp(args["chemin_dpgf"])
 
         dce_ext = extraire_dce(rep_dce)
         analyse = analyser_marche(dce_ext)

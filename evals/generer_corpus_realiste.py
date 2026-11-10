@@ -1,12 +1,7 @@
-"""Générateur du corpus de 20 consultations DCE BTP réalistes et anonymisées.
+"""Générateur du corpus de test synthétique (Catégorie A — 20 consultations BTP).
 
-Chaque dossier contient :
-- Règlement de la Consultation (RC.md)
-- Cahier des Clauses Administratives Particulières (CCAP.md)
-- Cahier des Clauses Techniques Particulières (CCTP.md)
-- Bordereau de Décomposition du Prix Global et Forfaitaire (DPGF.csv)
-- Acte d'Engagement (AE.md)
-- Contrat de vérité terrain indépendant (ground_truth.json)
+Scénarios synthétiques rigoureux pour les tests de régression, cas limites,
+documents contradictoires, exigences éliminatoires et calculs DPGF.
 """
 
 from __future__ import annotations
@@ -16,7 +11,7 @@ import json
 from decimal import Decimal
 from pathlib import Path
 
-CORPUS_DIR = Path(__file__).resolve().parent / "corpus"
+CORPUS_DIR = Path(__file__).resolve().parent / "corpus_synthetique"
 CORPUS_DIR.mkdir(parents=True, exist_ok=True)
 
 DOSSIERS_SPEC = [

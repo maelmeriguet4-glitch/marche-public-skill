@@ -47,12 +47,13 @@ def classifier_categorie_exigence(texte: str) -> str:
     return "Technique"
 
 
-def extraire_exigences(dce_extrait: Dict[str, Any], profil: Dict[str, Any]) -> List[Dict[str, Any]]:
+def extraire_exigences(dce_extrait: Dict[str, Any], profil: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """Construit dynamiquement la liste des exigences contractuelles extraites du DCE réel.
     
     Chaque exigence est sourcée dans le texte des pièces (RC, CCAP, CCTP, PGC, AE).
     Le statut par défaut est strictement NON_VERIFIE afin de proscrire toute fausse conformité présumée.
     """
+    profil = profil or {}
     pieces = dce_extrait.get("pieces", [])
     exigences = []
     compteur_par_cat: Dict[str, int] = {}

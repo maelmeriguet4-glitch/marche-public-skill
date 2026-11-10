@@ -220,14 +220,14 @@ def tester_cas_dynamiquement(donnees_cas: Dict[str, Any]) -> Dict[str, Any]:
     }
     checklist_simulee = {
         "candidature": [
-            {"piece": "DC1", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "DC2", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "Attestation décennale", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "DC1", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT", "chemin_fichier": "pieces/dc1.pdf"},
+            {"piece": "DC2", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT", "chemin_fichier": "pieces/dc2.pdf"},
+            {"piece": "Attestation décennale", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT", "chemin_fichier": "pieces/decennale.pdf"},
         ],
         "offre": [
-            {"piece": "Acte d'Engagement", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "DPGF", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "Mémoire technique", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "Acte d'Engagement", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT", "chemin_fichier": "pieces/ae.pdf"},
+            {"piece": "DPGF", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT", "chemin_fichier": "pieces/dpgf.xlsx"},
+            {"piece": "Mémoire technique", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT", "chemin_fichier": "pieces/memoire.docx"},
         ]
     }
     
@@ -327,10 +327,10 @@ def main() -> None:
         
     e2e_valide = True
     if args.e2e:
-        print("\n3. BENCHMARK RÉEL DE BOUT EN BOUT SUR CORPUS DCE BTP (20 DOSSIERS)")
+        print("\n3. BENCHMARK SYNTHÉTIQUE D'INVARIANTS ET DE RÉGRESSION (CATÉGORIE A — 20 DOSSIERS)")
         try:
-            from evals.benchmark_e2e import executer_benchmark_e2e
-            bench_res = executer_benchmark_e2e()
+            from benchmark_e2e import executer_benchmark_synthetique, executer_benchmark_independant
+            bench_res = executer_benchmark_synthetique()
             print(f"- Exactitude dates      : {bench_res['taux_exactitude_dates_pct']:.1f} %")
             print(f"- Précision visites     : {bench_res['precision_visites_pct']:.1f} %")
             print(f"- Rappel éliminatoires : {bench_res['rappel_clauses_eliminatoires_pct']:.1f} %")
@@ -342,8 +342,13 @@ def main() -> None:
                 or bench_res["taux_fiabilite_calculs_financiers_pct"] < 100.0
             ):
                 e2e_valide = False
+
+            print("\n4. BENCHMARK DOCUMENTAIRE INDÉPENDANT SUR DCE RÉELS (CATÉGORIE B)")
+            res_indep = executer_benchmark_independant()
+            print(f"- Statut formel         : {res_indep['statut']}")
+            print(f"- Information           : {res_indep.get('message', '')}")
         except Exception as e:
-            print(f"Erreur benchmark E2E: {e}")
+            print(f"Erreur benchmark: {e}")
             e2e_valide = False
 
     print("\n" + "=" * 70)

@@ -36,6 +36,10 @@ def analyser_lignes_dpgf(chemin_xlsx: Union[str, Path]) -> Tuple[List[Dict[str, 
     ext = chemin.suffix.lower()
 
     lignes_brutes = []
+    lignes_ouvrages = []
+    total_affiche_ht = None
+    lignes_masquees = []
+
     if ext == ".csv":
         import csv
         contenu = None
@@ -57,13 +61,13 @@ def analyser_lignes_dpgf(chemin_xlsx: Union[str, Path]) -> Tuple[List[Dict[str, 
     else:
         wb = openpyxl.load_workbook(str(chemin), data_only=True)
         ws = wb.active
-        for row in ws.iter_rows(values_only=True):
+        for r_idx, row in enumerate(ws.iter_rows(values_only=True), start=1):
+            dim = ws.row_dimensions.get(r_idx)
+            if dim and dim.hidden and any(v is not None for v in row):
+                lignes_masquees.append(r_idx)
             if any(v is not None for v in row):
                 lignes_brutes.append(list(row))
 
-    lignes_ouvrages = []
-    total_affiche_ht = None
-    
     col_qte_idx = None
     col_pu_idx = None
     col_total_idx = None
@@ -194,6 +198,7 @@ def analyser_lignes_dpgf(chemin_xlsx: Union[str, Path]) -> Tuple[List[Dict[str, 
     resume_dpgf = {
         "nb_lignes_extraites": len(lignes_ouvrages),
         "total_affiche_ht_excel": total_affiche_ht,
+        "lignes_masquees": lignes_masquees,
     }
     return lignes_ouvrages, resume_dpgf
 
@@ -229,6 +234,17 @@ def verifier_arithmetique(
         statut_ligne = "OK"
         ecart = Decimal("0.00")
         
+        # Détection quantité négative
+        if qte < Decimal("0.00"):
+            statut_ligne = "QUANTITE_NEGATIVE"
+            anomalies.append({
+                "type": "QUANTITE_NEGATIVE",
+                "ligne": l["ligne_excel"],
+                "poste": l["numero"],
+                "designation": l["designation"],
+                "description": f"Quantité négative détectée ({qte}). Une quantité de travaux ne peut être négative."
+            })
+
         # Détection prix nul ou négatif
         if pu <= Decimal("0.00"):
             statut_ligne = "PRIX_MANQUANT"
@@ -432,7 +448,7 @@ def auditer_fichier_dpgf(
     lignes, resume = analyser_lignes_dpgf(p)
     total_excel = resume.get("total_affiche_ht_excel")
     est_moe = to_decimal(estimation_acheteur_ht) if estimation_acheteur_ht is not None else None
-    return verifier_arithmetique(
+    res = verifier_arithmetique(
         lignes=lignes,
         total_excel=total_excel,
         taux_tva=to_decimal(taux_tva),
@@ -440,6 +456,16 @@ def auditer_fichier_dpgf(
         seuil_oab_pct=to_decimal(seuil_oab_pct),
         estimation_moe=est_moe,
     )
+    res["lignes_masquees"] = resume.get("lignes_masquees", [])
+    if res["lignes_masquees"]:
+        for l_masq in res["lignes_masquees"]:
+            res["anomalies"].append({
+                "type": "LIGNE_MASQUEE",
+                "ligne": l_masq,
+                "description": f"La ligne Excel {l_masq} est masquée et contient des données, dissimulant potentiellement des coûts.",
+            })
+        res["nb_anomalies"] = len(res["anomalies"])
+    return res
 
 
 def main() -> None:

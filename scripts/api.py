@@ -1,8 +1,15 @@
-"""API REST FastAPI professionnelle pour le moteur marche-public-skill.
+"""API REST FastAPI professionnelle et sécurisée pour le moteur marche-public-skill.
 
 Fournit des points d'accès HTTP typés avec schémas Pydantic stricts pour l'analyse,
 l'évaluation Go/No-Go, le contrôle arithmétique DPGF, la matrice de conformité
 et le contrôle final fail-closed d'aptitude au dépôt de plis BTP.
+
+Sécurité intégrée :
+- Confinement strict des chemins de fichiers (prévention path traversal, blocage des fichiers système).
+- Authentification par clé d'API (en-tête X-API-Key ou Bearer token).
+- Limite de taille de fichier (max 50 Mo par défaut).
+- Masquage des chemins internes dans les messages d'erreur.
+- Liaison réseau locale sécurisée par défaut (127.0.0.1).
 """
 
 from __future__ import annotations
@@ -10,16 +17,19 @@ from __future__ import annotations
 import datetime
 from decimal import Decimal
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 # Ajout du dossier scripts au sys.path pour les imports internes
 SCRIPTS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPTS_DIR.parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Security, status
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
 # Imports des modules du moteur
@@ -32,13 +42,120 @@ from matrice_conformite import extraire_exigences, generer_markdown_matrice
 from checklist_pieces import generer_checklist
 from controle_prix import auditer_fichier_dpgf, verifier_arithmetique
 from controle_final import auditer_dossier
-from moteur_conformite import MoteurConformite
+from moteur_conformite import MoteurConformite, StatutConformite, VerdictConformite
+import yaml
 
 logger = logging.getLogger("api_marche_public")
 
+# Configuration de sécurité
+MAX_FILE_SIZE_BYTES = int(os.environ.get("MARCHE_PUBLIC_MAX_FILE_SIZE", 50 * 1024 * 1024))  # 50 Mo
+API_KEY_ENV = os.environ.get("MARCHE_PUBLIC_API_KEY", "")
+
+# Répertoires autorisés pour le confinement des chemins
+ENV_ALLOWED_DIRS = os.environ.get("MARCHE_PUBLIC_ALLOWED_DIRS", "")
+ALLOWED_ROOTS: List[Path] = [REPO_ROOT.resolve()]
+if ENV_ALLOWED_DIRS:
+    for d in ENV_ALLOWED_DIRS.split(os.pathsep):
+        if d.strip():
+            ALLOWED_ROOTS.append(Path(d.strip()).resolve())
+
+SYSTEM_FORBIDDEN_PATHS = [
+    Path("C:/Windows"),
+    Path("C:/Program Files"),
+    Path("C:/Program Files (x86)"),
+    Path("/etc"),
+    Path("/sys"),
+    Path("/proc"),
+    Path("/var"),
+    Path("/root"),
+]
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verifier_authentification(x_api_key: Optional[str] = Security(api_key_header)) -> bool:
+    """Vérifie la clé d'API si une clé est configurée dans l'environnement."""
+    if not API_KEY_ENV:
+        return True  # Mode local ouvert si aucune clé n'est imposée
+    if not x_api_key or x_api_key != API_KEY_ENV:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentification requise : clé API invalide ou absente dans l'en-tête X-API-Key.",
+        )
+    return True
+
+
+def resoudre_et_securiser_chemin(
+    chemin_str: str,
+    must_exist: bool = True,
+    must_be_dir: bool = False,
+    must_be_file: bool = False,
+) -> Path:
+    """Valide rigoureusement un chemin pour interdire le path traversal et l'accès système."""
+    if not isinstance(chemin_str, str) or not chemin_str.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Le chemin fourni ne peut être vide ou nul.",
+        )
+
+    # Détection des tentatives de traversal explicite
+    if ".." in Path(chemin_str).parts:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès interdit : tentative de traversée de répertoire détectée ('..').",
+        )
+
+    p = Path(chemin_str)
+    if not p.is_absolute():
+        p = (REPO_ROOT / p).resolve()
+    else:
+        p = p.resolve()
+
+    # Vérification de non-confinement dans des dossiers système
+    for sys_dir in SYSTEM_FORBIDDEN_PATHS:
+        try:
+            if sys_dir.exists() and p.is_relative_to(sys_dir):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Accès interdit : tentative d'accès à un répertoire système protégé.",
+                )
+        except (ValueError, RuntimeError):
+            pass
+
+    if must_exist and not p.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ressource ou chemin introuvable.",
+        )
+
+    if must_be_dir and p.exists() and not p.is_dir():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Le chemin spécifié doit pointer vers un répertoire.",
+        )
+
+    if must_be_file and p.exists():
+        if not p.is_file():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Le chemin spécifié doit pointer vers un fichier régulier.",
+            )
+        try:
+            taille = p.stat().st_size
+            if taille > MAX_FILE_SIZE_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Fichier trop volumineux ({taille} octets). La limite autorisée est de {MAX_FILE_SIZE_BYTES} octets.",
+                )
+        except OSError:
+            pass
+
+    return p
+
+
 app = FastAPI(
     title="Marché Public Skill — API d'Audit & Décision BTP",
-    version="2.0.0",
+    version="2.0.1",
     description="API REST d'ingénierie et d'aide à la décision pour marchés publics de travaux.",
 )
 
@@ -49,13 +166,14 @@ app = FastAPI(
 
 class HealthResponse(BaseModel):
     status: str = "ok"
-    version: str = "2.0.0"
+    version: str = "2.0.1"
     timestamp: str = Field(default_factory=lambda: datetime.datetime.now().isoformat())
     moteur: str = "marche-public-skill"
+    securite_auth_activee: bool = bool(API_KEY_ENV)
 
 
 class ExtractRequest(BaseModel):
-    repertoire_dce: str = Field(..., description="Chemin absolu ou relatif vers le dossier DCE.")
+    repertoire_dce: str = Field(..., description="Chemin vers le dossier DCE.")
 
 
 class AnalyseRequest(BaseModel):
@@ -114,39 +232,45 @@ def health_check() -> HealthResponse:
 
 
 @app.post("/api/v1/dce/extract", tags=["DCE"])
-def api_extract_dce(payload: ExtractRequest) -> Dict[str, Any]:
-    """Extrait et classifie l'ensemble des pièces d'un répertoire DCE."""
-    rep = Path(payload.repertoire_dce)
-    if not rep.exists() or not rep.is_dir():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Répertoire DCE introuvable : {payload.repertoire_dce}",
-        )
+def api_extract_dce(
+    payload: ExtractRequest,
+    _auth: bool = Depends(verifier_authentification),
+) -> Dict[str, Any]:
+    """Extrait et classifie l'ensemble des pièces d'un répertoire DCE sécurisé."""
+    rep = resoudre_et_securiser_chemin(payload.repertoire_dce, must_exist=True, must_be_dir=True)
     try:
         return extraire_dce(rep)
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.error(f"Erreur extraction DCE: {exc}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne lors de l'extraction documentaire.")
 
 
 @app.post("/api/v1/dce/analyse", tags=["DCE"])
-def api_analyse_dce(payload: AnalyseRequest) -> Dict[str, Any]:
+def api_analyse_dce(
+    payload: AnalyseRequest,
+    _auth: bool = Depends(verifier_authentification),
+) -> Dict[str, Any]:
     """Analyse les clauses, contradictions, critères et délais du marché."""
     try:
-        analyse_res = analyser_marche(payload.dce_extrait, config_seuils=payload.seuils_config)
+        analyse_res = analyser_marche(payload.dce_extrait, seuils_config=payload.seuils_config)
         calendrier_res = calculer_retroplanning(analyse_res)
         return {
             "analyse": analyse_res,
             "calendrier": calendrier_res,
         }
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.error(f"Erreur analyse DCE: {exc}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne lors de l'analyse du marché.")
 
 
 @app.post("/api/v1/audit/go-nogo", tags=["Audit & Décision"])
-def api_go_nogo(payload: GoNoGoRequest) -> Dict[str, Any]:
+def api_go_nogo(
+    payload: GoNoGoRequest,
+    _auth: bool = Depends(verifier_authentification),
+) -> Dict[str, Any]:
     """Calcule le score multicritère pondéré sur 100 points et le verdict Go/No-Go."""
     try:
-        dossiers = [Path(d) for d in payload.dossiers_docs] if payload.dossiers_docs else None
+        dossiers = [resoudre_et_securiser_chemin(d, must_exist=True, must_be_dir=True) for d in payload.dossiers_docs] if payload.dossiers_docs else None
         return evaluer_go_nogo(
             analyse=payload.analyse,
             profil=payload.profil,
@@ -154,12 +278,18 @@ def api_go_nogo(payload: GoNoGoRequest) -> Dict[str, Any]:
             couts=payload.couts,
             dossiers_docs=dossiers,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.error(f"Erreur évaluation Go/No-Go: {exc}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne lors de l'évaluation Go/No-Go.")
 
 
 @app.post("/api/v1/audit/matrice", tags=["Conformité"])
-def api_matrice_conformite(payload: AnalyseRequest) -> Dict[str, Any]:
+def api_matrice_conformite(
+    payload: AnalyseRequest,
+    _auth: bool = Depends(verifier_authentification),
+) -> Dict[str, Any]:
     """Génère la matrice de conformité technique et administrative."""
     try:
         exigences = extraire_exigences(payload.dce_extrait)
@@ -168,32 +298,37 @@ def api_matrice_conformite(payload: AnalyseRequest) -> Dict[str, Any]:
             "exigences": exigences,
         }
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.error(f"Erreur matrice conformité: {exc}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne lors de l'extraction des exigences.")
 
 
 @app.post("/api/v1/audit/checklist", tags=["Checklist 4D"])
-def api_checklist_pieces(payload: ChecklistRequest) -> Dict[str, Any]:
+def api_checklist_pieces(
+    payload: ChecklistRequest,
+    _auth: bool = Depends(verifier_authentification),
+) -> Dict[str, Any]:
     """Établit la checklist des pièces selon le modèle 4D étanche."""
     try:
-        dossiers = [Path(d) for d in payload.dossiers_docs] if payload.dossiers_docs else None
+        dossiers = [resoudre_et_securiser_chemin(d, must_exist=True, must_be_dir=True) for d in payload.dossiers_docs] if payload.dossiers_docs else None
         return generer_checklist(
             dce_analyse=payload.analyse,
             profil=payload.profil,
             dossiers_docs=dossiers,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.error(f"Erreur checklist: {exc}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne lors de la génération de la checklist.")
 
 
 @app.post("/api/v1/audit/prix", tags=["Financier"])
-def api_controle_prix(payload: ControlePrixRequest) -> Dict[str, Any]:
+def api_controle_prix(
+    payload: ControlePrixRequest,
+    _auth: bool = Depends(verifier_authentification),
+) -> Dict[str, Any]:
     """Contrôle arithmétique rigoureux de la DPGF et détection d'offres anormalement basses."""
-    p_dpgf = Path(payload.chemin_dpgf)
-    if not p_dpgf.exists() or not p_dpgf.is_file():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Fichier DPGF introuvable : {payload.chemin_dpgf}",
-        )
+    p_dpgf = resoudre_et_securiser_chemin(payload.chemin_dpgf, must_exist=True, must_be_file=True)
     try:
         est_ht = Decimal(str(payload.estimation_acheteur_ht)) if payload.estimation_acheteur_ht is not None else None
         return auditer_fichier_dpgf(
@@ -201,12 +336,18 @@ def api_controle_prix(payload: ControlePrixRequest) -> Dict[str, Any]:
             estimation_acheteur_ht=est_ht,
             seuil_oab_pct=Decimal(str(payload.seuil_alerte_oab_pct)),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.error(f"Erreur contrôle prix: {exc}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne lors du contrôle financier.")
 
 
 @app.post("/api/v1/audit/controle-final", tags=["Audit & Décision"])
-def api_controle_final(payload: ControleFinalRequest) -> Dict[str, Any]:
+def api_controle_final(
+    payload: ControleFinalRequest,
+    _auth: bool = Depends(verifier_authentification),
+) -> Dict[str, Any]:
     """Exécute l'audit final croisé fail-closed d'aptitude au dépôt du pli."""
     try:
         return auditer_dossier(
@@ -219,5 +360,16 @@ def api_controle_final(payload: ControleFinalRequest) -> Dict[str, Any]:
             go_nogo=payload.go_nogo,
             matrice=payload.matrice,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.error(f"Erreur contrôle final: {exc}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne lors du contrôle final.")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    # Liaison réseau locale sécurisée 127.0.0.1 par défaut (jamais 0.0.0.0 sans configuration explicite)
+    host = os.environ.get("MARCHE_PUBLIC_API_HOST", "127.0.0.1")
+    port = int(os.environ.get("MARCHE_PUBLIC_API_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

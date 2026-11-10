@@ -697,8 +697,8 @@ def verifier_visite_effectuee_profil(
 
     # Vérification d'antériorité par rapport à la date limite
     date_visite_raw = v_info.get("date_visite")
-    if date_visite_raw:
-        dt_v, _, _ = parser_date_et_echeance(date_visite_raw)
+    if date_visite_raw is not None and str(date_visite_raw).strip() != "":
+        dt_v, _, _ = parser_date_et_echeance(str(date_visite_raw))
         if not dt_v:
             return (
                 False,
@@ -711,6 +711,12 @@ def verifier_visite_effectuee_profil(
                 f"Visite effectuée ({dt_v.strftime('%d/%m/%Y')}) postérieurement à la date limite de remise ({date_limite_dt.strftime('%d/%m/%Y')}).",
                 "VISITE_POSTERIEURE_ECHEANCE",
             )
+    elif "date_visite" in v_info and (date_visite_raw == "" or date_visite_raw is None):
+        return (
+            False,
+            "Date de visite manquante sur l'attestation de visite.",
+            "DATE_VISITE_MANQUANTE",
+        )
 
     # Vérification de concordance d'identité de l'entreprise candidate
     ent_visite = v_info.get("entreprise") or v_info.get("beneficiaire") or v_info.get("candidat")
