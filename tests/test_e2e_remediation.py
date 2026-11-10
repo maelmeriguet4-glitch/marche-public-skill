@@ -410,8 +410,16 @@ class TestTier1R3FinalControl:
         """R3.3 : Présence de balises résiduelles [À FOURNIR] / [À COMPLÉTER] force PAS_PRET."""
         analyse = {"contradictions_detectees": []}
         checklist = {
-            "candidature": [{"piece": "DC1", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
-            "offre": [{"piece": "AE", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
+            "candidature": [{
+                "piece": "DC1", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
+            "offre": [{
+                "piece": "AE", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
         }
         prix = {"total_recalcule_ht": "100000.00", "nb_anomalies": 0}
         memoire = f"Introduction méthodologique.\n{tag}\nConclusion technique."
@@ -429,8 +437,16 @@ class TestTier1R3FinalControl:
             "limite_pages_memoire": 15,
         }
         checklist = {
-            "candidature": [{"piece": "DC1", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
-            "offre": [{"piece": "AE", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
+            "candidature": [{
+                "piece": "DC1", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
+            "offre": [{
+                "piece": "AE", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
         }
         prix = {"total_recalcule_ht": "100000.00", "nb_anomalies": 0}
 
@@ -449,8 +465,16 @@ class TestTier1R3FinalControl:
             "calendrier": {"date_limite_retenue": "31/12/2030 à 12:00"},
         }
         checklist = {
-            "candidature": [{"piece": "DC1", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
-            "offre": [{"piece": "AE", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
+            "candidature": [{
+                "piece": "DC1", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
+            "offre": [{
+                "piece": "AE", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
         }
         prix = {"total_recalcule_ht": "100000.00", "nb_anomalies": 0}
         memoire = "Mémoire technique parfaitement rédigé sans aucune balise en suspens. Délai prévu : 12 semaines."
@@ -862,8 +886,16 @@ class TestTier3CrossFeatureCombinations:
         """Tier 3.5 : Tout est vert sauf une unique balise [À FOURNIR] -> Bloque immédiatement."""
         analyse = {"contradictions_detectees": []}
         checklist = {
-            "candidature": [{"piece": "DC1", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
-            "offre": [{"piece": "AE", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
+            "candidature": [{
+                "piece": "DC1", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
+            "offre": [{
+                "piece": "AE", "obligatoire": True, "exige_par_marche": True,
+                "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+                "statut": "VERIFIE_PRESENT"
+            }],
         }
         prix = {"total_recalcule_ht": "100000.00", "nb_anomalies": 0}
         memoire_presque_parfait = "Mémoire d'excellence.\n[À FOURNIR : Schéma d'organisation du chantier]\nFin."

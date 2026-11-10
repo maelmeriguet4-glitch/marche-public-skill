@@ -19,8 +19,16 @@ def test_controle_final_pret():
         "calendrier": {"date_limite_retenue": "31/12/2030 à 12:00"}
     }
     checklist = {
-        "candidature": [{"piece": "DC1", "obligatoire": True, "statut": "VERIFIE_PRESENT"}],
-        "offre": [{"piece": "Acte d'engagement", "obligatoire": True, "statut": "VERIFIE_PRESENT"}]
+        "candidature": [{
+            "piece": "DC1", "obligatoire": True, "exige_par_marche": True,
+            "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+            "statut": "VERIFIE_PRESENT"
+        }],
+        "offre": [{
+            "piece": "Acte d'engagement", "obligatoire": True, "exige_par_marche": True,
+            "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True,
+            "statut": "VERIFIE_PRESENT"
+        }]
     }
     prix = {
         "total_recalcule_ht": "142500.00",

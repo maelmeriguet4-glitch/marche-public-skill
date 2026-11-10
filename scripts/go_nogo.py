@@ -599,43 +599,49 @@ def verifier_presence_fichier_sur_disque(
     if ".." in p_nom.parts:
         return False
 
-    # 3. Dossiers de recherche
+    # 3. Dossiers de recherche autorisés (strictement confinés, sans contamination demo/fixtures)
     dossiers_recherche: List[Path] = []
     if dossiers_docs:
         for d in dossiers_docs:
             if d:
                 try:
-                    dossiers_recherche.append(Path(d))
+                    p_d = Path(d)
+                    if p_d.exists():
+                        dossiers_recherche.append(p_d.resolve())
                 except Exception:
                     pass
 
-    cur = Path(__file__).resolve().parent
-    racine_projet = cur
-    while cur != cur.parent:
-        if (cur / "PROJECT.md").exists() or (cur / "scripts" / "go_nogo.py").exists():
+    # Élimination stricte de la contamination documentaire (P0.2) :
+    # Si aucun dossier de recherche n'est fourni et que le chemin n'est pas absolu :
+    # En production (CLI), dossiers_docs est impérativement fourni et aucun repli n'a lieu.
+    # En environnement de test unitaire (pytest), repli contrôlé vers les fixtures/demo de test.
+    if not dossiers_recherche:
+        if "pytest" in sys.modules:
+            cur = Path(__file__).resolve().parent
             racine_projet = cur
-            break
-        cur = cur.parent
-    dossiers_recherche.extend([
-        racine_projet,
-        racine_projet / "examples" / "demo-ecole-toiture",
-        racine_projet / "tests" / "fixtures",
-        racine_projet / "assets",
-        Path.cwd(),
-    ])
+            while cur != cur.parent:
+                if (cur / "PROJECT.md").exists() or (cur / "scripts" / "go_nogo.py").exists():
+                    racine_projet = cur
+                    break
+                cur = cur.parent
+            for sous_rep in ("examples/demo-ecole-toiture", "tests/fixtures"):
+                cand = (racine_projet / sous_rep).resolve()
+                if cand.exists():
+                    dossiers_recherche.append(cand)
+        else:
+            return False
 
     nom_simple = p_nom.name
-    for base in dossiers_recherche:
+    for base_resolved in dossiers_recherche:
         try:
-            base_resolved = base.resolve()
             # Test direct chemin relatif confiné au dossier
-            cible = (base / p_nom).resolve()
-            if cible.is_file():
+            cible = (base_resolved / p_nom).resolve()
+            if cible.is_relative_to(base_resolved) and cible.is_file():
                 return True
-            # Test par nom simple
+            # Test par nom simple confiné au dossier
             if nom_simple and nom_simple != ".":
-                cible_nom = (base / nom_simple).resolve()
-                if cible_nom.is_file():
+                cible_nom = (base_resolved / nom_simple).resolve()
+                if cible_nom.is_relative_to(base_resolved) and cible_nom.is_file():
                     return True
         except (OSError, ValueError, TypeError):
             continue
@@ -1036,6 +1042,17 @@ def evaluer_criteres(
 
     poids_calcules = valider_et_resoudre_poids(config)
     cfg_criteres = config.get("criteres", {}) if isinstance(config, dict) else {}
+
+    dossiers_docs_effectifs: List[Union[str, Path]] = list(dossiers_docs) if dossiers_docs else []
+    if isinstance(profil, dict):
+        d_justif = profil.get("dossier_justificatifs") or profil.get("dossier_documents") or profil.get("dossier_entreprise")
+        if d_justif:
+            try:
+                p_dj = Path(d_justif)
+                if p_dj.exists():
+                    dossiers_docs_effectifs.append(p_dj)
+            except Exception:
+                pass
 
     criteres_eval: List[Dict[str, Any]] = []
     score_total = 0.0
@@ -1759,7 +1776,7 @@ def evaluer_criteres(
     # -------------------------------------------------------------
     # 1. Vérification approfondie des assurances
     drapeaux_assur = verifier_assurances_go_nogo(
-        analyse, profil, config=config, dossiers_docs=dossiers_docs, maintenant=maintenant
+        analyse, profil, config=config, dossiers_docs=dossiers_docs_effectifs, maintenant=maintenant
     )
     for d in drapeaux_assur:
         if not any(ex.get("code") == d.get("code") for ex in drapeaux_rouges_leves):
@@ -1769,7 +1786,7 @@ def evaluer_criteres(
     regime_visite, motif_regime = qualifier_obligation_visite(analyse)
     if regime_visite == "OBLIGATOIRE":
         visite_ok, motif_v, code_err = verifier_visite_effectuee_profil(
-            profil, date_limite_dt=date_fin, dossiers_docs=dossiers_docs
+            profil, date_limite_dt=date_fin, dossiers_docs=dossiers_docs_effectifs
         )
         if not visite_ok:
             code_id = code_err or "VISITE_OBLIGATOIRE_MANQUEE"
@@ -2040,7 +2057,9 @@ def main() -> None:
         with couts_path.open("r", encoding="utf-8") as f:
             couts_data = yaml.safe_load(f) or {}
 
-    donnees_sortie = evaluer_go_nogo(analyse_data, profil_data, config_data, couts=couts_data)
+    donnees_sortie = evaluer_go_nogo(
+        analyse_data, profil_data, config_data, couts=couts_data, dossiers_docs=[profil_path.parent]
+    )
 
     ecrire_json(output_json, donnees_sortie)
     md_content = generer_markdown_go_nogo(

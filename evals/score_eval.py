@@ -217,14 +217,14 @@ def tester_cas_dynamiquement(donnees_cas: Dict[str, Any]) -> Dict[str, Any]:
     }
     checklist_simulee = {
         "candidature": [
-            {"piece": "DC1", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "DC2", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "Attestation décennale", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "DC1", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "DC2", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "Attestation décennale", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
         ],
         "offre": [
-            {"piece": "Acte d'Engagement", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "DPGF", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
-            {"piece": "Mémoire technique", "obligatoire": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "Acte d'Engagement", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "DPGF", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
+            {"piece": "Mémoire technique", "obligatoire": True, "present_disque": True, "valide_juridiquement": True, "verifie_contenu": True, "statut": "VERIFIE_PRESENT"},
         ]
     }
     

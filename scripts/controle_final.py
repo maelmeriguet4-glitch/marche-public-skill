@@ -159,9 +159,15 @@ def auditer_dossier(
 
     # 6. Complétude des pièces obligatoires de la checklist (Candidature ET Offre)
     # Règle Fail-Closed P0 : une checklist vide, absente ou mal formée doit TOUJOURS bloquer
+    STATUTS_AUTORISES = {
+        "VERIFIE_PRESENT", "MANQUANT", "A_FOURNIR", "EXPIREE", "A_COMPLETER", "A_METTRE_A_JOUR",
+        "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR",
+        "PREUVE_A_VALIDER_HUMAINEMENT", "FACULTATIF", "VALIDE"
+    }
     STATUTS_INCOMPLETS = {
         "MANQUANT", "A_FOURNIR", "EXPIREE", "A_COMPLETER", "A_METTRE_A_JOUR",
-        "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR"
+        "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR",
+        "PREUVE_A_VALIDER_HUMAINEMENT"
     }
 
     if not isinstance(checklist, dict) or not checklist:
@@ -171,6 +177,7 @@ def auditer_dossier(
             "description": "La checklist des pièces justificatives est absente, vide ou invalide. Pli non éligible au dépôt.",
         })
     else:
+        # Validation rigoureuse de la section candidature
         candidature_pieces = checklist.get("candidature")
         if not isinstance(candidature_pieces, list) or len(candidature_pieces) == 0:
             blocages.append({
@@ -179,16 +186,35 @@ def auditer_dossier(
                 "description": "Section candidature absente, vide ou mal formée dans la checklist.",
             })
         else:
-            # Contrôle de cohérence du modèle 4D sur chaque pièce
-            for p in candidature_pieces:
-                if isinstance(p, dict):
-                    if p.get("statut") == "VERIFIE_PRESENT":
-                        if p.get("present_disque") is False or p.get("valide_juridiquement") is False or p.get("verifie_contenu") is False:
-                            blocages.append({
-                                "code": "INCOHERENCE_STATUT_4D",
-                                "gravite": "BLOQUANT",
-                                "description": f"Incohérence 4D sur la pièce '{p.get('piece')}': le statut VERIFIE_PRESENT est contradictoire avec une dimension invalidée.",
-                            })
+            for idx, p in enumerate(candidature_pieces):
+                if not isinstance(p, dict) or not p:
+                    blocages.append({
+                        "code": "CHECKLIST_PIECE_MAL_FORMEE",
+                        "gravite": "BLOQUANT",
+                        "description": f"Élément #{idx} de candidature mal formé ou dictionnaire vide.",
+                    })
+                    continue
+                nom_p = p.get("piece")
+                if not nom_p or not str(nom_p).strip():
+                    blocages.append({
+                        "code": "CHECKLIST_PIECE_SANS_INTITULE",
+                        "gravite": "BLOQUANT",
+                        "description": f"Élément #{idx} de candidature sans intitulé valide.",
+                    })
+                st = p.get("statut")
+                if not st or st not in STATUTS_AUTORISES:
+                    blocages.append({
+                        "code": "STATUT_PIECE_INVALIDE",
+                        "gravite": "BLOQUANT",
+                        "description": f"Statut '{st}' invalide ou absent sur la pièce de candidature '{nom_p}'.",
+                    })
+                if st == "VERIFIE_PRESENT":
+                    if p.get("present_disque") is not True or p.get("valide_juridiquement") is not True or p.get("verifie_contenu") is not True:
+                        blocages.append({
+                            "code": "INCOHERENCE_STATUT_4D",
+                            "gravite": "BLOQUANT",
+                            "description": f"Incohérence 4D sur la pièce '{nom_p}': le statut VERIFIE_PRESENT exige que present_disque, valide_juridiquement et verifie_contenu soient tous strictement True.",
+                        })
 
             manquantes_cand = [
                 p["piece"] for p in candidature_pieces 
@@ -203,6 +229,7 @@ def auditer_dossier(
             else:
                 controles_valides.append("Dossier de candidature complet (DC1, DC2, Kbis, attestations fiscales, sociales et assurances valides).")
 
+        # Validation rigoureuse de la section offre
         offre_pieces = checklist.get("offre")
         if not isinstance(offre_pieces, list) or len(offre_pieces) == 0:
             blocages.append({
@@ -211,16 +238,35 @@ def auditer_dossier(
                 "description": "Section offre absente, vide ou mal formée dans la checklist.",
             })
         else:
-            # Contrôle de cohérence du modèle 4D sur chaque pièce de l'offre
-            for p in offre_pieces:
-                if isinstance(p, dict):
-                    if p.get("statut") == "VERIFIE_PRESENT":
-                        if p.get("present_disque") is False or p.get("valide_juridiquement") is False or p.get("verifie_contenu") is False:
-                            blocages.append({
-                                "code": "INCOHERENCE_STATUT_4D",
-                                "gravite": "BLOQUANT",
-                                "description": f"Incohérence 4D sur la pièce d'offre '{p.get('piece')}': le statut VERIFIE_PRESENT est contradictoire avec une dimension invalidée.",
-                            })
+            for idx, p in enumerate(offre_pieces):
+                if not isinstance(p, dict) or not p:
+                    blocages.append({
+                        "code": "CHECKLIST_PIECE_MAL_FORMEE",
+                        "gravite": "BLOQUANT",
+                        "description": f"Élément #{idx} de l'offre mal formé ou dictionnaire vide.",
+                    })
+                    continue
+                nom_p = p.get("piece")
+                if not nom_p or not str(nom_p).strip():
+                    blocages.append({
+                        "code": "CHECKLIST_PIECE_SANS_INTITULE",
+                        "gravite": "BLOQUANT",
+                        "description": f"Élément #{idx} de l'offre sans intitulé valide.",
+                    })
+                st = p.get("statut")
+                if not st or st not in STATUTS_AUTORISES:
+                    blocages.append({
+                        "code": "STATUT_PIECE_INVALIDE",
+                        "gravite": "BLOQUANT",
+                        "description": f"Statut '{st}' invalide ou absent sur la pièce d'offre '{nom_p}'.",
+                    })
+                if st == "VERIFIE_PRESENT":
+                    if p.get("present_disque") is not True or p.get("valide_juridiquement") is not True or p.get("verifie_contenu") is not True:
+                        blocages.append({
+                            "code": "INCOHERENCE_STATUT_4D",
+                            "gravite": "BLOQUANT",
+                            "description": f"Incohérence 4D sur la pièce d'offre '{nom_p}': le statut VERIFIE_PRESENT exige que present_disque, valide_juridiquement et verifie_contenu soient tous strictement True.",
+                        })
 
             manquantes_offre = [
                 p["piece"] for p in offre_pieces 

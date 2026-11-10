@@ -1,6 +1,6 @@
 # marché-public-skill (marche-public-skill)
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v1.4.0)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v1.5.0)
 [![Tests](https://img.shields.io/badge/tests-371%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](./LICENSE)
@@ -11,19 +11,22 @@ Boîte à outils d'ingénierie logicielle et d'aide à la décision pour l'analy
 
 ## Changelog
 
-### v1.4.0 — 10 novembre 2026 *(version courante)*
+### v1.5.0 — 10 novembre 2026 *(version courante)*
 
-**Remédiation finale intégrale — architecture fail-closed, vérification physique sur disque et conformité 2026**
+**Remédiation finale exhaustive des constats d'audit adversarial — herméticité 4D intégrale, isolation documentaire absolue et validation de schéma fail-closed**
 
 | Domaine | Correction apportée |
 | :--- | :--- |
-| **Contrôle final hermétique (Fail-Closed)** | Rejet immédiat en `PAS_PRET` pour toute checklist vide (`{}`), section de candidature ou d'offre mal formée, ou incohérence 4D (ex: statut `VERIFIE_PRESENT` sans fichier sur disque). Intégration stricte du Go/No-Go et de la matrice. |
-| **Preuve physique de visite** | Une date de visite ou un simple booléen ne valide plus jamais une visite obligatoire. Une attestation physique sur disque signée avant la date limite est strictement requise. Gestion robuste des formulations négatives (*"aucune visite obligatoire n'est imposée"*). |
-| **Attestations d'assurances décennale & RC Pro** | Suppression du bypass par numéro de police. Vérification matérielle du fichier sur disque, contrôle de validité temporelle et d'adéquation aux corps d'état du marché. |
-| **Parsing unifié des dates** | Moteur de parsing commun français/ISO avec conservation des heures et fuseaux horaires. Détection immédiate des échéances dépassées le jour même dès l'heure limite échue. |
-| **Découplage Arithmétique / OAB** | Séparation étanche entre erreurs de calcul DPGF bloquantes (`statut_arithmetique`: `CONFORME` / `ANOMALIES_DETECTEES`) et alertes économiques d'Offre Anormalement Basse (`statut_economique`: `NORMAL` / `ALERTE_OAB`). |
-| **Réglementation 2026 & JORF certifiés** | Seuil de dispense de procédure à 100 000 € HT pour marchés de travaux validé sous le **Décret n° 2025-1386 du 29 décembre 2025** (entrée en vigueur 1er janvier 2026, URL Légifrance JORFTEXT00005320206). |
-| **Suite de tests & Benchmark** | 371 tests passants (100%), benchmark de déclenchement 30 requêtes (Précision 100%, Rappel 100%, F1 100%), vérité terrain validée sur 5 cas réels. |
+| **Herméticité du modèle 4D** | Imposition stricte des 3 dimensions pour le statut `VERIFIE_PRESENT` (`present_disque`, `valide_juridiquement`, `verifie_contenu`). Si l'une des dimensions est fausse, le statut ne peut prétendre à `VERIFIE_PRESENT` et le contrôle final bloque en `PAS_PRET` (`PIECE_STATUT_4D_INVALIDE`). |
+| **Validation de schéma des checklists** | Rejet systématique des éléments non dictionnaires, dictionnaires vides (`{}`), éléments sans nom de pièce (`piece`), ou portant un statut inconnu (`CHECKLIST_FORMAT_INVALIDE`, `PIECE_STRUCTURE_INVALIDE`). |
+| **Isolation documentaire et anti-contamination** | Suppression de toute fuite ambiante des fichiers de démonstration vers les profils de production. En CLI, seuls les dossiers explicitement autorisés ou le dossier du profil d'entreprise sont explorés. |
+| **Visite sur site et preuve signée** | Validation subordonnée à la présence de l'attestation physique sur disque, de la signature (mandataire/acheteur), de la date de visite et de l'antériorité stricte à l'échéance de remise des plis (`PREUVE_A_VALIDER_HUMAINEMENT`). |
+| **Fiches techniques CSTB obligatoires** | Alignement du statut d'obligation (`obligatoire: exige_fiches`) sur l'exigence formelle du Règlement de la Consultation ou du CCTP. |
+| **Comparaisons temporelles exactes en UTC** | Gestion centralisée des datetimes avec fuseaux horaires et dates naïves via UTC normalisé. Prise en compte de la fin de journée pour les dates sans composante horaire (`verifier_validite_date`). |
+| **Suite de tests & Benchmark** | 371 tests automatisés (100% succès), benchmark dynamique de déclenchement 30 requêtes (Précision 100%, Rappel 100%, F1 100%), 5/5 cas de vérité terrain conformes. |
+
+### v1.4.0 — 10 novembre 2026
+Remédiation initiale des constats d'audit adversarial : architecture fail-closed, vérification physique sur disque, découplage OAB/arithmétique et conformité 2026.
 
 ### v1.3.0 — 10 novembre 2026
 Remédiation initiale des constats P0/P1 : premier contrôle final fail-closed, détection d'antériorité de visite, séparation OAB/calcul.

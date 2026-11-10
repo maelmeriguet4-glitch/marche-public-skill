@@ -260,11 +260,31 @@ def parser_date_et_echeance(
             return None, "", False
         s_repr = s_str
 
-        # 1. ISO 8601 : YYYY-MM-DD[T\sHH:MM[:SS]]
-        m_iso = re.search(
-            r"\b(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2})[:h](\d{1,2})(?:[:\.](\d{1,2}))?)?",
-            s_str,
-        )
+        # 1. ISO 8601 : YYYY-MM-DD[T\sHH:MM[:SS]][Z|(+/-)HH:MM]
+        # Essai direct avec le parseur ISO standard de Python
+        try:
+            # Remplacement de Z par +00:00 pour compatibilité fromisoformat
+            s_iso_clean = s_str.replace("Z", "+00:00").replace("z", "+00:00")
+            dt_iso = datetime.datetime.fromisoformat(s_iso_clean)
+            dt = DateTimeWithDateEquality(
+                dt_iso.year, dt_iso.month, dt_iso.day,
+                dt_iso.hour, dt_iso.minute, dt_iso.second, dt_iso.microsecond,
+                dt_iso.tzinfo
+            )
+            # Évaluation rigoureuse avec conservation des fuseaux
+            maintenant_dt = maintenant or (datetime.datetime.now(dt.tzinfo) if dt.tzinfo else datetime.datetime.now())
+            if dt.tzinfo is not None and maintenant_dt.tzinfo is not None:
+                est_depassee = dt.astimezone(datetime.timezone.utc) < maintenant_dt.astimezone(datetime.timezone.utc)
+            elif dt.tzinfo is not None and maintenant_dt.tzinfo is None:
+                est_depassee = dt.astimezone(datetime.timezone.utc) < maintenant_dt.astimezone().astimezone(datetime.timezone.utc)
+            elif dt.tzinfo is None and maintenant_dt.tzinfo is not None:
+                est_depassee = dt.astimezone().astimezone(datetime.timezone.utc) < maintenant_dt.astimezone(datetime.timezone.utc)
+            else:
+                est_depassee = dt < maintenant_dt
+            return dt, s_repr, est_depassee
+        except (ValueError, TypeError):
+            pass
+
         # 2. Format français : JJ/MM/AAAA ou JJ-MM-AAAA ou JJ.MM.AAAA [à HHhMM]
         m_fr = re.search(
             r"\b(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})(?:(?:\s*(?:[àa]\s*)?|\s+)(\d{1,2})[h:](\d{1,2})(?:[:\.](\d{1,2}))?)?",
@@ -275,15 +295,7 @@ def parser_date_et_echeance(
         annee, mois, jour = None, None, None
         heure, minute, seconde = 18, 0, 0
 
-        if m_iso:
-            annee = int(m_iso.group(1))
-            mois = int(m_iso.group(2))
-            jour = int(m_iso.group(3))
-            if m_iso.group(4) is not None:
-                heure = int(m_iso.group(4))
-                minute = int(m_iso.group(5)) if m_iso.group(5) is not None else 0
-                seconde = int(m_iso.group(6)) if m_iso.group(6) is not None else 0
-        elif m_fr:
+        if m_fr:
             jour = int(m_fr.group(1))
             mois = int(m_fr.group(2))
             annee = int(m_fr.group(3))
@@ -301,13 +313,16 @@ def parser_date_et_echeance(
         except (ValueError, TypeError, OverflowError):
             return None, s_repr, False
 
-    # Évaluation de dépassement par rapport à maintenant
-    maintenant_dt = maintenant or datetime.datetime.now()
-    if maintenant_dt.tzinfo is not None and dt.tzinfo is None:
-        maintenant_dt = maintenant_dt.replace(tzinfo=None)
-    elif maintenant_dt.tzinfo is None and dt.tzinfo is not None:
-        dt = dt.replace(tzinfo=None)
+    # Évaluation de dépassement par rapport à maintenant avec conversion UTC exacte
+    maintenant_dt = maintenant or (datetime.datetime.now(dt.tzinfo) if dt.tzinfo else datetime.datetime.now())
+    if dt.tzinfo is not None and maintenant_dt.tzinfo is not None:
+        est_depassee = dt.astimezone(datetime.timezone.utc) < maintenant_dt.astimezone(datetime.timezone.utc)
+    elif dt.tzinfo is not None and maintenant_dt.tzinfo is None:
+        est_depassee = dt.astimezone(datetime.timezone.utc) < maintenant_dt.astimezone().astimezone(datetime.timezone.utc)
+    elif dt.tzinfo is None and maintenant_dt.tzinfo is not None:
+        est_depassee = dt.astimezone().astimezone(datetime.timezone.utc) < maintenant_dt.astimezone(datetime.timezone.utc)
+    else:
+        est_depassee = dt < maintenant_dt
 
-    est_depassee = dt < maintenant_dt
     return dt, s_repr, est_depassee
 

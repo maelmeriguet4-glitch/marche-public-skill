@@ -25,8 +25,11 @@ from common import charger_json, ecrire_fichier_securise, ecrire_json, resoudre_
 logger = logging.getLogger("checklist_pieces")
 
 
-def verifier_validite_date(date_str: Optional[str]) -> str:
-    """Contrôle si une date d'échéance est valide ou expirée."""
+def verifier_validite_date(
+    date_str: Optional[Any],
+    maintenant: Optional[datetime.datetime] = None,
+) -> str:
+    """Contrôle si une date d'échéance est valide ou expirée (centralisé via common.py)."""
     if not date_str:
         return "NON_RENSEIGNEE"
     if not isinstance(date_str, str):
@@ -37,21 +40,38 @@ def verifier_validite_date(date_str: Optional[str]) -> str:
     clean_date = date_str.strip()
     if not clean_date:
         return "NON_RENSEIGNEE"
-    dt = None
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
-        try:
-            dt = datetime.datetime.strptime(clean_date, fmt).date()
-            break
-        except ValueError:
-            continue
+    try:
+        from common import parser_date_et_echeance
+        dt, _, est_depassee = parser_date_et_echeance(clean_date, maintenant=maintenant)
+    except Exception:
+        dt = None
+        est_depassee = False
     if dt is None:
         return "FORMAT_INVALIDE"
-    today = datetime.date.today()
-    if dt < today:
-        return "EXPIREE"
-    if (dt - today).days < 30:
-        return "A_RENOUVELER_SOUS_30J"
-    return "VALIDE"
+
+    now_ref = maintenant or (datetime.datetime.now(dt.tzinfo) if dt.tzinfo else datetime.datetime.now())
+    try:
+        dt_date = dt.date()
+        now_date = now_ref.date() if isinstance(now_ref, datetime.datetime) else now_ref
+
+        # Si une heure précise est fournie (ex: échéance de remise avec heure)
+        has_time = any(c in clean_date for c in (":", "h", "H"))
+        if has_time:
+            if est_depassee:
+                return "EXPIREE"
+        else:
+            # Pour une validité de document exprimée par une date simple, valide jusqu'à la fin de la journée
+            if dt_date < now_date:
+                return "EXPIREE"
+
+        nb_jours = (dt_date - now_date).days
+        if nb_jours < 30:
+            return "A_RENOUVELER_SOUS_30J"
+        return "VALIDE"
+    except Exception:
+        if est_depassee:
+            return "EXPIREE"
+        return "VALIDE"
 
 
 def assainir_dossiers_docs(dossiers_docs: Any) -> List[Path]:
@@ -267,10 +287,10 @@ def generer_checklist(
             dt_k, _, _ = parser_date_et_echeance(date_kbis)
             if dt_k:
                 nb_jours = (datetime.datetime.now() - dt_k).days
-                if nb_jours > 90:
+                if nb_jours > 90 or nb_jours < 0:
                     valide_kbis = False
         except Exception:
-            pass
+            valide_kbis = False
     verifie_kbis = bool(present_kbis and valide_kbis and identite.get("siret") and identite.get("rcs_ville"))
     if not present_kbis:
         statut_kbis = "MANQUANT"
@@ -578,8 +598,8 @@ def generer_checklist(
         except Exception:
             pass
 
-    valide_visite = bool(present_visite and visite_faite and not visite_post_echeance)
-    verifie_visite = bool(present_visite and (visite_site.get("signataire_mairie") or visite_site.get("date_visite") or visite_faite))
+    valide_visite = bool(present_visite and visite_faite and not visite_post_echeance and bool(date_visite_str))
+    verifie_visite = bool(present_visite and bool(date_visite_str) and (bool(visite_site.get("signataire_mairie")) or bool(visite_site.get("signataire"))))
 
     if visite_post_echeance:
         statut_visite = "EXPIREE"
@@ -590,7 +610,7 @@ def generer_checklist(
     elif not valide_visite:
         statut_visite = "A_METTRE_A_JOUR"
     elif not verifie_visite:
-        statut_visite = "A_COMPLETER"
+        statut_visite = "PREUVE_A_VALIDER_HUMAINEMENT"
     else:
         statut_visite = "VERIFIE_PRESENT"
 
@@ -629,7 +649,7 @@ def generer_checklist(
     pieces_offre.append({
         "piece": "Fiches techniques des produits et avis techniques CSTB",
         "exige_par_marche": exige_fiches,
-        "obligatoire": False,
+        "obligatoire": exige_fiches,
         "present_disque": present_fiches,
         "valide_juridiquement": valide_fiches,
         "verifie_contenu": verifie_fiches,
