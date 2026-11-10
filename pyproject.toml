@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "marche-public-skill"
-version = "2.0.1"
+version = "2.0.2"
 description = "Boîte à outils d'ingénierie logicielle pour l'analyse documentaire et le contrôle des marchés publics BTP."
 readme = "README.md"
 requires-python = ">=3.10"

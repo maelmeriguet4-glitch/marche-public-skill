@@ -25,9 +25,11 @@ from common import (
     ecrire_json,
     formater_montant_fr,
     parser_date_et_echeance,
+    parse_bool_strict,
     resoudre_chemin_securise,
     to_decimal,
 )
+from moteur_conformite import MoteurConformite, StatutConformite, VerdictConformite
 
 logger = logging.getLogger("controle_final")
 
@@ -480,8 +482,28 @@ def auditer_dossier(
                 "description": f"{len(non_verifiees_ordinaires)} exigence(s) contractuelle(s) restent en statut NON VÉRIFIÉ dans la matrice et requièrent une validation humaine.",
             })
 
+    # 10. Délégation de synthèse et alignement avec le Moteur Centralisé de Conformité
+    moteur_central = MoteurConformite()
+    if isinstance(checklist, dict) and checklist:
+        moteur_central.charger_depuis_checklist(checklist)
+    if matrice:
+        moteur_central.charger_depuis_matrice(matrice)
+    for b in blocages:
+        moteur_central.enregistrer_anomalie_externe(b["code"], b["description"], "controle_final", "BLOQUANT")
+    
+    synth_centrale = moteur_central.synthetiser()
+    for anom in synth_centrale.get("anomalies", []):
+        c_code = anom.get("code") or "ANOMALIE_MOTEUR"
+        c_desc = anom.get("description") or "Anomalie d'invariant détectée par le moteur central."
+        if anom.get("gravite", "BLOQUANT") == "BLOQUANT":
+            if not any(b["code"] == c_code for b in blocages):
+                blocages.append({"code": c_code, "gravite": "BLOQUANT", "description": c_desc})
+        else:
+            if not any(a["code"] == c_code for a in avertissements):
+                avertissements.append({"code": c_code, "description": c_desc})
+
     # Verdict final rigoureux
-    if blocages:
+    if blocages or synth_centrale.get("verdict") in ("NO_GO", "NON_EVALUABLE"):
         verdict = "PAS PRÊT — BLOCAGES DÉTECTÉS"
         statut_code = "PAS_PRET"
     else:
@@ -497,6 +519,7 @@ def auditer_dossier(
         "blocages": blocages,
         "avertissements": avertissements,
         "controles_valides": controles_valides,
+        "synthese_moteur_central": synth_centrale,
     }
 
 

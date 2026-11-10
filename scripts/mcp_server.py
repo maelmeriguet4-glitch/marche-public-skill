@@ -25,7 +25,7 @@ import os
 import sys
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 # Configuration du logging sur stderr pour préserver stdout pour le protocole JSON-RPC
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="[MCP] %(levelname)s: %(message)s")
@@ -49,18 +49,94 @@ from moteur_conformite import MoteurConformite, StatutConformite, VerdictConform
 import yaml
 
 
-def _resoudre_chemin_mcp(p_str: str) -> Path:
-    """Résout et vérifie la sûreté d'un chemin fourni au serveur MCP."""
+MAX_FILE_SIZE_BYTES = int(os.environ.get("MARCHE_PUBLIC_MAX_FILE_SIZE", 50 * 1024 * 1024))
+ALLOWED_FILE_EXTENSIONS: Set[str] = {
+    ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".csv", ".txt", ".json", ".yaml", ".yml"
+}
+ENV_ALLOWED_DIRS = os.environ.get("MARCHE_PUBLIC_ALLOWED_DIRS", "")
+ALLOWED_ROOTS: List[Path] = [REPO_ROOT.resolve()]
+if ENV_ALLOWED_DIRS:
+    for d in ENV_ALLOWED_DIRS.split(os.pathsep):
+        if d.strip():
+            ALLOWED_ROOTS.append(Path(d.strip()).resolve())
+
+SYSTEM_FORBIDDEN_PATHS = [
+    Path("C:/Windows"),
+    Path("C:/Program Files"),
+    Path("C:/Program Files (x86)"),
+    Path("/etc"),
+    Path("/sys"),
+    Path("/proc"),
+    Path("/var"),
+    Path("/root"),
+]
+
+
+def _resoudre_chemin_mcp(
+    p_str: str,
+    must_exist: bool = False,
+    must_be_dir: bool = False,
+    must_be_file: bool = False,
+) -> Path:
+    """Résout et garantit le confinement strict d'un chemin fourni au serveur MCP."""
     if not isinstance(p_str, str) or not p_str.strip():
         raise ValueError("Le chemin fourni est vide ou invalide.")
-    if ".." in Path(p_str).parts:
+
+    import urllib.parse
+    chemin_normalise = urllib.parse.unquote(p_str)
+    parties = Path(chemin_normalise.replace("\\", "/")).parts
+    if ".." in parties:
         raise PermissionError("Accès interdit : traversée de répertoire détectée ('..').")
-    p = Path(p_str)
-    if not p.is_absolute():
-        p = (REPO_ROOT / p).resolve()
+
+    p_init = Path(chemin_normalise)
+    if not p_init.is_absolute():
+        p_resolu = (REPO_ROOT / p_init).resolve()
     else:
-        p = p.resolve()
-    return p
+        p_resolu = p_init.resolve()
+
+    # Vérification confinement dans les racines autorisées
+    est_confine = False
+    for r in ALLOWED_ROOTS:
+        try:
+            r_resolu = r.resolve()
+            if p_resolu == r_resolu or p_resolu.is_relative_to(r_resolu):
+                est_confine = True
+                break
+        except (ValueError, RuntimeError):
+            continue
+
+    if not est_confine:
+        raise PermissionError(f"Accès interdit : le chemin '{p_str}' est situé hors des répertoires autorisés du serveur MCP.")
+
+    # Blocage des répertoires système
+    for sys_dir in SYSTEM_FORBIDDEN_PATHS:
+        try:
+            if sys_dir.exists():
+                sd_resolu = sys_dir.resolve()
+                if p_resolu == sd_resolu or p_resolu.is_relative_to(sd_resolu):
+                    raise PermissionError("Accès interdit : tentative d'accès à un répertoire système protégé via MCP.")
+        except (ValueError, RuntimeError):
+            pass
+
+    if must_exist and not p_resolu.exists():
+        raise FileNotFoundError(f"Chemin introuvable : '{p_str}'.")
+
+    if must_be_dir and p_resolu.exists() and not p_resolu.is_dir():
+        raise ValueError(f"Le chemin doit pointer vers un répertoire : '{p_str}'.")
+
+    if must_be_file and p_resolu.exists():
+        if not p_resolu.is_file():
+            raise ValueError(f"Le chemin doit pointer vers un fichier régulier : '{p_str}'.")
+        if p_resolu.suffix.lower() not in ALLOWED_FILE_EXTENSIONS:
+            raise ValueError(f"Extension '{p_resolu.suffix}' non autorisée via MCP.")
+        try:
+            taille = p_resolu.stat().st_size
+            if taille > MAX_FILE_SIZE_BYTES:
+                raise ValueError(f"Fichier trop volumineux ({taille} octets). Limite autorisée : {MAX_FILE_SIZE_BYTES} octets.")
+        except OSError:
+            pass
+
+    return p_resolu
 
 
 MCP_TOOLS = [

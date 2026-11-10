@@ -50,6 +50,12 @@ logger = logging.getLogger("api_marche_public")
 # Configuration de sécurité
 MAX_FILE_SIZE_BYTES = int(os.environ.get("MARCHE_PUBLIC_MAX_FILE_SIZE", 50 * 1024 * 1024))  # 50 Mo
 API_KEY_ENV = os.environ.get("MARCHE_PUBLIC_API_KEY", "")
+API_ENVIRONMENT = os.environ.get("MARCHE_PUBLIC_ENV", "development").lower().strip()
+
+# Extensions de fichiers autorisées pour l'analyse documentaire
+ALLOWED_FILE_EXTENSIONS: Set[str] = {
+    ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".csv", ".txt", ".json", ".yaml", ".yml"
+}
 
 # Répertoires autorisés pour le confinement des chemins
 ENV_ALLOWED_DIRS = os.environ.get("MARCHE_PUBLIC_ALLOWED_DIRS", "")
@@ -74,14 +80,31 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 def verifier_authentification(x_api_key: Optional[str] = Security(api_key_header)) -> bool:
-    """Vérifie la clé d'API si une clé est configurée dans l'environnement."""
-    if not API_KEY_ENV:
-        return True  # Mode local ouvert si aucune clé n'est imposée
-    if not x_api_key or x_api_key != API_KEY_ENV:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentification requise : clé API invalide ou absente dans l'en-tête X-API-Key.",
-        )
+    """Vérifie l'authentification par clé API avec comparaison en temps constant et gestion d'environnement."""
+    import secrets
+
+    # En environnement de production ou réseau, une clé d'API valide est strictement obligatoire
+    if API_ENVIRONMENT in ("production", "prod", "network"):
+        if not API_KEY_ENV or len(API_KEY_ENV) < 16:
+            logger.error("Configuration de production incomplète : MARCHE_PUBLIC_API_KEY absente ou trop courte (>= 16 chars).")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Erreur de configuration serveur : authentification réseau non configurée de façon sécurisée.",
+            )
+        if not x_api_key or not secrets.compare_digest(x_api_key, API_KEY_ENV):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentification requise : clé API invalide ou absente dans l'en-tête X-API-Key.",
+            )
+        return True
+
+    # En environnement de développement local (127.0.0.1)
+    if API_KEY_ENV:
+        if not x_api_key or not secrets.compare_digest(x_api_key, API_KEY_ENV):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentification requise : clé API invalide ou absente dans l'en-tête X-API-Key.",
+            )
     return True
 
 
@@ -90,58 +113,96 @@ def resoudre_et_securiser_chemin(
     must_exist: bool = True,
     must_be_dir: bool = False,
     must_be_file: bool = False,
+    racines_autorisees: Optional[List[Path]] = None,
+    extensions_autorisees: Optional[Set[str]] = None,
 ) -> Path:
-    """Valide rigoureusement un chemin pour interdire le path traversal et l'accès système."""
+    """Valide rigoureusement un chemin pour garantir le confinement strict et interdire l'évasion."""
     if not isinstance(chemin_str, str) or not chemin_str.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Le chemin fourni ne peut être vide ou nul.",
         )
 
-    # Détection des tentatives de traversal explicite
-    if ".." in Path(chemin_str).parts:
+    # 1. Détection des encodages alternatifs et traversée de répertoire explicite
+    import urllib.parse
+    chemin_normalise = urllib.parse.unquote(chemin_str)
+    
+    # Remplacer les antislashs pour normaliser les parties
+    parties = Path(chemin_normalise.replace("\\", "/")).parts
+    if ".." in parties:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Accès interdit : tentative de traversée de répertoire détectée ('..').",
         )
 
-    p = Path(chemin_str)
-    if not p.is_absolute():
-        p = (REPO_ROOT / p).resolve()
+    # 2. Résolution canonique (résolution des liens symboliques et normalisation absolue)
+    p_init = Path(chemin_normalise)
+    if not p_init.is_absolute():
+        p_resolu = (REPO_ROOT / p_init).resolve()
     else:
-        p = p.resolve()
+        p_resolu = p_init.resolve()
 
-    # Vérification de non-confinement dans des dossiers système
+    # 3. Vérification du confinement strict dans les racines autorisées
+    racines = racines_autorisees or ALLOWED_ROOTS
+    est_confine = False
+    for r in racines:
+        try:
+            r_resolu = r.resolve()
+            if p_resolu == r_resolu or p_resolu.is_relative_to(r_resolu):
+                est_confine = True
+                break
+        except (ValueError, RuntimeError):
+            continue
+
+    if not est_confine:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès interdit : le chemin spécifié est situé hors des répertoires autorisés.",
+        )
+
+    # 4. Blocage explicite des répertoires système (protection en profondeur)
     for sys_dir in SYSTEM_FORBIDDEN_PATHS:
         try:
-            if sys_dir.exists() and p.is_relative_to(sys_dir):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Accès interdit : tentative d'accès à un répertoire système protégé.",
-                )
+            if sys_dir.exists():
+                sd_resolu = sys_dir.resolve()
+                if p_resolu == sd_resolu or p_resolu.is_relative_to(sd_resolu):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Accès interdit : tentative d'accès à un répertoire système protégé.",
+                    )
         except (ValueError, RuntimeError):
             pass
 
-    if must_exist and not p.exists():
+    # 5. Existence et type de ressource
+    if must_exist and not p_resolu.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ressource ou chemin introuvable.",
         )
 
-    if must_be_dir and p.exists() and not p.is_dir():
+    if must_be_dir and p_resolu.exists() and not p_resolu.is_dir():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Le chemin spécifié doit pointer vers un répertoire.",
         )
 
-    if must_be_file and p.exists():
-        if not p.is_file():
+    if must_be_file and p_resolu.exists():
+        if not p_resolu.is_file():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Le chemin spécifié doit pointer vers un fichier régulier.",
             )
+
+        # Contrôle des extensions autorisées
+        exts = extensions_autorisees or ALLOWED_FILE_EXTENSIONS
+        if p_resolu.suffix.lower() not in exts:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Extension de fichier non autorisée ('{p_resolu.suffix}'). Extensions acceptées : {sorted(list(exts))}.",
+            )
+
         try:
-            taille = p.stat().st_size
+            taille = p_resolu.stat().st_size
             if taille > MAX_FILE_SIZE_BYTES:
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -150,12 +211,12 @@ def resoudre_et_securiser_chemin(
         except OSError:
             pass
 
-    return p
+    return p_resolu
 
 
 app = FastAPI(
     title="Marché Public Skill — API d'Audit & Décision BTP",
-    version="2.0.1",
+    version="2.0.2",
     description="API REST d'ingénierie et d'aide à la décision pour marchés publics de travaux.",
 )
 

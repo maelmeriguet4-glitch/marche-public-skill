@@ -1,7 +1,7 @@
 # marché-public-skill (marche-public-skill)
 
-[![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v2.0.1)
-[![Tests](https://img.shields.io/badge/tests-403%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
+[![Version](https://img.shields.io/badge/version-2.0.2-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v2.0.2)
+[![Tests](https://img.shields.io/badge/tests-421%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](./LICENSE)
 
@@ -11,7 +11,22 @@ Boîte à outils d'ingénierie logicielle et d'aide à la décision pour l'analy
 
 ## Changelog
 
-### v2.0.1 — 10 novembre 2026 *(version courante)*
+### v2.0.2 — 10 novembre 2026 *(version courante)*
+
+**Durcissement de sécurité réseau & API, confinement strict des symlinks, validation formelle des booléens, source unique de vérité MoteurConformite, et architecture de benchmark avancée par partitions (dev/val/test) avec traçabilité complète des preuves (421 tests automatisés).**
+
+| Domaine | Améliorations majeures apportées |
+| :--- | :--- |
+| **Sécurité Réseau & Confinement des Chemins** | Confinement strict dans `ALLOWED_ROOTS` par résolution canonique intégrale avant validation ; rejet absolu des échappements par liens symboliques (symlinks) ; filtrage des extensions autorisées (`ALLOWED_FILE_EXTENSIONS`) et limitation de taille (50 Mo). |
+| **Authentification Réseau Renforcée** | Gestion explicite de `MARCHE_PUBLIC_ENV` : refus strict de démarrer en mode `production`/`network` sans clé d'API forte (`MARCHE_PUBLIC_API_KEY` >= 16 caractères) ; comparaison en temps constant (`secrets.compare_digest`). |
+| **Serveur MCP Hermétique** | Alignement des règles de confinement du serveur MCP sur l'API REST : rejet des chemins absolus hors racines, neutralisation des symlinks malveillants et blocage des fichiers système. |
+| **Source Unique de Vérité MoteurConformite** | Intégration directe de `MoteurConformite` dans `scripts/controle_final.py` : harmonisation complète des verdicts sans divergence entre modules satellites. |
+| **Validation Stricte des Booléens** | Implémentation de `parse_bool_strict()` dans `scripts/common.py` pour éliminer tout risque d'évaluation erronée (`bool("false") == True`) et rejet immédiat des types ambigus. |
+| **Architecture de Benchmark par Partitions** | Découpage rigoureux en trois ensembles (`dev`, `validation`, `test` indépendant) ; calcul automatique des métriques multi-niveaux (Précision, Rappel, F1-Score, Faux GO, Qualité des Preuves) et comparateur multi-versions (v2.0.0 vs v2.0.1 vs v2.0.2) dans `evals/benchmark_avance.py`. |
+| **Suite Red Team Sécurité (18 Scénarios)** | Implémentation de `tests/test_redteam_security_v202.py` validant 18 scénarios d'attaque (path traversal, symlinks externes, configuration réseau sans clé, TOCTOU, etc.). |
+| **Suite de tests & Qualité** | **421 tests automatisés** exécutés avec succès sous `pytest` (100% succès en 4.8s). |
+
+### v2.0.1 — 10 novembre 2026
 
 **Finalisation de la qualité professionnelle (Objectif 9.9/10) : Packaging standard PEP 621 (`pyproject.toml`), sécurisation absolue de l'API REST et du serveur MCP, séparation méthodologique stricte du benchmark synthétique et du corpus indépendant, détection des lignes masquées en DPGF, moteur centralisé de conformité avec 8 invariants fondamentaux, et suite Red Team de 20 scénarios adversariaux (403 tests automatisés).**
 

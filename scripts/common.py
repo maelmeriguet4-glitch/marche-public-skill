@@ -29,7 +29,48 @@ logger = logging.getLogger("marches_publics")
 CENTIME = Decimal("0.01")
 
 
+def parse_bool_strict(val: Any, default: Optional[bool] = None, allow_none: bool = False) -> bool:
+    """Parse et valide strictement un booléen sans conversion permissive dangereuse.
+    
+    Rejette formellement:
+    - les chaînes ambiguës ou 'false'/'0' qui s'évalueraient à True avec bool()
+    - les types inattendus (list, dict, non-numeric strings)
+    - les entiers différents de 0 et 1
+    """
+    if val is None:
+        if allow_none:
+            return None  # type: ignore
+        if default is not None:
+            return default
+        raise TypeError("Valeur booléenne requise, reçu: None")
+
+    if type(val) is bool:
+        return val
+
+    if isinstance(val, (int, float)):
+        if val == 1:
+            return True
+        if val == 0:
+            return False
+        raise ValueError(f"Valeur numérique invalide pour un booléen strict (seuls 0 et 1 sont acceptés): {val}")
+
+    if isinstance(val, str):
+        v_clean = val.strip().lower()
+        if v_clean in ("true", "1", "vrai", "yes", "oui", "o"):
+            return True
+        if v_clean in ("false", "0", "faux", "no", "non", "n"):
+            return False
+        raise ValueError(f"Chaîne textuelle non convertible en booléen strict: '{val}'")
+
+    raise TypeError(f"Type interdit pour un booléen strict (reçu {type(val).__name__}): {val}")
+
+
 def to_decimal(val: Union[int, float, str, Decimal, None], default: str = "0.00", strict: bool = False) -> Decimal:
+    """Convertit une valeur numérique en Decimal.
+    
+    Si strict=True, rejette les floats pour contraindre l'appelant à fournir
+    une chaîne ou un entier afin d'éviter toute perte de précision préalable.
+    """
     """Convertit une valeur numérique en Decimal.
     
     Si strict=True, rejette les floats pour contraindre l'appelant à fournir

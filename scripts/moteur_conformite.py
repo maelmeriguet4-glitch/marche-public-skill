@@ -20,6 +20,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+from common import parse_bool_strict
+
 logger = logging.getLogger("moteur_conformite")
 
 
@@ -151,14 +153,49 @@ class MoteurConformite:
                 except ValueError:
                     statut_val = StatutConformite.MANQUANT
 
-                exige_m = p.get("exige_par_marche", True)
-                obli = p.get("obligatoire", True)
-                elim = bool(p.get("eliminatoire", False))
-                present = bool(p.get("present_disque", False))
-                valide = bool(p.get("valide_juridiquement", False))
-                verifie = bool(p.get("verifie_contenu", False))
+                try:
+                    exige_m = parse_bool_strict(p.get("exige_par_marche", True), default=True)
+                except (TypeError, ValueError) as err:
+                    self.enregistrer_anomalie_externe("TYPE_CHAMP_BOOLEEN_INVALIDE", f"exige_par_marche invalide sur {nom_p}: {err}", "checklist")
+                    exige_m = True
 
-                chemin_f = p.get("chemin_fichier") or p.get("fichier") or p.get("chemin_fichier_disque")
+                try:
+                    obli = parse_bool_strict(p.get("obligatoire", True), default=True)
+                except (TypeError, ValueError) as err:
+                    self.enregistrer_anomalie_externe("TYPE_CHAMP_BOOLEEN_INVALIDE", f"obligatoire invalide sur {nom_p}: {err}", "checklist")
+                    obli = True
+
+                try:
+                    elim = parse_bool_strict(p.get("eliminatoire", False), default=False)
+                except (TypeError, ValueError) as err:
+                    self.enregistrer_anomalie_externe("TYPE_CHAMP_BOOLEEN_INVALIDE", f"eliminatoire invalide sur {nom_p}: {err}", "checklist")
+                    elim = False
+
+                try:
+                    present = parse_bool_strict(p.get("present_disque", False), default=False)
+                except (TypeError, ValueError) as err:
+                    self.enregistrer_anomalie_externe("TYPE_CHAMP_BOOLEEN_INVALIDE", f"present_disque invalide sur {nom_p}: {err}", "checklist")
+                    present = False
+
+                try:
+                    valide = parse_bool_strict(p.get("valide_juridiquement", False), default=False)
+                except (TypeError, ValueError) as err:
+                    self.enregistrer_anomalie_externe("TYPE_CHAMP_BOOLEEN_INVALIDE", f"valide_juridiquement invalide sur {nom_p}: {err}", "checklist")
+                    valide = False
+
+                try:
+                    verifie = parse_bool_strict(p.get("verifie_contenu", False), default=False)
+                except (TypeError, ValueError) as err:
+                    self.enregistrer_anomalie_externe("TYPE_CHAMP_BOOLEEN_INVALIDE", f"verifie_contenu invalide sur {nom_p}: {err}", "checklist")
+                    verifie = False
+
+                chemin_f = (
+                    p.get("chemin_fichier")
+                    or p.get("fichier")
+                    or p.get("chemin_fichier_disque")
+                    or p.get("preuve")
+                    or p.get("reference_preuve")
+                )
                 preuve = None
                 if chemin_f:
                     preuve = PreuveDocumentaire(
@@ -167,6 +204,15 @@ class MoteurConformite:
                         present_sur_disque=present,
                         niveau_confiance=1.0 if (present and valide and verifie) else 0.5,
                         methode_verification="AUTOMATIQUE",
+                    )
+                elif present and valide and verifie:
+                    # Pièce attestée présente et vérifiée sans chemin explicite
+                    preuve = PreuveDocumentaire(
+                        document_source=nom_p,
+                        chemin_fichier_disque=nom_p,
+                        present_sur_disque=True,
+                        niveau_confiance=0.9,
+                        methode_verification="DECLARATIVE_VERIFIEE",
                     )
 
                 self.ajouter_exigence(
