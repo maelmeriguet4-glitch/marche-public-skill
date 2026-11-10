@@ -1,0 +1,36 @@
+{
+  "id": "DCE-02",
+  "dossier": "dossier_02_isolation_gymnase",
+  "objet_attendu": "Travaux d'isolation thermique par l'extérieur (ITE) et bardage du gymnase municipal",
+  "acheteur_attendu": "Communauté d'Agglomération de Blois",
+  "date_limite_attendue": "2026-11-30T17:00:00",
+  "visite_regime_attendu": "RECOMMANDEE",
+  "visite_eliminatoire_attendue": false,
+  "delai_semaines_attendu": 16,
+  "criteres_attendus": [
+    {
+      "nom": "Prix des prestations",
+      "poids": 50
+    },
+    {
+      "nom": "Valeur technique",
+      "poids": 50
+    }
+  ],
+  "total_dpgf_ht_attendu": "144680.0",
+  "nb_lignes_dpgf_attendues": 5,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurance décennale",
+    "Qualibat 7131"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Fiches techniques CSTB"
+  ]
+}

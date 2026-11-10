@@ -536,6 +536,13 @@ def qualifier_obligation_visite(analyse: Dict[str, Any]) -> Tuple[str, str]:
         for t in _aplatir_valeurs(visite_site):
             textes.append(str(t))
 
+    # 0. Si une analyse structurée préalable a qualifié le régime de visite
+    visite_site_obj = analyse.get("visite_site")
+    if isinstance(visite_site_obj, dict):
+        reg_declare = str(visite_site_obj.get("regime", "")).strip().upper()
+        if reg_declare in ("OBLIGATOIRE", "RECOMMANDEE", "FACULTATIVE", "AUCUNE"):
+            return reg_declare, f"Régime qualifié depuis l'analyse documentaire : {reg_declare}"
+
     # Filtrage des mentions contenant le mot visite
     mentions_visite = [t for t in textes if "visite" in t.lower()]
     if not mentions_visite:
@@ -690,13 +697,33 @@ def verifier_visite_effectuee_profil(
 
     # Vérification d'antériorité par rapport à la date limite
     date_visite_raw = v_info.get("date_visite")
-    if date_visite_raw and date_limite_dt:
+    if date_visite_raw:
         dt_v, _, _ = parser_date_et_echeance(date_visite_raw)
-        if dt_v and dt_v > date_limite_dt:
+        if not dt_v:
+            return (
+                False,
+                f"Date de visite invalide ou non vérifiable sur le justificatif ('{date_visite_raw}').",
+                "VISITE_DATE_INVALIDE",
+            )
+        if date_limite_dt and dt_v > date_limite_dt:
             return (
                 False,
                 f"Visite effectuée ({dt_v.strftime('%d/%m/%Y')}) postérieurement à la date limite de remise ({date_limite_dt.strftime('%d/%m/%Y')}).",
                 "VISITE_POSTERIEURE_ECHEANCE",
+            )
+
+    # Vérification de concordance d'identité de l'entreprise candidate
+    ent_visite = v_info.get("entreprise") or v_info.get("beneficiaire") or v_info.get("candidat")
+    id_prof = profil.get("identite", {}) if isinstance(profil, dict) else {}
+    nom_prof = id_prof.get("raison_sociale") or id_prof.get("nom")
+    if ent_visite and nom_prof:
+        ev_norm = str(ent_visite).strip().lower()
+        np_norm = str(nom_prof).strip().lower()
+        if ev_norm not in np_norm and np_norm not in ev_norm:
+            return (
+                False,
+                f"Discordance d'identité sur l'attestation de visite : délivrée à '{ent_visite}' alors que le candidat est '{nom_prof}'.",
+                "VISITE_IDENTITE_DISCORDANTE",
             )
 
     return True, "Visite effectuée et justifiée par attestation physique sur disque.", None
@@ -880,6 +907,49 @@ def verifier_assurances_go_nogo(
                 "description": motif_adeq,
                 "bloquant": True,
             })
+
+    # Vérification approfondie de la Responsabilité Civile Professionnelle (RC Pro)
+    rc_pro = assurances.get("responsabilite_civile") or assurances.get("rc_pro") or profil.get("responsabilite_civile")
+    if isinstance(rc_pro, dict):
+        date_val_rc = rc_pro.get("date_validite") or rc_pro.get("date_echeance")
+        if date_val_rc:
+            dt_val_rc, _, est_dep_rc = parser_date_et_echeance(date_val_rc, maintenant=maintenant)
+            if dt_val_rc and est_dep_rc:
+                drapeaux.append({
+                    "id": "ASSURANCE_RC_PRO_EXPIREE",
+                    "code": "ASSURANCE_RC_PRO_EXPIREE",
+                    "motif": f"L'attestation d'assurance RC Professionnelle est expirée depuis le {dt_val_rc.strftime('%d/%m/%Y')}.",
+                    "description": f"L'attestation d'assurance RC Professionnelle est expirée depuis le {dt_val_rc.strftime('%d/%m/%Y')}.",
+                    "bloquant": True,
+                })
+
+        fich_rc = (
+            rc_pro.get("attestation_fichier")
+            or rc_pro.get("fichier")
+            or (fich_justifs.get("rc_pro") if isinstance(fich_justifs, dict) else None)
+        )
+        if fich_rc and not verifier_presence_fichier_sur_disque(fich_rc, dossiers_docs):
+            drapeaux.append({
+                "id": "ATTESTATION_RC_INEXISTANTE_DISQUE",
+                "code": "ATTESTATION_RC_INEXISTANTE_DISQUE",
+                "motif": f"Fichier d'attestation RC Professionnelle déclaré ('{fich_rc}') introuvable sur le disque.",
+                "description": f"Fichier d'attestation RC Professionnelle déclaré ('{fich_rc}') introuvable sur le disque.",
+                "bloquant": True,
+            })
+
+        acts_rc = rc_pro.get("activites_couvertes")
+        if acts_rc:
+            adeq_rc, motif_rc = verifier_adequation_activites_assurance(
+                acts_rc, str(analyse.get("objet", "")), analyse.get("lots")
+            )
+            if not adeq_rc:
+                drapeaux.append({
+                    "id": "ASSURANCE_RC_ACTIVITES_NON_COUVERTES",
+                    "code": "ASSURANCE_RC_ACTIVITES_NON_COUVERTES",
+                    "motif": f"RC Professionnelle : {motif_rc}",
+                    "description": f"RC Professionnelle : {motif_rc}",
+                    "bloquant": True,
+                })
 
     return drapeaux
 

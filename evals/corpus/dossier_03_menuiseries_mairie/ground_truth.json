@@ -1,0 +1,35 @@
+{
+  "id": "DCE-03",
+  "dossier": "dossier_03_menuiseries_mairie",
+  "objet_attendu": "Remplacement des menuiseries extérieures bois et PVC de l'Hôtel de Ville",
+  "acheteur_attendu": "Ville de Vierzon",
+  "date_limite_attendue": "2026-12-10T12:00:00",
+  "visite_regime_attendu": "OBLIGATOIRE",
+  "visite_eliminatoire_attendue": true,
+  "delai_semaines_attendu": 8,
+  "criteres_attendus": [
+    {
+      "nom": "Prix",
+      "poids": 40
+    },
+    {
+      "nom": "Performance thermique et acoustique",
+      "poids": 60
+    }
+  ],
+  "total_dpgf_ht_attendu": "68600.0",
+  "nb_lignes_dpgf_attendues": 4,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurances"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Attestation de visite signée"
+  ]
+}

@@ -41,14 +41,30 @@ def extraire_dates_remise(texte_rc: str, texte_ae: str) -> Tuple[Optional[str], 
     def _chercher_date(texte: str) -> Optional[str]:
         if not texte:
             return None
-        # 1. Format ISO
-        m_iso = re.search(r"(?:date\s+limite\s+(?:de\s+)?remise|remise\s+des\s+offres|remise\s+des\s+plis).*?(\d{4}-\d{1,2}-\d{1,2}(?:[T\s]\d{1,2}[:hH]\d{1,2}(?:[:\.]\d{1,2})?)?)", texte, re.IGNORECASE)
+        # 1. Format ISO (ex: 2026-12-15T12:00:00 ou 2026-12-15 12:00)
+        m_iso = re.search(
+            r"(?:date\s*(?:et\s*heure)?\s*limites?\s*(?:de\s*)?(?:remise|r[eé]ception|d[eé]p[oô]t)|(?:remise|r[eé]ception|d[eé]p[oô]t)\s+des\s+(?:offres|plis|candidatures)).{0,150}?(\d{4}-\d{1,2}-\d{1,2}(?:[T\s]\d{1,2}[:hH]\d{1,2}(?:[:\.]\d{1,2})?)?)",
+            texte,
+            re.IGNORECASE | re.DOTALL
+        )
         if m_iso:
             return m_iso.group(1).strip()
-        # 2. Format français
-        m_fr = re.search(r"(?:date\s+limite\s+(?:de\s+)?remise|remise\s+des\s+offres|remise\s+des\s+plis).*?(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}(?:\s+[àa]\s+\d{1,2}[hH:]\d{0,2})?)", texte, re.IGNORECASE)
+        # 2. Format français (ex: 15/12/2026 à 12h00)
+        m_fr = re.search(
+            r"(?:date\s*(?:et\s*heure)?\s*limites?\s*(?:de\s*)?(?:remise|r[eé]ception|d[eé]p[oô]t)|(?:remise|r[eé]ception|d[eé]p[oô]t)\s+des\s+(?:offres|plis|candidatures)).{0,150}?(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}(?:\s+[àa]\s+\d{1,2}[hH:]\d{0,2})?)",
+            texte,
+            re.IGNORECASE | re.DOTALL
+        )
         if m_fr:
             return m_fr.group(1).strip()
+        # 3. Fallback étendu sur "date limite"
+        m_fallback = re.search(
+            r"date\s+limite.{0,80}?(\d{4}-\d{1,2}-\d{1,2}(?:[T\s]\d{1,2}[:hH]\d{1,2})?|\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}(?:\s+[àa]\s+\d{1,2}[hH:]\d{0,2})?)",
+            texte,
+            re.IGNORECASE | re.DOTALL
+        )
+        if m_fallback:
+            return m_fallback.group(1).strip()
         return None
 
     date_rc = _chercher_date(texte_rc)
@@ -275,6 +291,35 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
         })
         contradictions.extend(exigences_orphelines_ccap)
 
+    # 7.bis Détection et qualification du régime de visite des lieux
+    visite_site = {
+        "regime": "AUCUNE",
+        "obligatoire": False,
+        "details": "",
+        "mentions": []
+    }
+    match_visite_art = re.search(r"(?:visite\s+des\s+lieux|visite\s+sur\s+site|visite\s+sur\s+place)[\s\S]{0,500}?(?=\n##|\Z)", texte_rc, re.IGNORECASE)
+    texte_visite = match_visite_art.group(0).strip() if match_visite_art else ""
+    if not texte_visite:
+        lignes_v = [l.strip() for l in (texte_rc + "\n" + texte_ccap).split("\n") if "visite" in l.lower()]
+        texte_visite = "\n".join(lignes_v)
+
+    if texte_visite:
+        visite_site["mentions"].append(texte_visite)
+        visite_site["details"] = texte_visite
+        if re.search(r"(?:r[eé]gime\s*(?:de\s+la\s+visite)?\s*:\s*obligatoire|visite\s+obligatoire|visite\s+imp[eé]rative|pr[eé]alable\s+obligatoire|sous\s+peine\s+de\s+rejet|sous\s+peine\s+d['’]irrecevabilit[eé])", texte_visite, re.IGNORECASE):
+            visite_site["regime"] = "OBLIGATOIRE"
+            visite_site["obligatoire"] = True
+        elif re.search(r"(?:r[eé]gime\s*(?:de\s+la\s+visite)?\s*:\s*recommand[eé]e|recommand[eé]e|conseill[eé]e|vivement\s+conseill[eé]e)", texte_visite, re.IGNORECASE):
+            visite_site["regime"] = "RECOMMANDEE"
+            visite_site["obligatoire"] = False
+        elif re.search(r"(?:r[eé]gime\s*(?:de\s+la\s+visite)?\s*:\s*facultative|facultative|optionnelle|libre|non\s+obligatoire)", texte_visite, re.IGNORECASE):
+            visite_site["regime"] = "FACULTATIVE"
+            visite_site["obligatoire"] = False
+        elif re.search(r"(?:r[eé]gime\s*(?:de\s+la\s+visite)?\s*:\s*aucune|aucune\s+visite|pas\s+de\s+visite|sans\s+visite)", texte_visite, re.IGNORECASE):
+            visite_site["regime"] = "AUCUNE"
+            visite_site["obligatoire"] = False
+
     # 8. Liste des pièces requises (détection dans le RC avec repères)
     pieces_candidature = []
     if re.search(r"\bdc1\b", texte_rc, re.IGNORECASE):
@@ -301,7 +346,7 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
         pieces_offre.append("Mémoire technique justificatif adapté aux critères du RC")
     if re.search(r"planning|calendrier", texte_rc, re.IGNORECASE):
         pieces_offre.append("Planning d'intervention prévisionnel")
-    if re.search(r"visite", texte_rc + "\n" + texte_ccap, re.IGNORECASE):
+    if visite_site["obligatoire"]:
         pieces_offre.append("Attestation de visite des lieux signée")
     if not pieces_offre:
         pieces_offre.append("[PIÈCES OFFRE NON EXTRAITES DU RC — VÉRIFIER L'ARTICLE CONTENU DE L'OFFRE DU RC]")
@@ -346,6 +391,8 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
             "offre": pieces_offre,
         },
         "clauses_sensibles": clauses_ccap,
+        "visite_site": visite_site,
+        "visite_obligatoire": visite_site["obligatoire"],
         "contradictions_detectees": contradictions,
         "non_extrait": non_extrait,
     }

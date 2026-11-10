@@ -30,11 +30,37 @@ from common import (
 logger = logging.getLogger("controle_prix")
 
 
-def analyser_lignes_dpgf(chemin_xlsx: Path) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
-    """Lit un fichier DPGF Excel et extrait les lignes d'ouvrages et le total affiché."""
-    wb = openpyxl.load_workbook(str(chemin_xlsx), data_only=True)
-    ws = wb.active
-    
+def analyser_lignes_dpgf(chemin_xlsx: Union[str, Path]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Lit un fichier DPGF (Excel .xlsx ou CSV) et extrait les lignes d'ouvrages et le total affiché."""
+    chemin = Path(chemin_xlsx)
+    ext = chemin.suffix.lower()
+
+    lignes_brutes = []
+    if ext == ".csv":
+        import csv
+        contenu = None
+        for enc in ("utf-8-sig", "utf-8", "latin-1"):
+            try:
+                contenu = chemin.read_text(encoding=enc)
+                break
+            except Exception:
+                continue
+        if contenu is None:
+            raise ValueError(f"Impossible de lire le fichier CSV {chemin} avec un encodage supporté.")
+
+        # Détection du délimiteur
+        sep = ";" if contenu.count(";") > contenu.count(",") else ("," if contenu.count(",") > 0 else "\t")
+        reader = csv.reader(contenu.splitlines(), delimiter=sep)
+        for r in reader:
+            if any(cell.strip() for cell in r):
+                lignes_brutes.append([c.strip() if c.strip() else None for c in r])
+    else:
+        wb = openpyxl.load_workbook(str(chemin), data_only=True)
+        ws = wb.active
+        for row in ws.iter_rows(values_only=True):
+            if any(v is not None for v in row):
+                lignes_brutes.append(list(row))
+
     lignes_ouvrages = []
     total_affiche_ht = None
     
@@ -46,9 +72,7 @@ def analyser_lignes_dpgf(chemin_xlsx: Path) -> Tuple[List[Dict[str, Any]], Dict[
     col_unite_idx = None
     
     # Première passe : détection des en-têtes
-    for row in ws.iter_rows(values_only=True):
-        if not any(v is not None for v in row):
-            continue
+    for row in lignes_brutes:
         textes = [str(v).lower().strip() if v is not None else "" for v in row]
         if any("quantit" in t or "qté" in t for t in textes) and any("prix" in t or "p.u" in t for t in textes):
             for idx, t in enumerate(textes):
@@ -67,7 +91,7 @@ def analyser_lignes_dpgf(chemin_xlsx: Path) -> Tuple[List[Dict[str, Any]], Dict[
             break
 
     # Parcours des lignes
-    for row_idx, row in enumerate(ws.iter_rows(values_only=True), start=1):
+    for row_idx, row in enumerate(lignes_brutes, start=1):
         if not any(v is not None for v in row):
             continue
             
@@ -394,6 +418,28 @@ def generer_markdown_controle_prix(resultat: Dict[str, Any]) -> str:
         md.append("")
         
     return "\n".join(md)
+
+
+def auditer_fichier_dpgf(
+    chemin_dpgf: Union[str, Path],
+    couts_data: Optional[Dict[str, Any]] = None,
+    taux_tva: Union[str, float, Decimal] = "20.0",
+    seuil_oab_pct: Union[str, float, Decimal] = "25.0",
+    estimation_acheteur_ht: Optional[Union[str, float, Decimal]] = None,
+) -> Dict[str, Any]:
+    """Charge un fichier DPGF (.xlsx / .csv) et exécute la vérification arithmétique complète."""
+    p = Path(chemin_dpgf)
+    lignes, resume = analyser_lignes_dpgf(p)
+    total_excel = resume.get("total_affiche_ht_excel")
+    est_moe = to_decimal(estimation_acheteur_ht) if estimation_acheteur_ht is not None else None
+    return verifier_arithmetique(
+        lignes=lignes,
+        total_excel=total_excel,
+        taux_tva=to_decimal(taux_tva),
+        couts_data=couts_data,
+        seuil_oab_pct=to_decimal(seuil_oab_pct),
+        estimation_moe=est_moe,
+    )
 
 
 def main() -> None:

@@ -1,0 +1,36 @@
+{
+  "id": "DCE-05",
+  "dossier": "dossier_05_creche_ventilation",
+  "objet_attendu": "Réhabilitation des installations de ventilation double flux et désenfumage d'une crèche",
+  "acheteur_attendu": "Centre Communal d'Action Sociale de Châteauroux",
+  "date_limite_attendue": "2026-11-25T11:00:00",
+  "visite_regime_attendu": "OBLIGATOIRE",
+  "visite_eliminatoire_attendue": true,
+  "delai_semaines_attendu": 6,
+  "criteres_attendus": [
+    {
+      "nom": "Prix",
+      "poids": 40
+    },
+    {
+      "nom": "Valeur technique",
+      "poids": 60
+    }
+  ],
+  "total_dpgf_ht_attendu": "61725.0",
+  "nb_lignes_dpgf_attendues": 5,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurance décennale CVC",
+    "Attestation Qualifelec"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Attestation de visite signée"
+  ]
+}

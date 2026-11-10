@@ -1,0 +1,35 @@
+{
+  "id": "DCE-09",
+  "dossier": "dossier_09_etancheite_terrasse",
+  "objet_attendu": "Réfection de l'étanchéité bitumineuse autoprotégée du toit-terrasse du centre nautique",
+  "acheteur_attendu": "Communauté de Communes Sauldre et Sologne",
+  "date_limite_attendue": "2026-11-28T12:00:00",
+  "visite_regime_attendu": "OBLIGATOIRE",
+  "visite_eliminatoire_attendue": true,
+  "delai_semaines_attendu": 12,
+  "criteres_attendus": [
+    {
+      "nom": "Prix des prestations",
+      "poids": 40
+    },
+    {
+      "nom": "Valeur technique",
+      "poids": 60
+    }
+  ],
+  "total_dpgf_ht_attendu": "112000.0",
+  "nb_lignes_dpgf_attendues": 3,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurance décennale"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Attestation de visite signée"
+  ]
+}

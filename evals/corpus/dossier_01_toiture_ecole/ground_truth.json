@@ -1,0 +1,38 @@
+{
+  "id": "DCE-01",
+  "dossier": "dossier_01_toiture_ecole",
+  "objet_attendu": "Travaux de réfection complète de la toiture du groupe scolaire Jean Moulin",
+  "acheteur_attendu": "Commune de Bourges",
+  "date_limite_attendue": "2026-12-15T12:00:00",
+  "visite_regime_attendu": "OBLIGATOIRE",
+  "visite_eliminatoire_attendue": true,
+  "delai_semaines_attendu": 12,
+  "criteres_attendus": [
+    {
+      "nom": "Prix des prestations",
+      "poids": 40
+    },
+    {
+      "nom": "Valeur technique",
+      "poids": 60
+    }
+  ],
+  "total_dpgf_ht_attendu": "75525.0",
+  "nb_lignes_dpgf_attendues": 6,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurance décennale",
+    "Attestation fiscale",
+    "Attestation sociale"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Planning",
+    "Attestation de visite signée"
+  ]
+}

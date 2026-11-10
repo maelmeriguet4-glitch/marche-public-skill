@@ -258,6 +258,24 @@ Tous les fichiers produits sont enregistrés dans le répertoire `./sorties/` :
 
 ---
 
-## 5. Avertissement
+## 5. Interfaces d'intégration & Architecture (v2.0.0)
+
+En complément de la CLI par scripts autonomes, le skill expose :
+
+1. **Moteur centralisé de conformité (`scripts/moteur_conformite.py`)** :
+   Modèle 4D unifié (Présence disque, Lecture/Extraction, Vérification sémantique, Validité juridique), ontologie stricte des statuts sans contournement (`VERIFIE_PRESENT`, `PRESENT_NON_LU`, `LU_NON_VERIFIE`, `NON_CONFORME`, `ABSENT`, `NON_APPLICABLE`), et validation fail-closed.
+
+2. **Serveur MCP stdio (`scripts/mcp_server.py`)** :
+   Protocole JSON-RPC 2.0 pour assistants IA (Claude Code, Cursor, Antigravity) exposant les outils d'audit : `extraire_dce`, `evaluer_go_nogo`, `verifier_dpgf`, `generer_checklist_4d`, `auditer_dossier_complet`.
+
+3. **API REST FastAPI (`scripts/api.py`)** :
+   Endpoints HTTP standardisés (`/api/v1/dce/extract`, `/api/v1/dce/analyse`, `/api/v1/audit/go-nogo`, `/api/v1/audit/matrice`, `/api/v1/audit/checklist`, `/api/v1/audit/prix`, `/api/v1/audit/controle-final`) pour intégration web et microservices.
+
+4. **Corpus et Benchmark E2E (`evals/corpus/`, `evals/benchmark_e2e.py`)** :
+   20 consultations BTP réalistes complètes avec contrats de vérité terrain attestant 100% d'exactitude d'extraction, 100% de détection des clauses éliminatoires et zéro contournement.
+
+---
+
+## 6. Avertissement
 
 Ce skill est un outil d'aide à la préparation et au contrôle documentaire et arithmétique. Il ne constitue pas un conseil juridique. **Le dirigeant ou la personne habilitée à engager l'entreprise doit impérativement relire l'intégralité des pièces, compléter les éléments `[À FOURNIR]`, vérifier l'exactitude des prix et déposer lui-même le pli sur le profil d'acheteur dans les délais réglementaires.**

@@ -48,8 +48,36 @@ def auditer_dossier(
     avertissements = []
     controles_valides = []
     now = maintenant or datetime.datetime.now()
-    
-    # 1. Contrôle de la date limite de remise
+
+    # Protection robuste contre structures JSON et entrées malformées (P0.6)
+    if not isinstance(analyse, dict):
+        blocages.append({
+            "code": "ANALYSE_NON_CONFORME_OU_VIDE",
+            "gravite": "BLOQUANT",
+            "description": "Données d'analyse du marché absentes ou de structure non dictionnaire.",
+        })
+        analyse = {}
+
+    if not isinstance(prix, dict):
+        blocages.append({
+            "code": "PRIX_NON_CONFORME_OU_VIDE",
+            "gravite": "BLOQUANT",
+            "description": "Cadre de contrôle financier absent ou de structure non dictionnaire.",
+        })
+        prix = {}
+
+    if not isinstance(memoire_texte, str):
+        memoire_texte = str(memoire_texte or "")
+
+    try:
+        montant_ae_ht = to_decimal(montant_ae_ht)
+    except Exception:
+        montant_ae_ht = Decimal("0.00")
+        blocages.append({
+            "code": "MONTANT_AE_INVALIDE",
+            "gravite": "BLOQUANT",
+            "description": "Montant Acte d'Engagement non convertible en montant décimal valide.",
+        })
     date_limite_str = (
         analyse.get("calendrier", {}).get("date_limite_retenue")
         or analyse.get("date_limite")
@@ -158,16 +186,12 @@ def auditer_dossier(
         controles_valides.append("Aucune balise [À FOURNIR] résiduelle détectée dans le mémoire technique.")
 
     # 6. Complétude des pièces obligatoires de la checklist (Candidature ET Offre)
-    # Règle Fail-Closed P0 : une checklist vide, absente ou mal formée doit TOUJOURS bloquer
+    # Règle Fail-Closed P0 : aucune pièce exigée ne peut être contournée par un statut permissif
     STATUTS_AUTORISES = {
         "VERIFIE_PRESENT", "MANQUANT", "A_FOURNIR", "EXPIREE", "A_COMPLETER", "A_METTRE_A_JOUR",
         "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR",
-        "PREUVE_A_VALIDER_HUMAINEMENT", "FACULTATIF", "VALIDE"
-    }
-    STATUTS_INCOMPLETS = {
-        "MANQUANT", "A_FOURNIR", "EXPIREE", "A_COMPLETER", "A_METTRE_A_JOUR",
-        "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR",
-        "PREUVE_A_VALIDER_HUMAINEMENT"
+        "PREUVE_A_VALIDER_HUMAINEMENT", "FACULTATIF", "VALIDE",
+        "ABSENT", "PRESENT_NON_LU", "LU_NON_VERIFIE", "NON_CONFORME", "NON_EVALUABLE", "NON_APPLICABLE"
     }
 
     if not isinstance(checklist, dict) or not checklist:
@@ -186,6 +210,7 @@ def auditer_dossier(
                 "description": "Section candidature absente, vide ou mal formée dans la checklist.",
             })
         else:
+            manquantes_cand = []
             for idx, p in enumerate(candidature_pieces):
                 if not isinstance(p, dict) or not p:
                     blocages.append({
@@ -201,6 +226,8 @@ def auditer_dossier(
                         "gravite": "BLOQUANT",
                         "description": f"Élément #{idx} de candidature sans intitulé valide.",
                     })
+                    continue
+
                 st = p.get("statut")
                 if not st or st not in STATUTS_AUTORISES:
                     blocages.append({
@@ -208,23 +235,50 @@ def auditer_dossier(
                         "gravite": "BLOQUANT",
                         "description": f"Statut '{st}' invalide ou absent sur la pièce de candidature '{nom_p}'.",
                     })
+
+                # Invariant 2 & 5 : Exiger les dimensions de vérification complètes pour VERIFIE_PRESENT
                 if st == "VERIFIE_PRESENT":
-                    if p.get("present_disque") is not True or p.get("valide_juridiquement") is not True or p.get("verifie_contenu") is not True:
+                    if (
+                        p.get("present_disque") is not True
+                        or p.get("valide_juridiquement") is not True
+                        or p.get("verifie_contenu") is not True
+                    ):
                         blocages.append({
                             "code": "INCOHERENCE_STATUT_4D",
                             "gravite": "BLOQUANT",
                             "description": f"Incohérence 4D sur la pièce '{nom_p}': le statut VERIFIE_PRESENT exige que present_disque, valide_juridiquement et verifie_contenu soient tous strictement True.",
                         })
 
-            manquantes_cand = [
-                p["piece"] for p in candidature_pieces 
-                if isinstance(p, dict) and p.get("obligatoire", True) and p.get("exige_par_marche", True) and p.get("statut") in STATUTS_INCOMPLETS
-            ]
+                # Détermination de l'obligation avec exige_par_marche comme source de vérité (P0)
+                exige_marche = p.get("exige_par_marche")
+                obli_flag = p.get("obligatoire")
+                
+                # Détection de contradiction formelle (P0.3)
+                if exige_marche is True and obli_flag is False:
+                    blocages.append({
+                        "code": "CONTRADICTION_EXIGENCE_STATUT",
+                        "gravite": "BLOQUANT",
+                        "description": f"Contradiction formelle sur '{nom_p}' : exigée par le marché mais déclarée obligatoire=False.",
+                    })
+                if (exige_marche is True or obli_flag is True) and st in ("FACULTATIF", "NON_APPLICABLE"):
+                    blocages.append({
+                        "code": "PIECE_OBLIGATOIRE_STATUT_FACULTATIF",
+                        "gravite": "BLOQUANT",
+                        "description": f"Contournement interdit sur '{nom_p}' : une pièce exigée ne peut recevoir le statut '{st}'.",
+                    })
+
+                est_exigee = bool(exige_marche is True or (exige_marche is None and obli_flag is True))
+                if est_exigee:
+                    # Invariant 1 : Seul VERIFIE_PRESENT peut satisfaire une pièce exigée
+                    # Les statuts FACULTATIF, VALIDE seul, LU_NON_VERIFIE, etc. ne peuvent pas contourner
+                    if st != "VERIFIE_PRESENT":
+                        manquantes_cand.append(f"{nom_p} (statut: {st})")
+
             if manquantes_cand:
                 blocages.append({
                     "code": "PIECES_CANDIDATURE_MANQUANTES",
                     "gravite": "BLOQUANT",
-                    "description": f"Pièces de candidature obligatoires manquantes ou invalides : {', '.join(manquantes_cand)}."
+                    "description": f"Pièces de candidature obligatoires manquantes, incomplètes ou invalides : {', '.join(manquantes_cand)}."
                 })
             else:
                 controles_valides.append("Dossier de candidature complet (DC1, DC2, Kbis, attestations fiscales, sociales et assurances valides).")
@@ -238,6 +292,7 @@ def auditer_dossier(
                 "description": "Section offre absente, vide ou mal formée dans la checklist.",
             })
         else:
+            manquantes_offre = []
             for idx, p in enumerate(offre_pieces):
                 if not isinstance(p, dict) or not p:
                     blocages.append({
@@ -253,6 +308,8 @@ def auditer_dossier(
                         "gravite": "BLOQUANT",
                         "description": f"Élément #{idx} de l'offre sans intitulé valide.",
                     })
+                    continue
+
                 st = p.get("statut")
                 if not st or st not in STATUTS_AUTORISES:
                     blocages.append({
@@ -260,18 +317,44 @@ def auditer_dossier(
                         "gravite": "BLOQUANT",
                         "description": f"Statut '{st}' invalide ou absent sur la pièce d'offre '{nom_p}'.",
                     })
+
+                # Invariant 2 & 5 : Exiger les dimensions de vérification complètes pour VERIFIE_PRESENT
                 if st == "VERIFIE_PRESENT":
-                    if p.get("present_disque") is not True or p.get("valide_juridiquement") is not True or p.get("verifie_contenu") is not True:
+                    if (
+                        p.get("present_disque") is not True
+                        or p.get("valide_juridiquement") is not True
+                        or p.get("verifie_contenu") is not True
+                    ):
                         blocages.append({
                             "code": "INCOHERENCE_STATUT_4D",
                             "gravite": "BLOQUANT",
                             "description": f"Incohérence 4D sur la pièce d'offre '{nom_p}': le statut VERIFIE_PRESENT exige que present_disque, valide_juridiquement et verifie_contenu soient tous strictement True.",
                         })
 
-            manquantes_offre = [
-                p["piece"] for p in offre_pieces 
-                if isinstance(p, dict) and p.get("obligatoire", True) and p.get("exige_par_marche", True) and p.get("statut") in STATUTS_INCOMPLETS
-            ]
+                # Détermination de l'obligation avec exige_par_marche comme source de vérité (P0)
+                exige_marche = p.get("exige_par_marche")
+                obli_flag = p.get("obligatoire")
+
+                # Détection de contradiction formelle (P0.3)
+                if exige_marche is True and obli_flag is False:
+                    blocages.append({
+                        "code": "CONTRADICTION_EXIGENCE_STATUT",
+                        "gravite": "BLOQUANT",
+                        "description": f"Contradiction formelle sur '{nom_p}' : exigée par le marché mais déclarée obligatoire=False.",
+                    })
+                if (exige_marche is True or obli_flag is True) and st in ("FACULTATIF", "NON_APPLICABLE"):
+                    blocages.append({
+                        "code": "PIECE_OBLIGATOIRE_STATUT_FACULTATIF",
+                        "gravite": "BLOQUANT",
+                        "description": f"Contournement interdit sur '{nom_p}' : une pièce exigée ne peut recevoir le statut '{st}'.",
+                    })
+
+                est_exigee = bool(exige_marche is True or (exige_marche is None and obli_flag is True))
+                if est_exigee:
+                    # Invariant 1 : Seul VERIFIE_PRESENT peut satisfaire une pièce exigée
+                    if st != "VERIFIE_PRESENT":
+                        manquantes_offre.append(f"{nom_p} (statut: {st})")
+
             if manquantes_offre:
                 blocages.append({
                     "code": "PIECES_OFFRE_MANQUANTES",
@@ -341,7 +424,7 @@ def auditer_dossier(
         exigences_mat = matrice.get("exigences", []) if isinstance(matrice, dict) else (matrice if isinstance(matrice, list) else [])
         non_conformes_mat = [
             e for e in exigences_mat
-            if isinstance(e, dict) and e.get("statut") in ["NON_CONFORME", "NON CONFORME"]
+            if isinstance(e, dict) and str(e.get("statut", "")).strip().upper() in ["NON_CONFORME", "NON CONFORME"]
         ]
         if non_conformes_mat:
             blocages.append({
@@ -349,14 +432,32 @@ def auditer_dossier(
                 "gravite": "BLOQUANT",
                 "description": f"{len(non_conformes_mat)} exigence(s) contractuelle(s) non satisfaite(s) dans la matrice de conformité (ex: '{non_conformes_mat[0].get('id', 'EX')}').",
             })
-        non_verifiees_mat = [
+
+        # Exigences éliminatoires non vérifiées ou inévaluables -> BLOQUANT
+        eliminatoires_non_verifiees = [
             e for e in exigences_mat
-            if isinstance(e, dict) and e.get("statut") in ["NON_VERIFIE", "NON VÉRIFIÉ", "A_VALIDER"]
+            if isinstance(e, dict)
+            and bool(e.get("eliminatoire") or e.get("caractere_eliminatoire") or e.get("bloquant"))
+            and str(e.get("statut", "")).strip().upper() in ["NON_VERIFIE", "NON VÉRIFIÉ", "A_VALIDER", "NON_EVALUABLE"]
         ]
-        if non_verifiees_mat:
+        if eliminatoires_non_verifiees:
+            blocages.append({
+                "code": "EXIGENCES_ELIMINATOIRES_NON_VERIFIEES",
+                "gravite": "BLOQUANT",
+                "description": f"{len(eliminatoires_non_verifiees)} exigence(s) éliminatoire(s) non vérifiée(s) dans la matrice de conformité (ex: '{eliminatoires_non_verifiees[0].get('id', 'EX')}'). Un pli ne peut être déclaré PRET avec des exigences éliminatoires en suspens.",
+            })
+
+        # Exigences non éliminatoires non vérifiées -> avertissement
+        non_verifiees_ordinaires = [
+            e for e in exigences_mat
+            if isinstance(e, dict)
+            and not bool(e.get("eliminatoire") or e.get("caractere_eliminatoire") or e.get("bloquant"))
+            and str(e.get("statut", "")).strip().upper() in ["NON_VERIFIE", "NON VÉRIFIÉ", "A_VALIDER", "NON_EVALUABLE"]
+        ]
+        if non_verifiees_ordinaires:
             avertissements.append({
                 "code": "EXIGENCES_DCE_NON_VERIFIEES",
-                "description": f"{len(non_verifiees_mat)} exigence(s) contractuelle(s) restent en statut NON VÉRIFIÉ dans la matrice et requièrent une validation humaine.",
+                "description": f"{len(non_verifiees_ordinaires)} exigence(s) contractuelle(s) restent en statut NON VÉRIFIÉ dans la matrice et requièrent une validation humaine.",
             })
 
     # Verdict final rigoureux

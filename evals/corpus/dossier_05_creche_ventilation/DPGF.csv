@@ -1,0 +1,7 @@
+Poste,Désignation des ouvrages,Quantité,Unité,Prix Unitaire HT,Montant Total HT
+V1,Dépose des anciennes centrales de traitement d'air,2,U,1500.00,3000.00
+V2,Centrale double flux haut rendement 3500 m3/h,2,U,18500.00,37000.00
+V3,Réseau gaines aérauliques calorifugées galva,180,ML,65.00,11700.00
+V4,Diffuseurs d'air et bouches d'extraction silencieuses,45,U,85.00,3825.00
+V5,Régulation numérique et GTB communicante BACnet,1,ENS,6200.00,6200.00
+TOTAL,TOTAL GÉNÉRAL HT,,,,61725.00

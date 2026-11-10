@@ -1,0 +1,34 @@
+{
+  "id": "DCE-20",
+  "dossier": "dossier_20_espaces_verts_parc",
+  "objet_attendu": "Aménagement paysager et création de noues d'infiltration du parc éco-quartier",
+  "acheteur_attendu": "Commune de Saint-Doulchard",
+  "date_limite_attendue": "2026-12-17T16:00:00",
+  "visite_regime_attendu": "FACULTATIVE",
+  "visite_eliminatoire_attendue": false,
+  "delai_semaines_attendu": 12,
+  "criteres_attendus": [
+    {
+      "nom": "Prix des prestations",
+      "poids": 40
+    },
+    {
+      "nom": "Valeur technique",
+      "poids": 60
+    }
+  ],
+  "total_dpgf_ht_attendu": "104000.0",
+  "nb_lignes_dpgf_attendues": 3,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurance décennale"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique"
+  ]
+}

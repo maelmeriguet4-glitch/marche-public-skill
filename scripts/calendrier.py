@@ -36,15 +36,39 @@ def parser_date_fr(date_str: str) -> Optional[datetime.datetime]:
     return dt
 
 
-def calculer_retroplanning(date_limite: datetime.datetime, contradictions: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+def calculer_retroplanning(
+    date_limite: Union[datetime.datetime, datetime.date, str, Dict[str, Any]],
+    contradictions: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
     """Génère les jalons clés à rebours en jours ouvrés légaux depuis la date limite."""
+    dt: Optional[datetime.datetime] = None
+    if isinstance(date_limite, dict):
+        d_str = (
+            date_limite.get("calendrier", {}).get("date_limite_retenue")
+            or date_limite.get("date_limite")
+            or date_limite.get("date_limite_remise")
+        )
+        if d_str:
+            dt = parser_date_fr(str(d_str))
+        if contradictions is None:
+            contradictions = date_limite.get("contradictions_detectees", [])
+    elif isinstance(date_limite, str):
+        dt = parser_date_fr(date_limite)
+    elif isinstance(date_limite, datetime.datetime):
+        dt = date_limite
+    elif isinstance(date_limite, datetime.date):
+        dt = datetime.datetime(date_limite.year, date_limite.month, date_limite.day, 18, 0, 0)
+
+    if not dt:
+        return []
+
     jalons = []
-    date_ref = date_limite.date()
+    date_ref = dt.date()
     
     # Jalon 1 : Clôture officielle (J)
     jalons.append({
         "jalon": "Échéance officielle de clôture de la consultation",
-        "echeance": date_limite.strftime("%d/%m/%Y à %H:%M"),
+        "echeance": dt.strftime("%d/%m/%Y à %H:%M"),
         "delta_jours_ouvres": 0,
         "responsable": "Plateforme profil d'acheteur",
         "description": "Fermeture automatique de la salle des dépôts. Tout pli en cours de téléversement est rejeté.",

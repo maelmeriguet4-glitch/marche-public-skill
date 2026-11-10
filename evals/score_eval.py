@@ -17,9 +17,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 # Insertion du dossier scripts dans le sys.path
-SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
-if str(SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_DIR))
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SCRIPTS_DIR = ROOT_DIR / "scripts"
+EVALS_DIR = ROOT_DIR / "evals"
+for p in [str(ROOT_DIR), str(SCRIPTS_DIR), str(EVALS_DIR)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from common import to_decimal, arrondi_monnaie
 from controle_final import auditer_dossier
@@ -275,6 +278,7 @@ def evaluer_cas_terrain(cas_dir: Path) -> List[Dict[str, Any]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Évaluation de la précision et du rappel du skill marches-publics.")
     parser.add_argument("--cas-dir", default=str(Path(__file__).resolve().parent / "cas"), help="Dossier des cas JSON de vérité terrain.")
+    parser.add_argument("--e2e", action="store_true", help="Exécute également le benchmark E2E de 20 consultations BTP.")
     parser.add_argument("--verbose", action="store_true", help="Affiche le détail de chaque requête.")
     args = parser.parse_args()
     
@@ -321,8 +325,29 @@ def main() -> None:
         print(f"Dossier {cas_dir} introuvable.")
         tous_valides = False
         
+    e2e_valide = True
+    if args.e2e:
+        print("\n3. BENCHMARK RÉEL DE BOUT EN BOUT SUR CORPUS DCE BTP (20 DOSSIERS)")
+        try:
+            from evals.benchmark_e2e import executer_benchmark_e2e
+            bench_res = executer_benchmark_e2e()
+            print(f"- Exactitude dates      : {bench_res['taux_exactitude_dates_pct']:.1f} %")
+            print(f"- Précision visites     : {bench_res['precision_visites_pct']:.1f} %")
+            print(f"- Rappel éliminatoires : {bench_res['rappel_clauses_eliminatoires_pct']:.1f} %")
+            print(f"- Exactitude calculs    : {bench_res['taux_fiabilite_calculs_financiers_pct']:.1f} %")
+            if (
+                bench_res["taux_exactitude_dates_pct"] < 100.0
+                or bench_res["f1_score_visites_pct"] < 100.0
+                or bench_res["rappel_clauses_eliminatoires_pct"] < 100.0
+                or bench_res["taux_fiabilite_calculs_financiers_pct"] < 100.0
+            ):
+                e2e_valide = False
+        except Exception as e:
+            print(f"Erreur benchmark E2E: {e}")
+            e2e_valide = False
+
     print("\n" + "=" * 70)
-    if tous_valides and res_req["f1_score"] == 1.0:
+    if tous_valides and res_req["f1_score"] == 1.0 and e2e_valide:
         print("RÉSULTAT DU BENCHMARK : VALIDÉ (100 % de conformité dynamique)")
         sys.exit(0)
     else:

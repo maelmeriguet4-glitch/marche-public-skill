@@ -1,0 +1,35 @@
+{
+  "id": "DCE-07",
+  "dossier": "dossier_07_electricite_college",
+  "objet_attendu": "Rénovation des tableaux électriques et éclairage LED du collège George Sand",
+  "acheteur_attendu": "Conseil Départemental du Cher",
+  "date_limite_attendue": "2027-01-15T12:00:00",
+  "visite_regime_attendu": "OBLIGATOIRE",
+  "visite_eliminatoire_attendue": true,
+  "delai_semaines_attendu": 12,
+  "criteres_attendus": [
+    {
+      "nom": "Prix des prestations",
+      "poids": 40
+    },
+    {
+      "nom": "Valeur technique",
+      "poids": 60
+    }
+  ],
+  "total_dpgf_ht_attendu": "165000.0",
+  "nb_lignes_dpgf_attendues": 3,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurance décennale"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Attestation de visite signée"
+  ]
+}

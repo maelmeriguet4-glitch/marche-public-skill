@@ -1,0 +1,35 @@
+{
+  "id": "DCE-17",
+  "dossier": "dossier_17_climatisation_serveurs",
+  "objet_attendu": "Installation d'un système de climatisation redondant pour la salle des serveurs informatiques",
+  "acheteur_attendu": "Centre Hospitalier Jacques Cœur",
+  "date_limite_attendue": "2026-12-08T15:00:00",
+  "visite_regime_attendu": "OBLIGATOIRE",
+  "visite_eliminatoire_attendue": true,
+  "delai_semaines_attendu": 12,
+  "criteres_attendus": [
+    {
+      "nom": "Prix des prestations",
+      "poids": 40
+    },
+    {
+      "nom": "Valeur technique",
+      "poids": 60
+    }
+  ],
+  "total_dpgf_ht_attendu": "91000.0",
+  "nb_lignes_dpgf_attendues": 3,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurance décennale"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Attestation de visite signée"
+  ]
+}

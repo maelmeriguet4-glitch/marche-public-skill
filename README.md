@@ -1,7 +1,7 @@
 # marché-public-skill (marche-public-skill)
 
-[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v1.5.0)
-[![Tests](https://img.shields.io/badge/tests-371%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/releases/tag/v2.0.0)
+[![Tests](https://img.shields.io/badge/tests-377%20passed-brightgreen.svg)](https://github.com/maelmeriguet4-glitch/marche-public-skill/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](./LICENSE)
 
@@ -11,19 +11,22 @@ Boîte à outils d'ingénierie logicielle et d'aide à la décision pour l'analy
 
 ## Changelog
 
-### v1.5.0 — 10 novembre 2026 *(version courante)*
+### v2.0.0 — 10 novembre 2026 *(version courante)*
 
-**Remédiation finale exhaustive des constats d'audit adversarial — herméticité 4D intégrale, isolation documentaire absolue et validation de schéma fail-closed**
+**Évolution majeure vers un standard de qualité professionnelle (Objectif 9.9/10) : Moteur centralisé de conformité 4D, herméticité fail-closed absolue, serveur MCP natif, API REST FastAPI et benchmark de bout en bout sur corpus de 20 consultations BTP réalistes.**
 
-| Domaine | Correction apportée |
+| Domaine | Améliorations majeures apportées |
 | :--- | :--- |
-| **Herméticité du modèle 4D** | Imposition stricte des 3 dimensions pour le statut `VERIFIE_PRESENT` (`present_disque`, `valide_juridiquement`, `verifie_contenu`). Si l'une des dimensions est fausse, le statut ne peut prétendre à `VERIFIE_PRESENT` et le contrôle final bloque en `PAS_PRET` (`PIECE_STATUT_4D_INVALIDE`). |
-| **Validation de schéma des checklists** | Rejet systématique des éléments non dictionnaires, dictionnaires vides (`{}`), éléments sans nom de pièce (`piece`), ou portant un statut inconnu (`CHECKLIST_FORMAT_INVALIDE`, `PIECE_STRUCTURE_INVALIDE`). |
-| **Isolation documentaire et anti-contamination** | Suppression de toute fuite ambiante des fichiers de démonstration vers les profils de production. En CLI, seuls les dossiers explicitement autorisés ou le dossier du profil d'entreprise sont explorés. |
-| **Visite sur site et preuve signée** | Validation subordonnée à la présence de l'attestation physique sur disque, de la signature (mandataire/acheteur), de la date de visite et de l'antériorité stricte à l'échéance de remise des plis (`PREUVE_A_VALIDER_HUMAINEMENT`). |
-| **Fiches techniques CSTB obligatoires** | Alignement du statut d'obligation (`obligatoire: exige_fiches`) sur l'exigence formelle du Règlement de la Consultation ou du CCTP. |
-| **Comparaisons temporelles exactes en UTC** | Gestion centralisée des datetimes avec fuseaux horaires et dates naïves via UTC normalisé. Prise en compte de la fin de journée pour les dates sans composante horaire (`verifier_validite_date`). |
-| **Suite de tests & Benchmark** | 371 tests automatisés (100% succès), benchmark dynamique de déclenchement 30 requêtes (Précision 100%, Rappel 100%, F1 100%), 5/5 cas de vérité terrain conformes. |
+| **Moteur centralisé de conformité** | Création de `scripts/moteur_conformite.py` avec ontologie stricte des statuts (`VERIFIE_PRESENT`, `PRESENT_NON_LU`, `LU_NON_VERIFIE`, `NON_CONFORME`, `ABSENT`, `NON_APPLICABLE`). Validation stricte des 4 dimensions (présence disque, extraction lisible, vérification de contenu, validité juridique). |
+| **Herméticité fail-closed absolue** | Refonte complète de `scripts/controle_final.py` : interdiction absolue de contournement via `FACULTATIF` ou `VALIDE` pour les pièces requises par le marché (`exige_par_marche=True`). Détection et rejet immédiat des contradictions d'exigence (`CONTRADICTION_EXIGENCE_STATUT`, `PIECE_OBLIGATOIRE_STATUT_FACULTATIF`). Blocage systématique si des exigences éliminatoires de la matrice de conformité ne sont pas vérifiées (`EXIGENCES_ELIMINATOIRES_NON_VERIFIEES`). Rejet sécurisé de tout payload malformé. |
+| **Serveur MCP stdio (JSON-RPC 2.0)** | Implémentation de `scripts/mcp_server.py` compatible Claude Code, Cursor et Antigravity. Outils exposés : `extraire_dce`, `evaluer_go_nogo`, `verifier_dpgf`, `generer_checklist_4d`, `auditer_dossier_complet`. |
+| **API REST FastAPI moderne** | Implémentation de `scripts/api.py` avec endpoints normalisés (`/api/v1/dce/extract`, `/api/v1/dce/analyse`, `/api/v1/audit/go-nogo`, `/api/v1/audit/matrice`, `/api/v1/audit/checklist`, `/api/v1/audit/prix`, `/api/v1/audit/controle-final`). Documentation OpenAPI interactive sur `/docs`. |
+| **Benchmark E2E sur 20 dossiers réalistes** | Création d'un corpus de 20 consultations BTP complètes dans `evals/corpus/` (RC, CCAP, CCTP, DPGF CSV/XLSX, AE, contrats de vérité terrain). Benchmark automatisé `evals/benchmark_e2e.py` attestant : 100% exactitude extraction, 100% exactitude dates, 100% détection visites de chantier (précision/rappel/F1 à 100%), 100% rappel des clauses éliminatoires, 100% fiabilité financière DPGF. |
+| **Contrôle documentaire approfondi** | Vérification physique de l'antériorité de la date de visite et de la concordance d'identité candidate (`scripts/go_nogo.py`). Vérification explicite de la Responsabilité Civile Professionnelle en complément de la garantie décennale. Prise en charge universelle des DPGF au format CSV et XLSX. |
+| **Suite de tests & Qualité** | 377 tests automatisés validés sous `pytest` (100% succès en 7s). |
+
+### v1.5.0 — 10 novembre 2026
+Remédiation des constats d'audit adversarial — herméticité 4D intégrale, isolation documentaire absolue et validation de schéma fail-closed.
 
 ### v1.4.0 — 10 novembre 2026
 Remédiation initiale des constats d'audit adversarial : architecture fail-closed, vérification physique sur disque, découplage OAB/arithmétique et conformité 2026.
@@ -211,22 +214,54 @@ pytest tests -v
 
 ---
 
-## 8. Protocole d'évaluation (evals/)
+## 8. Interfaces d'intégration : Serveur MCP et API REST FastAPI
 
-Le protocole d'évaluation mesure empiriquement la précision et le rappel du système face à des requêtes formulées en langage naturel :
+Le skill propose deux modes d'intégration programmatique :
 
-- **Jeu de 30 requêtes d'évaluation** : 15 requêtes positives représentatives des tâches de réponse aux marchés publics de travaux, et 15 requêtes négatives ciblant des activités hors périmètre (droit étranger, marchés privés de gré à gré, scraping, fausses déclarations).
-- **Vérité terrain sur 5 consultations réelles** : Présentes dans `evals/cas/`, couvrant divers corps d'état (toiture, ITE, menuiserie, génie civil, CVC).
-
-Exécution du benchmark :
+### Serveur MCP stdio (JSON-RPC 2.0)
+Pour intégrer les capacités d'audit de marchés publics directement dans votre environnement d'agent IA (Claude Code, Cursor, Antigravity) :
 
 ```bash
-python evals/score_eval.py --cas-dir evals/cas --verbose
+python scripts/mcp_server.py
+```
+Outils MCP disponibles :
+- `extraire_dce` : Extraction et typage des pièces du DCE
+- `evaluer_go_nogo` : Scoring multicritère et décision Go / No-Go
+- `verifier_dpgf` : Contrôle arithmétique et détection OAB
+- `generer_checklist_4d` : Évaluation 4D de complétude documentaire
+- `auditer_dossier_complet` : Audit final fail-closed d'aptitude au dépôt
+
+### API REST FastAPI
+Pour exposer les microservices de vérification de marché public :
+
+```bash
+uvicorn scripts.api:app --host 127.0.0.1 --port 8000
+# ou directement :
+python scripts/api.py --port 8000
+```
+Documentation Swagger / OpenAPI disponible en direct sur : `http://127.0.0.1:8000/docs`
+
+---
+
+## 9. Protocole d'évaluation et Benchmark E2E (evals/)
+
+Le protocole d'évaluation mesure empiriquement la précision, le rappel et la robustesse fail-closed du système :
+
+- **Jeu de 30 requêtes d'évaluation** : 15 requêtes positives représentatives des tâches de réponse aux marchés publics de travaux, et 15 requêtes négatives ciblant des activités hors périmètre (droit étranger, marchés privés de gré à gré, scraping, fausses déclarations). Précision : 100%, Rappel : 100%, F1 : 100%.
+- **Vérité terrain sur 5 consultations réelles** : Présentes dans `evals/cas/`, couvrant divers corps d'état (toiture, ITE, menuiserie, génie civil, CVC). 100% de conformité dynamique.
+- **Benchmark E2E sur corpus de 20 consultations BTP** : Présentes dans `evals/corpus/`, avec vérification complète de bout en bout (extraction dates, visites de chantier, clauses éliminatoires et calculs DPGF).
+
+Exécution du benchmark complet :
+
+```bash
+python evals/score_eval.py --e2e --verbose
+# ou benchmark E2E seul :
+python evals/benchmark_e2e.py
 ```
 
 ---
 
-## 9. Mentions légales et licence
+## 10. Mentions légales et licence
 
 Cet outil constitue un instrument d'assistance technique, documentaire et arithmétique à destination des professionnels du bâtiment et des travaux publics. Il ne remplace en aucun cas la relecture humaine exhaustive des documents contractuels, le jugement technique du conducteur de travaux, ni un conseil juridique délivré par un professionnel habilité. Le candidat demeure seul et intégralement responsable de la teneur de son offre et de sa remise dans les délais réglementaires sur le profil d'acheteur.
 

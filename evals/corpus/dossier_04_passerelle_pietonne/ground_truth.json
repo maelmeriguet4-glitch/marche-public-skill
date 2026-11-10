@@ -1,0 +1,36 @@
+{
+  "id": "DCE-04",
+  "dossier": "dossier_04_passerelle_pietonne",
+  "objet_attendu": "Construction d'une passerelle piétonne en ossature métallique franchissant l'Yèvre",
+  "acheteur_attendu": "Syndicat Mixte du Bassin de l'Yèvre",
+  "date_limite_attendue": "2027-01-20T16:00:00",
+  "visite_regime_attendu": "FACULTATIVE",
+  "visite_eliminatoire_attendue": false,
+  "delai_semaines_attendu": 20,
+  "criteres_attendus": [
+    {
+      "nom": "Prix",
+      "poids": 45
+    },
+    {
+      "nom": "Méthodologie et sécurité fluviale",
+      "poids": 55
+    }
+  ],
+  "total_dpgf_ht_attendu": "267560.0",
+  "nb_lignes_dpgf_attendues": 5,
+  "nb_erreurs_arithmetiques_attendues": 0,
+  "pieces_exigees_candidature_attendues": [
+    "DC1",
+    "DC2",
+    "Kbis",
+    "Assurances",
+    "Certificats Qualibat 2412"
+  ],
+  "pieces_exigees_offre_attendues": [
+    "Acte d'engagement",
+    "DPGF",
+    "Mémoire technique",
+    "Note de calculs"
+  ]
+}
