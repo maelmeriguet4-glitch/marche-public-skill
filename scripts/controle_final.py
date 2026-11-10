@@ -115,21 +115,27 @@ def auditer_dossier(
         controles_valides.append(f"Délai d'exécution fixé à {delai_ae_semaines} semaines dans l'Acte d'Engagement.")
 
     # 5. Détection de balises résiduelles [À FOURNIR] dans le mémoire technique
-    balises_resid = re.findall(r"\[À\s+FOURNIR[^\]]*\]|\[À\s+COMPLÉTER[^\]]*\]|\[À\s+CONFIRMER[^\]]*\]", memoire_texte, re.IGNORECASE)
+    balises_resid = re.findall(r"\[(?:À|A)\s*(?:FOURNIR|COMPLÉTER|COMPLETER|CONFIRMER|CHIFFRER)[^\]]*\]", memoire_texte, re.IGNORECASE)
     if balises_resid:
         nb_balises = len(balises_resid)
-        avertissements.append({
+        blocages.append({
             "code": "BALISES_NON_COMPLETEES",
-            "description": f"{nb_balises} balise(s) d'information en attente détectée(s) dans le mémoire technique (ex: '{balises_resid[0]}')."
+            "gravite": "BLOQUANT",
+            "description": f"{nb_balises} balise(s) d'information résiduelle(s) non complétée(s) détectée(s) dans le mémoire technique (ex: '{balises_resid[0]}')."
         })
     else:
         controles_valides.append("Aucune balise [À FOURNIR] résiduelle détectée dans le mémoire technique.")
 
     # 6. Complétude des pièces obligatoires de la checklist (Candidature ET Offre)
+    STATUTS_INCOMPLETS = {
+        "MANQUANT", "A_FOURNIR", "EXPIREE", "A_COMPLETER", "A_METTRE_A_JOUR",
+        "NON_VERIFIE", "A_CHIFFRER", "A_REDIGER", "A_FINALISER", "A_OBTENIR"
+    }
+
     candidature_pieces = checklist.get("candidature", [])
     manquantes_cand = [
         p["piece"] for p in candidature_pieces 
-        if p.get("obligatoire") and p.get("statut") in ["MANQUANT", "A_FOURNIR", "EXPIREE"]
+        if p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
     ]
     if manquantes_cand:
         blocages.append({
@@ -143,16 +149,28 @@ def auditer_dossier(
     offre_pieces = checklist.get("offre", [])
     manquantes_offre = [
         p["piece"] for p in offre_pieces 
-        if p.get("obligatoire") and p.get("statut") in ["MANQUANT", "A_FOURNIR"]
+        if p.get("obligatoire") and p.get("statut") in STATUTS_INCOMPLETS
     ]
     if manquantes_offre:
         blocages.append({
             "code": "PIECES_OFFRE_MANQUANTES",
             "gravite": "BLOQUANT",
-            "description": f"Pièces de l'offre obligatoires manquantes : {', '.join(manquantes_offre)}."
+            "description": f"Pièces de l'offre obligatoires manquantes ou incomplètes : {', '.join(manquantes_offre)}."
         })
     else:
         controles_valides.append("Dossier de l'offre complet (Acte d'engagement, DPGF/BPU et mémoire technique présents).")
+
+    # 6 bis. Limite de pages du mémoire technique si fixée au RC
+    rc_limite_pages = analyse.get("rc_limite_pages")
+    if rc_limite_pages:
+        nb_mots = len(memoire_texte.split())
+        nb_pages_estime = max(1, (nb_mots + 349) // 350)
+        if nb_pages_estime > int(rc_limite_pages):
+            blocages.append({
+                "code": "LIMITE_PAGES_DEPASSEE",
+                "gravite": "BLOQUANT",
+                "description": f"Le mémoire technique dépasse la limite de {rc_limite_pages} pages fixée au RC (~{nb_pages_estime} pages estimées)."
+            })
 
     # 7. Contradictions contractuelles du marché
     # CORRECTION CRITIQUE : Les contradictions bloquantes sont des BLOCAGES, pas de simples avertissements !

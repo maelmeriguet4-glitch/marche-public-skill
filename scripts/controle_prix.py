@@ -187,6 +187,15 @@ def verifier_arithmetique(
     anomalies = []
     total_recalcule_ht = Decimal("0.00")
     
+    if not lignes:
+        anomalies.append({
+            "type": "DPGF_VIDE_OU_NON_EXPLOITABLE",
+            "ligne": 0,
+            "poste": "Global",
+            "designation": "Bordereau / DPGF",
+            "description": "Aucune ligne d'ouvrage ni montant unitaire n'a pu être extrait de la DPGF. Document vide ou non exploitable."
+        })
+
     for l in lignes:
         qte = l["quantite"]
         pu = l["prix_unitaire_ht"]
@@ -299,7 +308,7 @@ def verifier_arithmetique(
         "montant_tva": str(montant_tva),
         "total_recalcule_ttc": str(total_recalcule_ttc),
         "ecart_total_ht": str(ecart_total_ht),
-        "statut_global": "CONFORME" if not anomalies else "ANOMALIES_DETECTEES",
+        "statut_global": "CONFORME" if not anomalies else ("NON_CONFORME" if not lignes else "ANOMALIES_DETECTEES"),
         "nb_anomalies": len(anomalies),
         "anomalies": anomalies,
         "analyse_rentabilite": analyse_rentabilite,

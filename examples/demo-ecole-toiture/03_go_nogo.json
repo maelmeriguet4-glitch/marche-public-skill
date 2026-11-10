@@ -1,8 +1,24 @@
 {
-  "score_sur_100": 74.0,
-  "verdict": "GO",
-  "commentaire": "Opportunité favorable avec un score solide de 74.0/100. Candidature recommandée.",
-  "drapeaux_rouges": [],
+  "score_sur_100": 82.0,
+  "verdict": "NO-GO",
+  "commentaire": "Refus obligatoire en raison de 2 drapeau(x) rouge(s) bloquant(s) : CONTRADICTION_CONTRACTUELLE_BLOQUANTE, DATE_LIMITE_DEPASSEE.",
+  "drapeaux_rouges": [
+    {
+      "id": "CONTRADICTION_CONTRACTUELLE_BLOQUANTE",
+      "code": "CONTRADICTION_CONTRACTUELLE_BLOQUANTE",
+      "alias": "CONTRADICTION_DCE_BLOQUANTE",
+      "motif": "Contradiction bloquante non résolue dans le DCE : L'obligation de visite sur site ou la remise d'une attestation de visite signée est stipulée dans le CCAP mais omise dans le RC.",
+      "description": "Contradiction bloquante non résolue dans le DCE : L'obligation de visite sur site ou la remise d'une attestation de visite signée est stipulée dans le CCAP mais omise dans le RC.",
+      "bloquant": true
+    },
+    {
+      "id": "DATE_LIMITE_DEPASSEE",
+      "code": "DATE_LIMITE_DEPASSEE",
+      "motif": "La date limite de remise des plis (24/10/2026 à 12h00) est expirée.",
+      "description": "La date limite de remise des plis (24/10/2026 à 12h00) est expirée.",
+      "bloquant": true
+    }
+  ],
   "criteres": [
     {
       "id": "adequation_technique",
@@ -29,36 +45,36 @@
       "id": "charge_travail_et_disponibilite",
       "nom": "Disponibilité des ressources humaines",
       "poids_max": 15,
-      "points_obtenus": 6.0,
-      "justification": "[EFFECTIF NON RENSEIGNÉ DANS LE PROFIL] — Disponibilité opérationnelle à confirmer manuellement."
+      "points_obtenus": 15.0,
+      "justification": "Effectif complet (14 salariés) garantissant l'affectation dédiée d'équipes sans surcharge."
     },
     {
       "id": "localisation_eloignement",
       "nom": "Proximité géographique et logistique",
       "poids_max": 10,
-      "points_obtenus": 6.0,
-      "justification": "[DISTANCE NON CALCULÉE] — Localisation exacte de l'acheteur à rapprocher de l'atelier de l'entreprise."
+      "points_obtenus": 10.0,
+      "justification": "Chantier situé dans le même département (18) : proximité immédiate (< 40 km) et logistique optimisée."
     },
     {
       "id": "rentabilite_estimee",
       "nom": "Potentiel de rentabilité et maîtrise des coûts",
       "poids_max": 10,
-      "points_obtenus": 6.0,
-      "justification": "[MARGE NON CHIFFRÉE] — Étude de déboursé requise pour évaluer le coefficient de vente."
+      "points_obtenus": 7.0,
+      "justification": "Objectif de rentabilité standard BTP (7.0 % de marge nette ciblée)."
     },
     {
       "id": "risques_contractuels",
       "nom": "Sécurité juridique et contractuelle",
       "poids_max": 10,
-      "points_obtenus": 3.0,
+      "points_obtenus": 0.0,
       "justification": "Risque contractuel critique : 1 contradiction(s) bloquante(s) non résolue(s) dans le DCE."
     },
     {
       "id": "delai_remise_dossier",
       "nom": "Délai disponible pour la préparation",
       "poids_max": 5,
-      "points_obtenus": 3.0,
-      "justification": "[DÉLAI NON CALCULABLE] — Date de clôture à vérifier sur le profil d'acheteur."
+      "points_obtenus": 0.0,
+      "justification": "Date limite dépassée (24/10/2026 à 12h00) : le pli ne peut plus être déposé."
     }
   ]
 }

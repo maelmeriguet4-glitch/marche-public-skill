@@ -1,5 +1,5 @@
 {
-  "acheteur": "Commune de Saint-Pierre-des-Bois\nDate limite de remise des p",
+  "acheteur": "Commune de Saint-Pierre-des-Bois",
   "objet": "Réfection de la toiture et mise en accessibilité d'une école communale.",
   "procedure": "MAPA (Marché à Procédure Adaptée)",
   "allotissement": {
@@ -86,7 +86,5 @@
       "recommandation": "Effectuer impérativement la visite et faire tamponner l'attestation sous peine d'élimination de l'offre."
     }
   ],
-  "non_extrait": [
-    "delai_global_contractuel_mois [À VÉRIFIER DANS LE CCAP]"
-  ]
+  "non_extrait": []
 }

@@ -1,7 +1,6 @@
 # Fiche d'Analyse de Marché — Réfection de la toiture et mise en accessibilité d'une école communale.
 
 - **Acheteur public** : Commune de Saint-Pierre-des-Bois
-Date limite de remise des p
 - **Procédure de passation** : MAPA (Marché à Procédure Adaptée)
 - **Date limite de remise des plis** : 24/10/2026 à 12h00
 - **Date limite pour poser des questions** : 16/10/2026
@@ -35,6 +34,3 @@ Date limite de remise des p
 - [ ] Mémoire technique justificatif adapté aux critères du RC
 - [ ] Planning d'intervention prévisionnel
 - [ ] Attestation de visite des lieux signée
-
-## 5. Données non détectées avec certitude
-- `delai_global_contractuel_mois [À VÉRIFIER DANS LE CCAP]`

@@ -103,6 +103,9 @@ def extraire_criteres_notation(texte_rc: str) -> List[Dict[str, Any]]:
     return criteres
 
 
+extraire_criteres_jugement = extraire_criteres_notation
+
+
 def extraire_clauses_ccap(texte_ccap: str) -> Dict[str, Any]:
     """Extrait les clauses sensibles du CCAP (pénalités, délais, avance, garantie)."""
     clauses = {
@@ -165,9 +168,16 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
     
     # 1. Identification de l'acheteur et de l'objet
     acheteur = "[ACHETEUR NON DÉTECTÉ — À RENSEIGNER]"
-    match_ach = re.search(r"(?:pouvoir\s+adjudicateur|ma[iî]tre\s+d['’]ouvrage|acheteur|commune\s+de|mairie\s+de|ville\s+de)\s*:?\s*([A-Za-zÀ-ÿ0-9\s\-\'\.]{4,60})", texte_global, re.IGNORECASE)
+    match_ach = re.search(r"(?:pouvoir\s+adjudicateur|ma[iî]tre\s+d['’]ouvrage|acheteur|commune\s+de|mairie\s+de|ville\s+de)\s*:?\s*([^\n\r]{4,80})", texte_global, re.IGNORECASE)
     if match_ach:
-        acheteur = match_ach.group(1).strip()
+        val_ach = match_ach.group(1).strip()
+        val_ach = re.split(r"(?:date\s+limite|objet\s+du\s+march[eé])", val_ach, flags=re.IGNORECASE)[0].strip()
+        val_ach = val_ach.split("\n")[0].split("\r")[0].strip()
+        if not re.search(r"^(?:commune|mairie|ville|d[eé]partement|r[eé]gion)", val_ach, re.I):
+            pref = re.search(r"(commune\s+de|mairie\s+de|ville\s+de)", match_ach.group(0), re.I)
+            if pref and pref.group(1).lower() not in val_ach.lower():
+                val_ach = f"{pref.group(1).capitalize()} {val_ach}"
+        acheteur = val_ach
     
     objet = "[OBJET NON DÉTECTÉ — À RENSEIGNER]"
     match_obj = re.search(r"(?:objet\s+(?:du\s+march[eé]|de\s+la\s+consultation))\s*:?\s*([^\n\r]{10,150})", texte_global, re.IGNORECASE)
@@ -285,12 +295,9 @@ def analyser_marche(dce_extrait: Dict[str, Any], seuils_config: Optional[Dict[st
     if clauses_ccap.get("penalites_retard") and "[NON MENTIONNÉ" in clauses_ccap["penalites_retard"]:
         non_extrait.append("penalites_retard_specifiques [NON MENTIONNÉES AU CCAP]")
     
-    # 9. Champs non extraits avec certitude
-    non_extrait = []
-    if "Non détectée" in date_limite_retenue:
-        non_extrait.append("date_limite_remise [À VÉRIFIER DANS LE RC/CCAP]")
-    if not clauses_ccap.get("delai_global_mois"):
-        non_extrait.append("delai_global_contractuel_mois [À VÉRIFIER DANS LE CCAP]")
+    if not clauses_ccap.get("delai_global_mois") and not clauses_ccap.get("delai_global_semaines"):
+        if "delai_global_execution [NON DÉTECTÉ AU CCAP]" not in non_extrait:
+            non_extrait.append("delai_global_execution [NON DÉTECTÉ AU CCAP]")
         
     return {
         "acheteur": acheteur,

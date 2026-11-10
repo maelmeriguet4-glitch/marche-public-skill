@@ -5,6 +5,21 @@ Toutes les modifications notables apportées à ce projet sont consignées dans 
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et ce projet adhère aux principes du [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-10
+
+### Modifié
+- `scripts/go_nogo.py` : harmonisation multi-chemins des schémas de profil YAML (`effectifs.total_salaries`, `siege_social.code_postal`), inspection récursive des dictionnaires `pieces_exigees`, levée stricte d'un drapeau rouge et verdict `NO-GO` impératif dès qu'une contradiction bloquante existe, exploitation intégrale des barèmes de `go_nogo_config.yaml`.
+- `scripts/checklist_pieces.py` : modèle documentaire 4D (`exige_par_marche`, `present_disque`, `valide_juridiquement`, `verifie_contenu`), suppression absolue des replis `or True`, contrôle physique strict des fichiers sur disque sans présomption sur les métadonnées YAML.
+- `scripts/controle_final.py` : blocage éliminatoire sur l'ensemble des statuts incomplets (`A_COMPLETER`, `A_METTRE_A_JOUR`, `NON_VERIFIE`, `A_CHIFFRER`, `A_REDIGER`, `A_FINALISER`, `A_OBTENIR`), interdiction stricte de dépôt en cas de balises résiduelles `[À FOURNIR]` dans le mémoire technique et respect de la limite de pages du RC.
+- `scripts/matrice_conformite.py` : comptabilisation distincte de `nb_non_verifie` dans le résumé JSON, affichage fidèle `[NON VÉRIFIÉ]` sans requalification erronée en non-conformité.
+- `scripts/analyse_marche.py` : assainissement de l'extraction de l'acheteur public sans saut de ligne parasite, préservation intégrale de la liste `non_extrait`, exposition de `extraire_criteres_notation`.
+- `scripts/controle_prix.py` : refus de déclaration de conformité sur DPGF vide (0 ligne extraite) et découplage strict des anomalies arithmétiques et des suspicions d'OAB.
+- `assets/seuils.yaml` & `references/02-procedures-et-seuils.md` : alignement de la date d'application du seuil de 100 000 € HT au 1er avril 2026 selon le Décret n° 2025-1440.
+- `evals/score_eval.py` : retour d'un code de sortie non nul (`sys.exit(1)`) en cas d'échec du benchmark ou de régression pour déclencher le blocage CI.
+
+### Ajouté
+- Suite de tests de robustesse et d'adversité (288 tests unitaires, d'intégration, challengers et stress tests de bout en bout, 100 % passants).
+
 ## [1.1.0] - 2026-11-10
 
 ### Modifié

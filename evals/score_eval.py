@@ -324,8 +324,10 @@ def main() -> None:
     print("\n" + "=" * 70)
     if tous_valides and res_req["f1_score"] == 1.0:
         print("RÉSULTAT DU BENCHMARK : VALIDÉ (100 % de conformité dynamique)")
+        sys.exit(0)
     else:
-        print("RÉSULTAT DU BENCHMARK : ANOMALIES DÉTECTÉES")
+        print("RÉSULTAT DU BENCHMARK : ANOMALIES DÉTECTÉES (ÉCHEC DU BENCHMARK)")
+        sys.exit(1)
     print("=" * 70)
 
 

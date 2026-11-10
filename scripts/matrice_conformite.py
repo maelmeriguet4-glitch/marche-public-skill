@@ -157,7 +157,14 @@ def generer_markdown_matrice(exigences: List[Dict[str, Any]]) -> str:
     md.append("| :--- | :---: | :--- | :--- | :---: | :--- | :--- | :---: |")
     for ex in exigences:
         elim = "Oui" if ex["eliminatoire"] else "Non"
-        badge = "🟢 CONFORME" if ex["statut"] == "CONFORME" else ("🟠 À COMPLÉTER" if ex["statut"] == "À COMPLÉTER" else "🔴 NON CONFORME")
+        if ex["statut"] in ["CONFORME", "VALIDE"]:
+            badge = "[CONFORME]"
+        elif ex["statut"] in ["À COMPLÉTER", "A_COMPLETER"]:
+            badge = "[À COMPLÉTER]"
+        elif ex["statut"] == "NON_VERIFIE":
+            badge = "[NON VÉRIFIÉ]"
+        else:
+            badge = "[NON CONFORME]"
         md.append(f"| **{ex['id']}** | {ex['piece_source']} | {ex['reference']} | {ex['categorie']} | {elim} | {ex['exigence']} | {ex['reponse_entreprise']} | {badge} |")
     md.append("")
     return "\n".join(md)
@@ -228,10 +235,13 @@ def exporter_matrice_excel(exigences: List[Dict[str, Any]], chemin_xlsx: Path) -
                 
         # Coloration du statut
         statut_cell = ws.cell(row=row_idx, column=9)
-        if ex["statut"] == "CONFORME":
+        fill_non_verifie = PatternFill(start_color="EDEDED", end_color="EDEDED", fill_type="solid")
+        if ex["statut"] in ["CONFORME", "VALIDE"]:
             statut_cell.fill = fill_conforme
-        elif ex["statut"] == "À COMPLÉTER":
+        elif ex["statut"] in ["À COMPLÉTER", "A_COMPLETER"]:
             statut_cell.fill = fill_completer
+        elif ex["statut"] == "NON_VERIFIE":
+            statut_cell.fill = fill_non_verifie
         else:
             statut_cell.fill = fill_non_conforme
             
@@ -268,11 +278,13 @@ def main() -> None:
         
     exigences = extraire_exigences(dce_data, profil_data)
     
+    nb_non_verifie = sum(1 for e in exigences if e.get("statut") == "NON_VERIFIE")
     donnees_sortie = {
         "total_exigences": len(exigences),
-        "nb_conformes": sum(1 for e in exigences if e["statut"] == "CONFORME"),
-        "nb_a_completer": sum(1 for e in exigences if e["statut"] == "À COMPLÉTER"),
-        "nb_non_conformes": sum(1 for e in exigences if e["statut"] == "NON CONFORME"),
+        "nb_conformes": sum(1 for e in exigences if e["statut"] in ["CONFORME", "VALIDE"]),
+        "nb_a_completer": sum(1 for e in exigences if e["statut"] in ["À COMPLÉTER", "A_COMPLETER"]),
+        "nb_non_conformes": sum(1 for e in exigences if e["statut"] in ["NON CONFORME", "NON_CONFORME"]),
+        "nb_non_verifie": nb_non_verifie,
         "exigences": exigences,
     }
     

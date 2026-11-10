@@ -41,7 +41,7 @@ criteres:
     description: "Disponibilité de l'encadrement et des équipes travaux sur la période d'exécution prévisionnelle."
     bareme:
       ressources_disponibles_immediatement: 15
-      charge_moderee_ajustement_mineur: 10
+      charge_moderee_ajustement_mineur: 12
       charge_elevee_recrutement_ou_interim_requis: 5
       saturation_totale_des_equipes: 0
 
